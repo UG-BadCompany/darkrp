@@ -4,23 +4,25 @@ A premium, client-focused DarkRP interface suite for Garry's Mod. It replaces th
 
 ## Current Features
 
-- **F4 command center** with dashboard cards, animated tab transitions, premium job/shop cards, searchable/sortable job browsing, category filters, right-side selected item preview, model preview panels, and client-side job favorites.
-- **Job support** reads `RPExtraTeams` directly, supports `job.model` as a string or table, falls back to `models/player/kleiner.mdl`, and avoids broken model errors.
+- **F4 command center** with a command-center dashboard, animated tab transitions, premium job/shop cards, searchable/sortable job browsing, category filters, larger selected-item preview, rich job details, polished salary/player/slot displays, click sounds, and client-side favorites.
+- **Premium job browser** reads `RPExtraTeams` directly, supports `job.model` as a string or table, validates model paths when possible, falls back to `models/player/kleiner.mdl`, caches model lists, avoids broken-model errors, auto-frames DModelPanel cameras, and lets users click multi-model previews to cycle appearances.
+- **Job status indicators** include favorite, locked, VIP, staff, and vote badges, plus clearer requirements and loadout text in the selected job panel.
 - **HUD** includes animated health, armor, hunger, money, salary, ammo, voice, wanted, lockdown, agenda, and laws displays with compact mode and scaling support.
 - **Scoreboard** opens only while TAB is held, uses premium rows, avatars, job color stripes, staff/VIP badges, colored ping, SteamID copy, and admin action integration placeholders.
-- **Notifications** safely wrap legacy and DarkRP notifications after `GAMEMODE` is available, with stacked animated toast cards, icons, progress bars, and sound settings.
-- **Reusable UI components** include premium buttons, cards, search boxes, combo boxes, close buttons, model previews, empty states, confirmation modals, and shared animation helpers.
+- **Notifications** safely wrap legacy and DarkRP notifications after `GAMEMODE` is available, with stacked animated toast cards, type icons, progress bars, slide animations, and sound settings.
+- **Reusable UI components** include premium buttons, cards, search boxes, combo boxes, close buttons, model previews, empty states, confirmation modals, shared animation helpers, consistent radius, hover behavior, spacing, fonts, and accent colors.
 - **Themes/settings** provide consistent radius, spacing, font usage, accent colors, blur, sounds, notification placement, HUD scale, compact mode, and saved favorites.
 
 ## Controls
 
 - Press **F4** to open the DarkRP command menu.
-- Press **ESC** or the premium close button to close the F4 menu.
+- Press **F4 again**, **ESC**, or the premium close button to close the F4 menu.
 - Press and hold **TAB** to show the scoreboard.
 - Release **TAB** to close the scoreboard and restore normal mouse behavior.
 - Click a job card to inspect it in the large right-side preview.
 - Click the star on a job card to favorite/unfavorite it; favorites are saved client-side.
 - Click a multi-model preview to cycle available models.
+- Click a scoreboard row to copy that player’s SteamID.
 
 ## F4 Close Behavior
 
@@ -41,14 +43,18 @@ Client settings are stored in `data/darkrp_ui/settings.txt` and include theme, H
 - Store: wire the `store` tab to your donation/store provider.
 - Admin actions: connect moderation commands in `DarkRPUI.Admin.Send` to your admin system permissions.
 - Server links: update Discord, rules, and store URLs in config.
+- Custom restriction messaging: integrate server-specific VIP/staff/custom-check failure copy where desired.
 
 ## Testing Checklist
 
 - Open F4 repeatedly and confirm no duplicate frames or stuck screen clicker.
+- Close F4 with F4, ESC, and the close button and confirm all paths animate out cleanly.
 - Search, sort, filter jobs, favorite jobs, reconnect, and confirm favorites persist.
 - Verify every `RPExtraTeams` job displays a model and multi-model jobs can cycle models.
+- Confirm invalid/missing job models fall back to `models/player/kleiner.mdl` without Lua errors.
 - Select locked/VIP/staff/vote jobs and confirm indicators/actions are clear.
 - Change money, salary, health, armor, hunger, wanted, lockdown, voice, ammo, laws, and agenda values and confirm HUD animations.
+- Toggle compact mode and HUD scale and confirm the HUD remains readable at common resolutions.
 - Hold and release TAB to confirm scoreboard appears only while held and mouse control is restored.
 - Trigger legacy and DarkRP notifications before/after gamemode initialization and confirm there are no Lua errors.
 - Toggle blur, sounds, compact mode, notification position, and HUD scale in settings.

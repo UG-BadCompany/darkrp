@@ -80,16 +80,18 @@ function UI.MakeAnimatedCard(parent, title, body)
 end
 local function safeSetModel(panel, mdl)
     if not IsValid(panel) then return end
-    mdl = (isstring(mdl) and mdl ~= "") and mdl or "models/player/kleiner.mdl"
+    local fallback = "models/player/kleiner.mdl"
+    mdl = (isstring(mdl) and mdl ~= "") and mdl or fallback
+    if util and util.IsValidModel and not util.IsValidModel(mdl) then mdl = fallback end
     pcall(function() panel:SetModel(mdl) end)
-    if not IsValid(panel.Entity) then pcall(function() panel:SetModel("models/player/kleiner.mdl") end) end
+    if not IsValid(panel.Entity) then pcall(function() panel:SetModel(fallback) end) end
 end
 function UI.MakeModelPreview(parent, models, large)
     local p=vgui.Create("DModelPanel",parent); p.Models=istable(models) and models or { tostring(models or "models/player/kleiner.mdl") }; p.ModelIndex=1; p.HoverRot=0
-    safeSetModel(p,p.Models[1]); p:SetFOV(large and 30 or 38); p:SetCamPos(Vector(42,-8,58)); p:SetLookAt(Vector(0,0,40))
-    function p:AutoFrameModel() if not IsValid(self.Entity) then return end; local mn,mx=self.Entity:GetRenderBounds(); local size=math.max(math.abs(mn.x)+math.abs(mx.x), math.abs(mn.y)+math.abs(mx.y), math.abs(mn.z)+math.abs(mx.z)); self:SetCamPos(Vector(size*0.62,-size*0.08,size*0.62)); self:SetLookAt(Vector(0,0,(mn.z+mx.z)*0.52)); self:SetFOV(large and 28 or 36) end
+    safeSetModel(p,p.Models[1]); p:SetFOV(large and 28 or 36); p:SetCamPos(Vector(46,-10,58)); p:SetLookAt(Vector(0,0,40)); p.AmbientLight=Color(95,120,155); p.DirectionalLight=Color(255,255,255)
+    function p:AutoFrameModel() if not IsValid(self.Entity) then return end; local mn,mx=self.Entity:GetRenderBounds(); local height=math.max(1, mx.z-mn.z); local width=math.max(math.abs(mn.x)+math.abs(mx.x), math.abs(mn.y)+math.abs(mx.y), 28); local dist=math.max(width*1.35, height*.78); self:SetCamPos(Vector(dist,-dist*.16,mn.z+height*.58)); self:SetLookAt(Vector(0,0,mn.z+height*.50)); self:SetFOV(large and 24 or 32) end
     p:AutoFrameModel()
-    p.LayoutEntity=function(s,ent) if not IsValid(ent) then return end; local target=s:IsHovered() and ((CurTime()*34)%360) or 25; ent:SetAngles(Angle(0,target,0)); ent:SetModelScale(1+((s:IsHovered() and .025 or 0)),0) end
+    p.LayoutEntity=function(s,ent) if not IsValid(ent) then return end; local target=s:IsHovered() and ((CurTime()*34)%360) or 25; ent:SetAngles(Angle(0,target,0)); ent:SetModelScale(1+((s:IsHovered() and .025 or 0)),0); ent:SetColor(color_white) end
     p.PaintOver=function(s,w,h)
         if #s.Models > 1 then
             surface.SetDrawColor(DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),210)); surface.DrawRect(0,h-24,w,24)
