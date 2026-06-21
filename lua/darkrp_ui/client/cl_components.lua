@@ -6,9 +6,16 @@ local transparent = Color(0,0,0,0)
 
 local function cfg(k, fallback) return DarkRPUI.Config and DarkRPUI.Config[k] ~= nil and DarkRPUI.Config[k] or fallback end
 local function animSpeed(mult) return (cfg("AnimationSpeed", 0.16) or 0.16) * (mult or 1) end
-function UI.LerpValue(current, target, speed) return Lerp(math.Clamp(FrameTime() * (speed or 10), 0, 1), current or 0, target or 0) end
+function UI.LerpValue(current, target, speed) return Lerp(math.Clamp(FrameTime() * (speed or 12), 0, 1), current or 0, target or 0) end
+function UI.AnimSpeed(mult) return animSpeed(mult) end
+function UI.DrawShadow(x,y,w,h,alpha)
+    alpha = alpha or 95
+    surface.SetDrawColor(0,0,0,alpha*.28); surface.DrawRect(x+4,y+6,w-8,h)
+    surface.SetDrawColor(0,0,0,alpha*.18); surface.DrawRect(x+8,y+10,w-16,h)
+end
 function UI.RoundedBox(r,x,y,w,h,c) draw.RoundedBox(r or (DarkRPUI.ThemeRadius and DarkRPUI.ThemeRadius() or 8),x,y,w,h,c or (DarkRPUI.Color and DarkRPUI.Color("panel") or color_black)) end
 function UI.OutlinedBox(r,x,y,w,h,c,border) UI.RoundedBox(r,x,y,w,h,c); surface.SetDrawColor(border or (DarkRPUI.Color and DarkRPUI.Color("border") or color_white)); surface.DrawOutlinedRect(x,y,w,h,1) end
+function UI.ShadowedBox(r,x,y,w,h,c,border,alpha) UI.DrawShadow(x,y,w,h,alpha); UI.OutlinedBox(r,x,y,w,h,c,border) end
 function UI.Text(t,f,x,y,c,ax,ay) draw.SimpleText(t or "", f or "DarkRPUI.Body", x,y,c or DarkRPUI.Color("text"), ax or TEXT_ALIGN_LEFT, ay or TEXT_ALIGN_TOP) end
 function UI.DrawBlur(panel, amount) if not IsValid(panel) then return end if DarkRPUI.Settings and DarkRPUI.Settings.blur == false then return end if not cfg("BlurEnabled", true) then return end blurMat = blurMat or Material("pp/blurscreen") local x,y=panel:LocalToScreen(0,0); surface.SetDrawColor(255,255,255); surface.SetMaterial(blurMat); for i=1,3 do blurMat:SetFloat("$blur", (i/3)*(amount or 6)); blurMat:Recompute(); render.UpdateScreenEffectTexture(); surface.DrawTexturedRect(-x,-y,ScrW(),ScrH()) end end
 
@@ -41,7 +48,8 @@ function UI.CloseButton(parent, onClick)
 end
 function UI.StyleButton(btn, accent)
     btn:SetTextColor(DarkRPUI.Color("text")); btn:SetFont("DarkRPUI.Body"); btn.DarkRPUIHover=0
-    btn.Paint=function(s,w,h) s.DarkRPUIHover=UI.LerpValue(s.DarkRPUIHover, s:IsHovered() and 1 or 0, 12); local base=DarkRPUI.Color("card"); local hov=accent or DarkRPUI.Color("cardHover"); UI.OutlinedBox(10,0,0,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,base,hov),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))) end
+    btn.Paint=function(s,w,h) s.DarkRPUIHover=UI.HoverLerp(s,12); local y=-math.floor(2*s.DarkRPUIHover); local base=DarkRPUI.Color("card"); local hov=accent or DarkRPUI.Color("cardHover"); UI.ShadowedBox(11,0,y,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,base,hov),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),55+45*s.DarkRPUIHover) end
+    local old=btn.DoClick; btn.DoClick=function(s,...) UI.PlayClick(); if old then return old(s,...) end end
 end
 function UI.MakeHeader(parent, title, subtitle) local p=vgui.Create("DPanel",parent); p:SetTall(DarkRPUI.Util.Scale(72)); p.Paint=function(_,w,h) UI.Text(title,"DarkRPUI.Title",0,4); UI.Text(subtitle,"DarkRPUI.Small",2,42,DarkRPUI.Color("subtext")) end; return p end
 function UI.EmptyState(parent, title, body) local p=vgui.Create("DPanel",parent); p:Dock(FILL); p.Paint=function(_,w,h) UI.RoundedBox(16,w*.5-190,h*.5-72,380,144,DarkRPUI.Color("card")); UI.Text(title or "Nothing here yet","DarkRPUI.Subtitle",w*.5,h*.5-42,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER); draw.SimpleText(body or "This area is ready for server integration.","DarkRPUI.Small",w*.5,h*.5,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER) end; return p end
@@ -71,7 +79,7 @@ function UI.MakeAnimatedCard(parent, title, body)
     local c=vgui.Create("DButton",parent); c:SetText(""); c.Title=title or ""; c.Body=body or ""; c.Hover=0; c.Press=0
     c.Paint=function(s,w,h)
         s.Hover=UI.HoverLerp(s,10); local lift=-math.floor(5*s.Hover)
-        UI.OutlinedBox(15,0,lift,w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")))
+        UI.ShadowedBox(15,0,lift,w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),70+45*s.Hover)
         surface.SetDrawColor(DarkRPUI.WithAlpha(color_black,70*s.Hover)); surface.DrawRect(6,h-3,w-12,3)
         if s.Title ~= "" then UI.Text(s.Title,"DarkRPUI.Subtitle",16,16+lift) end
         if s.Body ~= "" then draw.DrawText(s.Body,"DarkRPUI.Small",16,48+lift,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end
@@ -83,7 +91,8 @@ local function safeSetModel(panel, mdl)
     local fallback = "models/player/kleiner.mdl"
     mdl = (isstring(mdl) and mdl ~= "") and mdl or fallback
     if util and util.IsValidModel and not util.IsValidModel(mdl) then mdl = fallback end
-    pcall(function() panel:SetModel(mdl) end)
+    local ok = pcall(function() panel:SetModel(mdl) end)
+    if not ok then pcall(function() panel:SetModel(fallback) end) end
     if not IsValid(panel.Entity) then pcall(function() panel:SetModel(fallback) end) end
 end
 function UI.MakeModelPreview(parent, models, large)
@@ -111,7 +120,14 @@ function UI.PlayClick()
 end
 function UI.StyleCombo(combo)
     combo:SetFont("DarkRPUI.Body"); combo:SetTextColor(DarkRPUI.Color("text")); combo.DarkRPUIHover=0
-    combo.Paint=function(s,w,h) s.DarkRPUIHover=UI.HoverLerp(s,12); UI.OutlinedBox(12,0,0,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.Text("⌄","DarkRPUI.Small",w-24,h/2-7,DarkRPUI.Color("muted")) end
+    combo.Paint=function(s,w,h) s.DarkRPUIHover=UI.HoverLerp(s,12); UI.ShadowedBox(12,0,0,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),45); UI.Text("⌄","DarkRPUI.Small",w-24,h/2-7,DarkRPUI.Color("muted")) end
+    combo.OnMenuOpened=function(s,m) if IsValid(m) then m.Paint=function(_,w,h) UI.ShadowedBox(10,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),80) end end end
+end
+function UI.StyleScrollbar(scroll)
+    if not IsValid(scroll) or not IsValid(scroll:GetVBar()) then return end
+    local v=scroll:GetVBar(); v:SetWide(8); v.Paint=function(_,w,h) UI.RoundedBox(4,2,0,w-4,h,DarkRPUI.WithAlpha(DarkRPUI.Color("border"),95)) end
+    v.btnGrip.Paint=function(s,w,h) s.Hover=UI.HoverLerp(s,12); UI.RoundedBox(4,1,0,w-2,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("muted"),DarkRPUI.Color("accent"))) end
+    v.btnUp.Paint=function() end; v.btnDown.Paint=function() end
 end
 function UI.PremiumSearch(parent, placeholder, onChange)
     local holder=vgui.Create("DPanel",parent); holder:SetTall(44); holder.Hover=0
@@ -121,7 +137,7 @@ function UI.PremiumSearch(parent, placeholder, onChange)
 end
 function UI.Confirm(title, body, yes, no, cb)
     local f=vgui.Create("DFrame"); f:SetSize(420,210); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); UI.AnimateIn(f)
-    f.Paint=function(s,w,h) UI.DrawBlur(s,5); UI.OutlinedBox(18,0,0,w,h,DarkRPUI.Color("background"),DarkRPUI.Color("border")); UI.Text(title or "Confirm","DarkRPUI.Subtitle",24,22); draw.DrawText(body or "Are you sure?","DarkRPUI.Small",24,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end
+    f.Paint=function(s,w,h) UI.DrawBlur(s,5); UI.ShadowedBox(18,0,0,w,h,DarkRPUI.Color("background"),DarkRPUI.Color("border"),110); UI.Text(title or "Confirm","DarkRPUI.Subtitle",24,22); draw.DrawText(body or "Are you sure?","DarkRPUI.Small",24,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end
     local yb=vgui.Create("DButton",f); yb:SetText(yes or "Confirm"); yb:SetPos(24,142); yb:SetSize(178,42); UI.StyleButton(yb,DarkRPUI.Color("success")); yb.DoClick=function() UI.PlayClick(); if cb then cb(true) end; UI.SafeRemoveAnimated(f) end
     local nb=vgui.Create("DButton",f); nb:SetText(no or "Cancel"); nb:SetPos(218,142); nb:SetSize(178,42); UI.StyleButton(nb,DarkRPUI.Color("error")); nb.DoClick=function() UI.PlayClick(); if cb then cb(false) end; UI.SafeRemoveAnimated(f) end
 end
