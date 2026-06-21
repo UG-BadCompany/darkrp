@@ -1,0 +1,11 @@
+DarkRPUI = DarkRPUI or {}; DarkRPUI.Scoreboard = DarkRPUI.Scoreboard or {}
+function DarkRPUI.Scoreboard.Open()
+    if IsValid(DarkRPUI.Scoreboard.Frame) then DarkRPUI.Scoreboard.Frame:Remove() end
+    local f=vgui.Create("DFrame"); DarkRPUI.Scoreboard.Frame=f; f:SetSize(ScrW()*0.72,ScrH()*0.72); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,5); DarkRPUI.UI.RoundedBox(18,0,0,w,h,DarkRPUI.Color("background")); DarkRPUI.UI.Text("Server Roster","DarkRPUI.Title",24,20); DarkRPUI.UI.Text(#player.GetAll().." players online", "DarkRPUI.Small",26,60,DarkRPUI.Color("subtext")) end
+    local search=vgui.Create("DTextEntry",f); search:SetPos(24,92); search:SetSize(f:GetWide()-48,38); search:SetPlaceholderText("Search players..."); search:SetFont("DarkRPUI.Body")
+    local list=vgui.Create("DScrollPanel",f); list:SetPos(24,142); list:SetSize(f:GetWide()-48,f:GetTall()-166)
+    local function rebuild() list:Clear(); local q=string.lower(search:GetValue() or ""); for _,ply in ipairs(player.GetAll()) do if q=="" or string.find(string.lower(ply:Nick()),q,1,true) then local row=vgui.Create("DButton",list); row:Dock(TOP); row:DockMargin(0,0,0,8); row:SetTall(58); row:SetText(""); row.Paint=function(s,w,h) DarkRPUI.UI.RoundedBox(10,0,0,w,h,DarkRPUI.Color("panel")); DarkRPUI.UI.Text(ply:Nick(),"DarkRPUI.Body",14,10); DarkRPUI.UI.Text(team.GetName(ply:Team()) or "Unknown","DarkRPUI.Small",14,34,team.GetColor(ply:Team())); if DarkRPUI.Util.IsAdmin(ply) then DarkRPUI.UI.Text("STAFF","DarkRPUI.Small",w-180,20,DarkRPUI.Color("warning"),TEXT_ALIGN_RIGHT) end; if DarkRPUI.Util.IsVIP(ply) then DarkRPUI.UI.Text("VIP","DarkRPUI.Small",w-125,20,DarkRPUI.Color("accent"),TEXT_ALIGN_RIGHT) end; DarkRPUI.UI.Text(ply:Ping().."ms","DarkRPUI.Small",w-18,20,DarkRPUI.Color("subtext"),TEXT_ALIGN_RIGHT) end; row.DoClick=function() SetClipboardText(ply:SteamID()); DarkRPUI.Notify("success","SteamID copied",ply:SteamID()) end end end end
+    search.OnChange=rebuild; rebuild()
+end
+hook.Add("ScoreboardShow","DarkRPUI.Scoreboard.Show",function() if DarkRPUI.Config.EnableScoreboard then DarkRPUI.Scoreboard.Open(); return false end end)
+hook.Add("ScoreboardHide","DarkRPUI.Scoreboard.Hide",function() if IsValid(DarkRPUI.Scoreboard.Frame) then DarkRPUI.Scoreboard.Frame:Remove() end end)

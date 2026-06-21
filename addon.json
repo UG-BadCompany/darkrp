@@ -1,0 +1,6 @@
+{
+  "title": "DarkRP Premium UI Suite",
+  "type": "gamemode",
+  "tags": ["roleplay", "darkrp", "realism"],
+  "ignore": ["Doc/*", ".git/*"]
+}

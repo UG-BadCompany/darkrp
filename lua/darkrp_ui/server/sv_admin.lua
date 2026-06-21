@@ -1,0 +1,1 @@
+net.Receive("DarkRPUI.AdminAction", function(_, ply) if not DarkRPUI.Util.IsAdmin(ply) then return end local action=net.ReadString(); local target=Entity(net.ReadUInt(16)); if not IsValid(target) then return end hook.Run("DarkRPUI.AdminAction", ply, action, target) if ULib then hook.Run("DarkRPUI.ULibAction", ply, action, target) end end)
