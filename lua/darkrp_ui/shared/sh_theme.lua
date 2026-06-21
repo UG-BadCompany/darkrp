@@ -31,3 +31,4 @@ function DarkRPUI.Color(name, alpha)
 end
 function DarkRPUI.ThemeRadius(mult) return math.Round((DarkRPUI.Theme().radius or 12) * (mult or 1)) end
 function DarkRPUI.WithAlpha(c, a) c = c or color_white return Color(c.r, c.g, c.b, a) end
+function DarkRPUI.LerpColor(t, a, b) a = a or color_white; b = b or color_white; t = math.Clamp(t or 0, 0, 1); return Color(Lerp(t, a.r, b.r), Lerp(t, a.g, b.g), Lerp(t, a.b, b.b), Lerp(t, a.a or 255, b.a or 255)) end
