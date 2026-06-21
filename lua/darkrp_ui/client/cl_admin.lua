@@ -11,7 +11,7 @@ end
 function DarkRPUI.Admin.OpenPanel(parent)
     if not IsValid(parent) then return end
     local p=vgui.Create("DPanel",parent); p:Dock(FILL); p:DockMargin(20,0,20,20); p.Paint=function() end
-    local list=vgui.Create("DScrollPanel",p); list:Dock(FILL)
+    local list=vgui.Create("DScrollPanel",p); list:Dock(FILL); DarkRPUI.UI.StyleScrollbar(list)
     for _,ply in ipairs(player.GetAll()) do local row=vgui.Create("DButton",list); row:Dock(TOP); row:DockMargin(0,0,0,8); row:SetTall(44); row:SetText(ply:Nick().."  •  "..ply:SteamID()); DarkRPUI.UI.StyleButton(row); row.DoClick=function() DarkRPUI.Admin.Open(ply) end end
 end
 concommand.Add("darkrpui_admin", function() DarkRPUI.Admin.Open() end)

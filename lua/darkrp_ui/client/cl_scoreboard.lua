@@ -12,7 +12,7 @@ function DarkRPUI.Scoreboard.Open()
     if IsValid(DarkRPUI.Scoreboard.Frame) then DarkRPUI.Scoreboard.Close() end
     local f=vgui.Create("DFrame"); DarkRPUI.Scoreboard.Frame=f; f:SetSize(ScrW()*0.76,ScrH()*0.76); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:SetMouseInputEnabled(true); f:SetKeyboardInputEnabled(false); DarkRPUI.UI.AnimatePanelIn(f); f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,5); DarkRPUI.UI.OutlinedBox(20,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),240),DarkRPUI.Color("border")); DarkRPUI.UI.Text("Server Roster","DarkRPUI.Title",24,20); DarkRPUI.UI.Text(#player.GetAll().." players online  •  hold TAB to keep open", "DarkRPUI.Small",26,60,DarkRPUI.Color("subtext")) end
     local searchHolder,search=DarkRPUI.UI.PremiumSearch(f,"Search by name, job, rank, SteamID..."); searchHolder:SetPos(24,92); searchHolder:SetSize(f:GetWide()-48,42)
-    local list=vgui.Create("DScrollPanel",f); list:SetPos(24,142); list:SetSize(f:GetWide()-48,f:GetTall()-166)
+    local list=vgui.Create("DScrollPanel",f); list:SetPos(24,142); list:SetSize(f:GetWide()-48,f:GetTall()-166); DarkRPUI.UI.StyleScrollbar(list)
     local function rebuild()
         list:Clear(); local q=string.lower(search:GetValue() or ""); local players=player.GetAll(); table.sort(players,function(a,b) return team.GetName(a:Team()) < team.GetName(b:Team()) end)
         for _,ply in ipairs(players) do local hay=string.lower(table.concat({ply:Nick(), team.GetName(ply:Team()) or "", DarkRPUI.Util.PlayerGroup(ply), ply:SteamID()}, " ")); if q=="" or string.find(hay,q,1,true) then
