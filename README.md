@@ -60,3 +60,14 @@ These tabs are intentionally clean integration points because they depend on ser
 - Press Tab and test search, SteamID copy, Steam profile, and staff right-click actions.
 - Trigger `notification.AddLegacy`, `GAMEMODE:AddNotify`, and `DarkRPUI.Notify` to verify queue styling.
 - Test as user, VIP, and staff groups to confirm tab/badge visibility.
+
+## UI Close Behavior and Animation System
+
+- **F4 command center:** F4 now toggles the menu open and closed. The top-right premium **×** button and **ESC** both close through `DarkRPUI.F4.Close()`, which plays a fade-out animation, removes the frame once complete, and releases cursor/input state so reopening never duplicates panels.
+- **TAB scoreboard:** `ScoreboardShow` opens the custom roster and returns `false`; `ScoreboardHide` closes it immediately with the shared fade-out animation. A lightweight fail-safe also closes the scoreboard if TAB is no longer held, preventing stuck panels or trapped cursor state.
+- **Admin/settings/future panels:** Shared UI helpers provide `DarkRPUI.UI.CloseButton(parent, callback)`, `DarkRPUI.UI.SafeRemoveAnimated(panel, duration)`, `DarkRPUI.UI.AnimatePanelIn(panel)`, and `DarkRPUI.UI.AnimatePanelOut(panel, callback)` so new inventory, store, skills, and settings panels can use one clean close path.
+- **Premium motion:** Buttons, cards, F4 tabs, scoreboard rows, and notifications now use lerped hover/active states, card lift, tab indicators, soft blur where enabled, and slide/fade notification expiry without heavy per-panel Think hooks.
+
+## Notification Load-Order Fix
+
+The notification bridge no longer indexes `GAMEMODE` at file load time. `notification.AddLegacy` is safely replaced when available, while the DarkRP `GAMEMODE.AddNotify` override is installed only after `GAMEMODE` exists via `Initialize`, `InitPostEntity`, and a bounded timer retry. The notification path guards `DarkRPUI.Config`, `DarkRPUI.Settings`, and `DarkRPUI.Util`, so clients do not Lua error when DarkRP or the UI config is still loading or unavailable.
