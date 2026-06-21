@@ -81,19 +81,45 @@ end
 local function safeSetModel(panel, mdl)
     if not IsValid(panel) then return end
     mdl = (isstring(mdl) and mdl ~= "") and mdl or "models/player/kleiner.mdl"
-    panel:SetModel(mdl)
-    if not IsValid(panel.Entity) then panel:SetModel("models/player/kleiner.mdl") end
+    pcall(function() panel:SetModel(mdl) end)
+    if not IsValid(panel.Entity) then pcall(function() panel:SetModel("models/player/kleiner.mdl") end) end
 end
 function UI.MakeModelPreview(parent, models, large)
     local p=vgui.Create("DModelPanel",parent); p.Models=istable(models) and models or { tostring(models or "models/player/kleiner.mdl") }; p.ModelIndex=1; p.HoverRot=0
-    safeSetModel(p,p.Models[1]); p:SetFOV(large and 34 or 42); p:SetCamPos(Vector(48,0,58)); p:SetLookAt(Vector(0,0,42))
-    p.LayoutEntity=function(s,ent) if not IsValid(ent) then return end; if s:IsHovered() then ent:SetAngles(Angle(0,CurTime()*35%360,0)) else ent:SetAngles(Angle(0,25,0)) end end
+    safeSetModel(p,p.Models[1]); p:SetFOV(large and 30 or 38); p:SetCamPos(Vector(42,-8,58)); p:SetLookAt(Vector(0,0,40))
+    function p:AutoFrameModel() if not IsValid(self.Entity) then return end; local mn,mx=self.Entity:GetRenderBounds(); local size=math.max(math.abs(mn.x)+math.abs(mx.x), math.abs(mn.y)+math.abs(mx.y), math.abs(mn.z)+math.abs(mx.z)); self:SetCamPos(Vector(size*0.62,-size*0.08,size*0.62)); self:SetLookAt(Vector(0,0,(mn.z+mx.z)*0.52)); self:SetFOV(large and 28 or 36) end
+    p:AutoFrameModel()
+    p.LayoutEntity=function(s,ent) if not IsValid(ent) then return end; local target=s:IsHovered() and ((CurTime()*34)%360) or 25; ent:SetAngles(Angle(0,target,0)); ent:SetModelScale(1+((s:IsHovered() and .025 or 0)),0) end
     p.PaintOver=function(s,w,h)
         if #s.Models > 1 then
             surface.SetDrawColor(DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),210)); surface.DrawRect(0,h-24,w,24)
             for i=1,#s.Models do DarkRPUI.UI.RoundedBox(4,w/2-(#s.Models*8)/2+i*8-6,h-15,5,5,i==s.ModelIndex and DarkRPUI.Color("accent") or DarkRPUI.Color("muted")) end
         end
     end
-    p.OnMousePressed=function(s,code) if #s.Models <= 1 then return end; if code==MOUSE_LEFT then s.ModelIndex=s.ModelIndex%#s.Models+1 else s.ModelIndex=s.ModelIndex-1; if s.ModelIndex<1 then s.ModelIndex=#s.Models end end; safeSetModel(s,s.Models[s.ModelIndex]) end
+    p.OnMousePressed=function(s,code) if #s.Models <= 1 then return end; if code==MOUSE_LEFT then s.ModelIndex=s.ModelIndex%#s.Models+1 else s.ModelIndex=s.ModelIndex-1; if s.ModelIndex<1 then s.ModelIndex=#s.Models end end; safeSetModel(s,s.Models[s.ModelIndex]); if s.AutoFrameModel then s:AutoFrameModel() end; UI.PlayClick() end
     return p
+end
+
+
+-- 10/10 polish helpers -------------------------------------------------------
+function UI.PlayClick()
+    if DarkRPUI.Settings and DarkRPUI.Settings.sounds == false then return end
+    if DarkRPUI.Config and DarkRPUI.Config.SoundEnabled == false then return end
+    surface.PlaySound((DarkRPUI.Config and DarkRPUI.Config.ClickSound) or "ui/buttonclickrelease.wav")
+end
+function UI.StyleCombo(combo)
+    combo:SetFont("DarkRPUI.Body"); combo:SetTextColor(DarkRPUI.Color("text")); combo.DarkRPUIHover=0
+    combo.Paint=function(s,w,h) s.DarkRPUIHover=UI.HoverLerp(s,12); UI.OutlinedBox(12,0,0,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.Text("⌄","DarkRPUI.Small",w-24,h/2-7,DarkRPUI.Color("muted")) end
+end
+function UI.PremiumSearch(parent, placeholder, onChange)
+    local holder=vgui.Create("DPanel",parent); holder:SetTall(44); holder.Hover=0
+    holder.Paint=function(s,w,h) s.Hover=UI.HoverLerp(s,12); UI.OutlinedBox(13,0,0,w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.Text("⌕","DarkRPUI.Body",15,11,DarkRPUI.Color("muted")) end
+    local e=vgui.Create("DTextEntry",holder); e:Dock(FILL); e:DockMargin(42,3,12,3); e:SetPaintBackground(false); e:SetFont("DarkRPUI.Body"); e:SetTextColor(DarkRPUI.Color("text")); e:SetPlaceholderText(placeholder or "Search..."); e.OnChange=function() if onChange then onChange(e:GetValue() or "") end end
+    return holder,e
+end
+function UI.Confirm(title, body, yes, no, cb)
+    local f=vgui.Create("DFrame"); f:SetSize(420,210); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); UI.AnimateIn(f)
+    f.Paint=function(s,w,h) UI.DrawBlur(s,5); UI.OutlinedBox(18,0,0,w,h,DarkRPUI.Color("background"),DarkRPUI.Color("border")); UI.Text(title or "Confirm","DarkRPUI.Subtitle",24,22); draw.DrawText(body or "Are you sure?","DarkRPUI.Small",24,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end
+    local yb=vgui.Create("DButton",f); yb:SetText(yes or "Confirm"); yb:SetPos(24,142); yb:SetSize(178,42); UI.StyleButton(yb,DarkRPUI.Color("success")); yb.DoClick=function() UI.PlayClick(); if cb then cb(true) end; UI.SafeRemoveAnimated(f) end
+    local nb=vgui.Create("DButton",f); nb:SetText(no or "Cancel"); nb:SetPos(218,142); nb:SetSize(178,42); UI.StyleButton(nb,DarkRPUI.Color("error")); nb.DoClick=function() UI.PlayClick(); if cb then cb(false) end; UI.SafeRemoveAnimated(f) end
 end
