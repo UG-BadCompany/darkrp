@@ -47,3 +47,53 @@ function UI.MakeHeader(parent, title, subtitle) local p=vgui.Create("DPanel",par
 function UI.EmptyState(parent, title, body) local p=vgui.Create("DPanel",parent); p:Dock(FILL); p.Paint=function(_,w,h) UI.RoundedBox(16,w*.5-190,h*.5-72,380,144,DarkRPUI.Color("card")); UI.Text(title or "Nothing here yet","DarkRPUI.Subtitle",w*.5,h*.5-42,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER); draw.SimpleText(body or "This area is ready for server integration.","DarkRPUI.Small",w*.5,h*.5,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER) end; return p end
 function UI.MakeCard(parent, title, body, action, footer) local c=vgui.Create("DButton",parent); c:SetText(""); c.Title=title; c.Body=body; c.Footer=footer; c.Lift=0; c.DoClick=action or function() end; c.Paint=function(s,w,h) s.Lift=UI.LerpValue(s.Lift,s:IsHovered() and 1 or 0,10); local y=-math.floor(4*s.Lift); UI.OutlinedBox(12,0,y,w,h,DarkRPUI.LerpColor(s.Lift,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Lift,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.Text(s.Title,"DarkRPUI.Subtitle",16,14+y); draw.DrawText(s.Body or "","DarkRPUI.Small",16,42+y,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT); if s.Footer then UI.Text(s.Footer,"DarkRPUI.Tiny",w-14,h-22+y,DarkRPUI.Color("accent"),TEXT_ALIGN_RIGHT) end end; return c end
 function UI.Badge(x,y,text,color) surface.SetFont("DarkRPUI.Tiny"); local tw=surface.GetTextSize(text); UI.RoundedBox(6,x,y,tw+14,20,color or DarkRPUI.Color("accent")); UI.Text(text,"DarkRPUI.Tiny",x+7,y+4,color_white) return tw+14 end
+
+-- Premium animation/helper aliases used across the full UI package.
+function UI.AnimateIn(panel) return UI.AnimatePanelIn(panel) end
+function UI.AnimateOut(panel, callback) return UI.AnimatePanelOut(panel, callback) end
+function UI.LerpColor(frac, from, to) return DarkRPUI.LerpColor(frac, from, to) end
+function UI.HoverLerp(panel, speed)
+    panel.DarkRPUIHover = UI.LerpValue(panel.DarkRPUIHover or 0, panel:IsHovered() and 1 or 0, speed or 12)
+    return panel.DarkRPUIHover
+end
+function UI.MakeCloseButton(parent, onClick) return UI.CloseButton(parent, onClick) end
+function UI.MakeIconButton(parent, text, onClick)
+    local b=vgui.Create("DButton",parent); b:SetText(text or "•"); b:SetFont("DarkRPUI.Body"); b:SetTextColor(DarkRPUI.Color("text")); b.Hover=0; b.Active=0
+    b.Paint=function(s,w,h)
+        s.Hover=UI.HoverLerp(s,14); s.Active=UI.LerpValue(s.Active,(s.ActiveFunc and s.ActiveFunc()) and 1 or 0,14)
+        local f=math.max(s.Hover,s.Active); UI.OutlinedBox(11,0,0,w,h,DarkRPUI.LerpColor(f,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(f,DarkRPUI.Color("border"),DarkRPUI.Color("accent")))
+        if s.Active > 0.02 then surface.SetDrawColor(DarkRPUI.WithAlpha(DarkRPUI.Color("accent"),220*s.Active)); surface.DrawRect(0,8,3,h-16) end
+    end
+    b.DoClick=onClick or function() end
+    return b
+end
+function UI.MakeAnimatedCard(parent, title, body)
+    local c=vgui.Create("DButton",parent); c:SetText(""); c.Title=title or ""; c.Body=body or ""; c.Hover=0; c.Press=0
+    c.Paint=function(s,w,h)
+        s.Hover=UI.HoverLerp(s,10); local lift=-math.floor(5*s.Hover)
+        UI.OutlinedBox(15,0,lift,w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")))
+        surface.SetDrawColor(DarkRPUI.WithAlpha(color_black,70*s.Hover)); surface.DrawRect(6,h-3,w-12,3)
+        if s.Title ~= "" then UI.Text(s.Title,"DarkRPUI.Subtitle",16,16+lift) end
+        if s.Body ~= "" then draw.DrawText(s.Body,"DarkRPUI.Small",16,48+lift,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end
+    end
+    return c
+end
+local function safeSetModel(panel, mdl)
+    if not IsValid(panel) then return end
+    mdl = (isstring(mdl) and mdl ~= "") and mdl or "models/player/kleiner.mdl"
+    panel:SetModel(mdl)
+    if not IsValid(panel.Entity) then panel:SetModel("models/player/kleiner.mdl") end
+end
+function UI.MakeModelPreview(parent, models, large)
+    local p=vgui.Create("DModelPanel",parent); p.Models=istable(models) and models or { tostring(models or "models/player/kleiner.mdl") }; p.ModelIndex=1; p.HoverRot=0
+    safeSetModel(p,p.Models[1]); p:SetFOV(large and 34 or 42); p:SetCamPos(Vector(48,0,58)); p:SetLookAt(Vector(0,0,42))
+    p.LayoutEntity=function(s,ent) if not IsValid(ent) then return end; if s:IsHovered() then ent:SetAngles(Angle(0,CurTime()*35%360,0)) else ent:SetAngles(Angle(0,25,0)) end end
+    p.PaintOver=function(s,w,h)
+        if #s.Models > 1 then
+            surface.SetDrawColor(DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),210)); surface.DrawRect(0,h-24,w,24)
+            for i=1,#s.Models do DarkRPUI.UI.RoundedBox(4,w/2-(#s.Models*8)/2+i*8-6,h-15,5,5,i==s.ModelIndex and DarkRPUI.Color("accent") or DarkRPUI.Color("muted")) end
+        end
+    end
+    p.OnMousePressed=function(s,code) if #s.Models <= 1 then return end; if code==MOUSE_LEFT then s.ModelIndex=s.ModelIndex%#s.Models+1 else s.ModelIndex=s.ModelIndex-1; if s.ModelIndex<1 then s.ModelIndex=#s.Models end end; safeSetModel(s,s.Models[s.ModelIndex]) end
+    return p
+end
