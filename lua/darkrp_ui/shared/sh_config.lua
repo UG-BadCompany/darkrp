@@ -11,6 +11,7 @@ C.AnimationSpeed = 0.16
 C.BlurEnabled = true
 C.SoundEnabled = true
 C.NotificationSound = "buttons/button15.wav"
+C.ClickSound = "ui/buttonclickrelease.wav"
 C.NotificationPosition = "top-right"
 C.CurrencySymbol = "$"
 C.AdminRanks = { superadmin = true, admin = true, moderator = true, mod = true, trialmod = true, operator = true }

@@ -1,73 +1,54 @@
-# DarkRP Premium UI Suite
+# DarkRP UI
 
-A modular, premium-quality Garry's Mod DarkRP UI addon built around the existing `lua/darkrp_ui` structure and the goals in `Doc/DARKRP_UI_MASTER_PLAN.md`.
+A premium, client-focused DarkRP interface suite for Garry's Mod. It replaces the default rough Derma feel with a consistent modern theme, animated panels, safe DarkRP integration points, and client-side preferences.
 
-## Install
+## Current Features
 
-1. Copy this folder into `garrysmod/addons/darkrp` on your server.
-2. Restart the server or change map so `lua/autorun/darkrp_ui_loader.lua` runs on both realms.
-3. Join the server and press **F4** for the command center, **Tab** for the scoreboard, and `darkrpui_settings` for quick settings access.
+- **F4 command center** with dashboard cards, animated tab transitions, premium job/shop cards, searchable/sortable job browsing, category filters, right-side selected item preview, model preview panels, and client-side job favorites.
+- **Job support** reads `RPExtraTeams` directly, supports `job.model` as a string or table, falls back to `models/player/kleiner.mdl`, and avoids broken model errors.
+- **HUD** includes animated health, armor, hunger, money, salary, ammo, voice, wanted, lockdown, agenda, and laws displays with compact mode and scaling support.
+- **Scoreboard** opens only while TAB is held, uses premium rows, avatars, job color stripes, staff/VIP badges, colored ping, SteamID copy, and admin action integration placeholders.
+- **Notifications** safely wrap legacy and DarkRP notifications after `GAMEMODE` is available, with stacked animated toast cards, icons, progress bars, and sound settings.
+- **Reusable UI components** include premium buttons, cards, search boxes, combo boxes, close buttons, model previews, empty states, confirmation modals, and shared animation helpers.
+- **Themes/settings** provide consistent radius, spacing, font usage, accent colors, blur, sounds, notification placement, HUD scale, compact mode, and saved favorites.
 
-## Feature List
+## Controls
 
-- Premium F4 command center with Dashboard, Jobs, Entities, Weapons, Shipments, Vehicles, Ammo, Food, Inventory, Skills, Store, Rules, Settings, and staff-only Admin tabs.
-- DarkRP data-driven shop cards with search, prices, purchase command support, and clean placeholders for addon-backed systems.
-- Replacement HUD for health, armor, hunger, money, salary, job, level/XP placeholders, wanted, lockdown, agenda/laws, ammo, and voice state.
-- Modern scoreboard with avatars, name, job, rank, ping, SteamID copy, Steam profile shortcut, Staff/VIP badges, search/filter, and admin right-click actions.
-- Notification queue with success/error/warning/info styles, animation, progress bars, position settings, sound toggle, and GMod/DarkRP notice replacement.
-- Client settings saved to `DATA/darkrp_ui/settings.txt`: theme, HUD scale, blur, notification position, sounds, compact mode, and toggles.
-- Central theme, font, material, drawing helper, module, utility, networking, server settings, and admin foundations.
+- Press **F4** to open the DarkRP command menu.
+- Press **ESC** or the premium close button to close the F4 menu.
+- Press and hold **TAB** to show the scoreboard.
+- Release **TAB** to close the scoreboard and restore normal mouse behavior.
+- Click a job card to inspect it in the large right-side preview.
+- Click the star on a job card to favorite/unfavorite it; favorites are saved client-side.
+- Click a multi-model preview to cycle available models.
 
-## Configuration
+## F4 Close Behavior
 
-Edit `lua/darkrp_ui/shared/sh_config.lua` to configure:
+The F4 frame is single-instance safe. If it is already open, pressing F4 again starts the animated close path instead of creating a duplicate frame. Close actions disable input, fade out the panel, remove it safely, and release the screen clicker.
 
-- Feature toggles and default DarkRP HUD hiding.
-- Admin and VIP groups.
-- Server links for Discord, rules, and store.
-- Server rules text.
-- Theme options and accent presets.
-- HUD defaults such as laws/agenda/ammo visibility.
-- F4 tab order, labels, icons, and staff-only visibility.
-- Integration placeholder messages.
+## TAB Scoreboard Behavior
 
-## Integration Notes
+The scoreboard is intended to be visible only while TAB is held. `ScoreboardShow` opens it, `ScoreboardHide` closes it, and a lightweight fail-safe closes it if TAB is no longer down so mouse input is not trapped after release.
 
-- DarkRP missing fallback is supported; the UI will run in preview mode without hard errors.
-- ULX and SAM are not directly required. Server admin actions fire hooks:
-  - `DarkRPUI.AdminAction(admin, action, target)`
-  - `DarkRPUI.ULibAction(admin, action, target)` when ULib exists
-  - `DarkRPUI.SAMAction(admin, action, target)` when SAM exists
-- Add themes with `DarkRPUI.RegisterTheme(id, data)`.
-- Add modules with `DarkRPUI.RegisterModule(id, module)`.
-- Override level/XP with `DarkRPUI.GetLevelData(ply)`.
-- Build custom inventory/skills/store panels by handling `DarkRPUI.BuildInventoryPanel`, `DarkRPUI.BuildSkillsPanel`, or `DarkRPUI.BuildStorePanel`.
+## Theme and Settings Info
 
-## Known Placeholders
+Client settings are stored in `data/darkrp_ui/settings.txt` and include theme, HUD enabled state, HUD scale, blur, notifications, notification position, sounds, compact mode, and favorites. Server owners can edit shared defaults in `lua/darkrp_ui/shared/sh_config.lua` and theme colors/radius in `lua/darkrp_ui/shared/sh_theme.lua`.
 
-These tabs are intentionally clean integration points because they depend on server-specific addons:
+## Known Integration Placeholders
 
-- Inventory: connect your inventory addon or hook `DarkRPUI.BuildInventoryPanel`.
-- Skills: connect an XP/perks backend or define `DarkRPUI.GetLevelData`.
-- Store: connect your donation/store addon or server URL.
+- Inventory panel: override/register an inventory module for the `inventory` F4 tab.
+- Skills/XP: provide `DarkRPUI.GetLevelData(ply)` or DarkRP vars `level`, `xp`, and `xpmax`.
+- Store: wire the `store` tab to your donation/store provider.
+- Admin actions: connect moderation commands in `DarkRPUI.Admin.Send` to your admin system permissions.
+- Server links: update Discord, rules, and store URLs in config.
 
 ## Testing Checklist
 
-- Start a local DarkRP server and confirm no client/server Lua errors on join.
-- Press F4 and verify each tab opens, searches, and gracefully handles empty data.
-- Buy a job/item on a DarkRP server and confirm the generated chat command matches your config.
-- Toggle settings, reconnect, and verify saved settings reload from `DATA/darkrp_ui/settings.txt`.
-- Press Tab and test search, SteamID copy, Steam profile, and staff right-click actions.
-- Trigger `notification.AddLegacy`, `GAMEMODE:AddNotify`, and `DarkRPUI.Notify` to verify queue styling.
-- Test as user, VIP, and staff groups to confirm tab/badge visibility.
-
-## UI Close Behavior and Animation System
-
-- **F4 command center:** F4 now toggles the menu open and closed. The top-right premium **×** button and **ESC** both close through `DarkRPUI.F4.Close()`, which plays a fade-out animation, removes the frame once complete, and releases cursor/input state so reopening never duplicates panels.
-- **TAB scoreboard:** `ScoreboardShow` opens the custom roster and returns `false`; `ScoreboardHide` closes it immediately with the shared fade-out animation. A lightweight fail-safe also closes the scoreboard if TAB is no longer held, preventing stuck panels or trapped cursor state.
-- **Admin/settings/future panels:** Shared UI helpers provide `DarkRPUI.UI.CloseButton(parent, callback)`, `DarkRPUI.UI.SafeRemoveAnimated(panel, duration)`, `DarkRPUI.UI.AnimatePanelIn(panel)`, and `DarkRPUI.UI.AnimatePanelOut(panel, callback)` so new inventory, store, skills, and settings panels can use one clean close path.
-- **Premium motion:** Buttons, cards, F4 tabs, scoreboard rows, and notifications now use lerped hover/active states, card lift, tab indicators, soft blur where enabled, and slide/fade notification expiry without heavy per-panel Think hooks.
-
-## Notification Load-Order Fix
-
-The notification bridge no longer indexes `GAMEMODE` at file load time. `notification.AddLegacy` is safely replaced when available, while the DarkRP `GAMEMODE.AddNotify` override is installed only after `GAMEMODE` exists via `Initialize`, `InitPostEntity`, and a bounded timer retry. The notification path guards `DarkRPUI.Config`, `DarkRPUI.Settings`, and `DarkRPUI.Util`, so clients do not Lua error when DarkRP or the UI config is still loading or unavailable.
+- Open F4 repeatedly and confirm no duplicate frames or stuck screen clicker.
+- Search, sort, filter jobs, favorite jobs, reconnect, and confirm favorites persist.
+- Verify every `RPExtraTeams` job displays a model and multi-model jobs can cycle models.
+- Select locked/VIP/staff/vote jobs and confirm indicators/actions are clear.
+- Change money, salary, health, armor, hunger, wanted, lockdown, voice, ammo, laws, and agenda values and confirm HUD animations.
+- Hold and release TAB to confirm scoreboard appears only while held and mouse control is restored.
+- Trigger legacy and DarkRP notifications before/after gamemode initialization and confirm there are no Lua errors.
+- Toggle blur, sounds, compact mode, notification position, and HUD scale in settings.
