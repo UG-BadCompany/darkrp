@@ -12,8 +12,18 @@ local sections = {
 }
 
 local quickActions = {
-    'bring', 'goto', 'returnply', 'freeze', 'unfreeze', 'respawn', 'slay', 'stripweapons', 'warn', 'spectate', 'unspectate', 'noclip', 'god', 'cloak'
+    'bring', 'goto', 'returnply', 'freeze', 'unfreeze', 'respawn', 'slay', 'stripweapons', 'warn', 'kick', 'ban', 'jail', 'unjail', 'setjob', 'setmoney', 'spectate', 'unspectate', 'noclip', 'god', 'cloak'
 }
+
+net.Receive( 'VoxUI.Admin.Logs', function()
+    local rows = net.ReadUInt( 8 )
+    local lines = {}
+    for i = 1, rows do
+        local row = util.JSONToTable( net.ReadString() ) or {}
+        lines[#lines + 1] = os.date( '%H:%M:%S', row.time or os.time() ) .. '  ' .. tostring( row.admin ) .. ' -> ' .. tostring( row.action ) .. ' -> ' .. tostring( row.target ) .. '  ' .. tostring( row.reason or '' )
+    end
+    chat.AddText( Color( 0, 174, 255 ), '[Vox Admin Logs] ', color_white, table.concat( lines, '\n' ) )
+end )
 
 function vox.admin.Open()
     if IsValid( vox.admin.Frame ) then vox.admin.Frame:Remove() end
@@ -90,9 +100,16 @@ function vox.admin.Open()
         end
         btn.DoClick = function()
             local _, steamid = targetBox:GetSelected()
-            RunConsoleCommand( 'vox_admin_action', action, steamid or LocalPlayer():SteamID(), reason:GetValue() or '' )
+            RunConsoleCommand( 'vox_admin_action', action, steamid or LocalPlayer():SteamID(), reason:GetValue() or '', '0' )
         end
     end
+
+    local logs = rail:Add( 'DButton' )
+    logs:Dock( TOP )
+    logs:DockMargin( 0, 0, 0, 10 )
+    logs:SetTall( 36 )
+    logs:SetText( 'FETCH AUDIT LOGS' )
+    logs.DoClick = function() RunConsoleCommand( 'vox_admin_logs' ) end
 
     for _, name in ipairs( sections ) do
         local btn = rail:Add( 'DButton' )

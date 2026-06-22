@@ -1,4 +1,5 @@
 util.AddNetworkString('VoxUI.Admin.Notify')
+util.AddNetworkString('VoxUI.Admin.Logs')
 
 vox.admin.Actions = vox.admin.Actions or {}
 vox.admin.Logs = vox.admin.Logs or {}
@@ -32,6 +33,8 @@ function vox.admin:Log(admin, action, target, reason)
     table.insert(self.Logs, 1, row)
     if #self.Logs > 200 then table.remove(self.Logs) end
     self:Print('# -> # (#)', row.admin, action, row.target)
+    file.CreateDir('vox_admin')
+    file.Append('vox_admin/audit.log', util.TableToJSON(row) .. '\n')
 end
 
 function vox.admin:RegisterAction(id, data)
@@ -92,9 +95,17 @@ reg('god', function(a,t) if t:HasGodMode() then t:GodDisable() else t:GodEnable(
 reg('ban', function(a,t,r,d) if ulx then RunConsoleCommand('ulx','ban',t:Nick(),tostring(d or 0),r); return true end if sam then RunConsoleCommand('sam','ban',t:SteamID(),tostring(d or 0),r); return true end return 'Ban is integration-ready; connect ULX/SAM/your ban system before enabling.' end)
 reg('jail', function(a,t,r,d) if ulx then RunConsoleCommand('ulx','jail',t:Nick(),tostring(d or 0)); return true end if sam then RunConsoleCommand('sam','jail',t:SteamID(),tostring(d or 0)); return true end return 'Jail is integration-ready placeholder.' end)
 reg('unjail', function(a,t) if ulx then RunConsoleCommand('ulx','unjail',t:Nick()); return true end if sam then RunConsoleCommand('sam','unjail',t:SteamID()); return true end return 'Unjail is integration-ready placeholder.' end)
-reg('setjob', function() return 'Set job is integration-ready placeholder.' end)
-reg('setmoney', function() return 'Set money is integration-ready placeholder.' end)
+reg('setjob', function(a,t,r,d) local name = tostring(r or '') if name == '' then return 'Provide a job/team name as the reason.' end for id, data in pairs(RPExtraTeams or {}) do if string.lower(data.name or '') == string.lower(name) or tostring(id) == name then t:changeTeam(id, true, true) return true end end return 'Unknown DarkRP job: ' .. name end)
+reg('setmoney', function(a,t,r,d) local amount = tonumber(r) or tonumber(d) if not amount then return 'Provide a numeric money amount as the reason.' end local current = t.getDarkRPVar and (t:getDarkRPVar('money') or 0) or 0 if t.addMoney then t:addMoney(amount - current) elseif t.setDarkRPVar then t:setDarkRPVar('money', amount) else return 'DarkRP money API unavailable.' end return true end)
 reg('cloak', function(a,t) t:SetNoDraw(not t:GetNoDraw()); t:DrawShadow(not t:GetNoDraw()); return true end)
+
+concommand.Add('vox_admin_logs', function(ply)
+    if not IsValid(ply) or not ply:IsAdmin() then return end
+    net.Start('VoxUI.Admin.Logs')
+        net.WriteUInt(math.min(#vox.admin.Logs, 50), 8)
+        for i = 1, math.min(#vox.admin.Logs, 50) do net.WriteString(util.TableToJSON(vox.admin.Logs[i]) or '{}') end
+    net.Send(ply)
+end)
 
 concommand.Add('vox_admin_action', function(ply, _, args)
     if not IsValid(ply) then return end

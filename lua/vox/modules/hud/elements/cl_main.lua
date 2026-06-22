@@ -483,9 +483,89 @@ local function drawCommandStripHUD( self, client, scrW, scrH )
     draw.SimpleText( formatSalary( client:getDarkRPVar( 'salary' ) or 0 ), hud.fonts.TinyBold, econX + hud.ScaleWide( 266 ), y + hud.ScaleTall( 35 ), colors.money or colors.positive, 2, 1 )
 end
 
+
+local function drawMinimalEdgeHUD( self, client, scrW, scrH )
+    local space = hud.GetScreenPadding()
+    local theme = hud:GetCurrentTheme()
+    local colors = theme.colors
+    local teamColor = team.GetColor( client:Team() )
+    local animSpeed = FrameTime() * ( hud:GetOptionValue( 'reduce_motion' ) and 64 or hud:GetOptionValue( 'animation_speed' ) or 16 )
+    local healthFraction = math.Clamp( client:Health() / client:GetMaxHealth(), 0, 1 )
+    local maxArmor = math.max( client:GetMaxArmor() or 100, 1 )
+    local armorFraction = math.Clamp( client:Armor() / maxArmor, 0, 1 )
+
+    lerpHealth = Lerp( animSpeed, lerpHealth or healthFraction, healthFraction )
+    lerpArmor = Lerp( animSpeed, lerpArmor or armorFraction, armorFraction )
+
+    local railW = hud.ScaleWide( 8 )
+    local railH = scrH - space * 2
+    vox.DrawVoxBlade( space, space, railW, railH, ColorAlpha( colors.accent, 215 ), colors.accent )
+    vox.DrawVoxBlade( scrW - space - railW, space, railW, railH, ColorAlpha( teamColor, 215 ), teamColor )
+
+    local podW, podH = hud.ScaleWide( 300 ), hud.ScaleTall( 40 )
+    local x, y = space + hud.ScaleWide( 18 ), scrH - space - podH
+    vox.DrawVoxPanel( x, y, podW, podH, colors, 8 )
+    draw.SimpleText( string.upper( client:Name() ), hud.fonts.TinyBold, x + hud.ScaleWide( 14 ), y + hud.ScaleTall( 11 ), colors.textPrimary, 0, 1 )
+    draw.SimpleText( string.upper( client:getDarkRPVar( 'job' ) or team.GetName( client:Team() ) ), hud.fonts.ExtraTinyBold, x + hud.ScaleWide( 14 ), y + hud.ScaleTall( 28 ), teamColor, 0, 1 )
+    drawIndicator( x + hud.ScaleWide( 128 ), y + hud.ScaleTall( 12 ), hud.ScaleWide( 150 ), hud.ScaleTall( 14 ), WIMG_HEART, colors.negative, lerpHealth, math.Round( lerpHealth * 100 ) .. '%' )
+
+    local money = client:getDarkRPVar( 'money' ) or 0
+    local moneyFormatted = DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( money ) or tostring( money )
+    local econW = hud.ScaleWide( 220 )
+    local ex = scrW - space - railW - hud.ScaleWide( 18 ) - econW
+    vox.DrawVoxPanel( ex, y, econW, podH, colors, 8 )
+    vox.DrawVoxBlade( ex, y + hud.ScaleTall( 7 ), hud.ScaleWide( 6 ), podH - hud.ScaleTall( 14 ), colors.money or colors.positive )
+    draw.SimpleText( 'BALANCE', hud.fonts.ExtraTinyBold, ex + hud.ScaleWide( 18 ), y + hud.ScaleTall( 11 ), colors.textSecondary, 0, 1 )
+    draw.SimpleText( moneyFormatted, hud.fonts.TinyBold, ex + econW - hud.ScaleWide( 14 ), y + hud.ScaleTall( 25 ), colors.money or colors.positive, 2, 1 )
+end
+
+local function drawRoleplayProfileHUD( self, client, scrW, scrH )
+    local space = hud.GetScreenPadding()
+    local theme = hud:GetCurrentTheme()
+    local colors = theme.colors
+    local teamColor = team.GetColor( client:Team() )
+    local w, h = hud.ScaleWide( 360 ), hud.ScaleTall( 126 )
+    local x, y = space, scrH - space - h
+    local animSpeed = FrameTime() * ( hud:GetOptionValue( 'reduce_motion' ) and 64 or hud:GetOptionValue( 'animation_speed' ) or 16 )
+    local healthFraction = math.Clamp( client:Health() / client:GetMaxHealth(), 0, 1 )
+    local maxArmor = math.max( client:GetMaxArmor() or 100, 1 )
+    local armorFraction = math.Clamp( client:Armor() / maxArmor, 0, 1 )
+    lerpHealth = Lerp( animSpeed, lerpHealth or healthFraction, healthFraction )
+    lerpArmor = Lerp( animSpeed, lerpArmor or armorFraction, armorFraction )
+
+    vox.DrawVoxPanel( x, y, w, h, colors, hud.GetRoundness() )
+    vox.DrawVoxBlade( x - hud.ScaleWide( 5 ), y + hud.ScaleTall( 12 ), hud.ScaleWide( 10 ), h - hud.ScaleTall( 24 ), teamColor )
+    vox.DrawVoxCornerTicks( x + hud.ScaleWide( 8 ), y + hud.ScaleTall( 8 ), w - hud.ScaleWide( 16 ), h - hud.ScaleTall( 16 ), ColorAlpha( teamColor, 120 ), hud.ScaleWide( 18 ) )
+
+    local avatarSize = hud.ScaleTall( 72 )
+    local ax, ay = x + hud.ScaleWide( 18 ), y + hud.ScaleTall( 18 )
+    if ( IsValid( self.AvatarPanel ) ) then
+        self.AvatarPanel:SetPos( ax, ay )
+        self.AvatarPanel:SetSize( avatarSize, avatarSize )
+        self.AvatarPanel:PaintManual()
+        vox.DrawOutlinedCircle( ax + avatarSize * .5, ay + avatarSize * .5, avatarSize * .5, hud.ScaleTall( 3 ), teamColor )
+    end
+
+    local tx = ax + avatarSize + hud.ScaleWide( 16 )
+    draw.SimpleText( 'ROLEPLAY PROFILE', hud.fonts.ExtraTinyBold, tx, y + hud.ScaleTall( 17 ), colors.textSecondary, 0, 0 )
+    draw.SimpleText( client:Name(), hud.fonts.SmallBold, tx, y + hud.ScaleTall( 34 ), colors.textPrimary, 0, 0 )
+    draw.SimpleText( client:getDarkRPVar( 'job' ) or team.GetName( client:Team() ), hud.fonts.TinyBold, tx, y + hud.ScaleTall( 57 ), teamColor, 0, 0 )
+    drawIndicator( tx, y + hud.ScaleTall( 84 ), w - ( tx - x ) - hud.ScaleWide( 18 ), hud.ScaleTall( 14 ), WIMG_HEART, colors.negative, lerpHealth, math.Round( lerpHealth * 100 ) .. '%' )
+    if ( lerpArmor > 0 ) then
+        drawIndicator( tx, y + hud.ScaleTall( 104 ), w - ( tx - x ) - hud.ScaleWide( 18 ), hud.ScaleTall( 12 ), WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor )
+    end
+end
+
 local function drawStyledMainHUD( self, client, scrW, scrH )
-    if ( hud:GetOptionValue( 'hud_style' ) == 1 ) then
+    local style = hud:GetOptionValue( 'hud_style' )
+    if ( style == 1 ) then
         drawCommandStripHUD( self, client, scrW, scrH )
+        return
+    elseif ( style == 2 ) then
+        drawMinimalEdgeHUD( self, client, scrW, scrH )
+        return
+    elseif ( style == 3 ) then
+        drawRoleplayProfileHUD( self, client, scrW, scrH )
         return
     end
 
