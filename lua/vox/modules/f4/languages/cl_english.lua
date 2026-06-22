@@ -20,13 +20,13 @@ LANG.f4_shop_u = 'SHOP'
 LANG.f4_shop_desc = 'Purchase any goods'
 
 LANG.f4_admin_u = 'ADMIN'
-LANG.f4_admin_desc = 'Configure the addon'
+LANG.f4_admin_desc = 'Open Vox Admin tools'
 
 LANG.f4_donate_u = 'DONATE'
 LANG.f4_donate_desc = 'Support the server'
 
-LANG.addon_settings_u = 'SETTINGS'
-LANG.addon_settings_desc = 'Configure the addon'
+LANG.addon_settings_u = 'VOX SETTINGS'
+LANG.addon_settings_desc = 'Tune Vox UI controls'
 
 LANG.addon_stats_u = 'STATS'
 LANG.addon_stats_desc = 'Check the addon stats'
@@ -109,7 +109,7 @@ LANG['f4.donate_url.name'] = 'Donate'
 LANG['f4.website_ingame.name'] = 'Browser'
 LANG['f4.website_ingame.desc'] = 'Use in-game browser to open website URL'
 
-LANG['f4.title.name'] = 'Title'
+LANG['f4.title.name'] = 'Vox Menu Title'
 LANG['f4.title.desc'] = 'The title for the frame'
 
 LANG['f4.hide_donate_tab.name'] = 'Hide Donate Tab'

@@ -94,7 +94,7 @@ function vox.scoreboard.OpenAdminSettings(tab)                                  
     frame:SetSize(ScrW() * .6, ScrH() * .6)
     frame:Center()
     frame:MakePopup()
-    frame:SetTitle('VOX SCOREBOARD (ADMIN)')
+    frame:SetTitle('Vox Scoreboard Settings')
 
     local p = vox.ScaleTall(15)
     local content = frame:Add('Panel')

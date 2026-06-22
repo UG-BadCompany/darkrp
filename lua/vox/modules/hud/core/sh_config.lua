@@ -125,6 +125,50 @@ createDisplayOption( 'pickup_history' )
 createDisplayOption( 'voice' )
 createDisplayOption( 'alerts' )
 createDisplayOption( 'vehicle' )
+createDisplayOption( 'money' )
+createDisplayOption( 'salary' )
+createDisplayOption( 'job' )
+createDisplayOption( 'health' )
+createDisplayOption( 'armor' )
+createDisplayOption( 'hunger' )
+createDisplayOption( 'xp' )
+
+vox.hud:RegisterOption( 'hud_style', {
+    title = 'HUD Layout Preset',
+    desc = 'Choose the Vox HUD layout preset',
+    category = 'general',
+    cami = 'vox_hud_edit',
+    type = 'int',
+    default = 0,
+    min = 0,
+    max = 3,
+    combo = {
+        { 'Vox Compact Corner', 0 },
+        { 'Vox Tactical Bar', 1 },
+        { 'Vox Minimal', 2 },
+        { 'Vox Roleplay Card', 3 }
+    }
+} )
+
+vox.hud:RegisterOption( 'animation_speed', {
+    title = 'Animation Speed',
+    desc = 'Controls HUD value smoothing speed',
+    category = 'general',
+    cami = 'vox_hud_edit',
+    type = 'int',
+    default = 16,
+    min = 1,
+    max = 32
+} )
+
+vox.hud:RegisterOption( 'reduce_motion', {
+    title = 'Reduce Motion',
+    desc = 'Minimizes animated Vox UI effects',
+    category = 'general',
+    cami = 'vox_hud_edit',
+    type = 'bool',
+    default = false
+} )
 createDisplayOption( 'level' )
 createDisplayOption( 'overhead_health', false )
 createDisplayOption( 'overhead_armor', false )
