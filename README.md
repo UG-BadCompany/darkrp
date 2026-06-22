@@ -115,3 +115,37 @@ hook.Run("DarkRPUI.AdminAction", admin, target, action, data)
 - No Lua errors.
 - No cursor stuck.
 - No console spam.
+
+
+## 1.2 premium systems update
+
+This release deepens the Onyx-inspired-but-original direction with a stricter safe-area layout layer, a callable theme engine with `DarkRPUI.Theme.Default`, global animation constants, premium overlay systems, and more integration hooks.
+
+### Safe-area debugging
+
+Run this client convar to draw the protected layout rectangle and confirm HUD/menu elements are not touching screen corners:
+
+```text
+darkrpui_debug_safearea 1
+```
+
+The shared helpers now include `DarkRPUI.Layout.GetSafeRect()`, `DarkRPUI.Layout.ClampToScreen(x, y, w, h)`, `DarkRPUI.Layout.ClampRect(...)`, and `DarkRPUI.Layout.ClampPanel(...)`. F4, scoreboard, notifications, HUD cards, ammo HUD, agenda/law cards, door UI, radial menu, weapon selector, context menus, and modals use this safe-area clamp path.
+
+### Premium overlays
+
+- Modern top-center weapon selector with slot columns 1-6, active highlight, fade timing, and theme-aware cards.
+- Door/property HUD card for owned/for-sale doors with safe-area clamp.
+- Optional radial action API via `DarkRPUI.Radial.Open(items, x, y, callback)` for doors, player interactions, emotes, or staff quick actions.
+- Admin log networking via `DarkRPUI.Admin.RequestLogs` and `DarkRPUI.Admin.Logs`.
+
+### Expanded testing checklist
+
+- No clipping at screen corners.
+- Safe-area outline appears with `darkrpui_debug_safearea 1`.
+- F4 centers within safe area at 65-72% width and clamps at lower resolutions.
+- Player Upgrades hook `DarkRPUI.BuildPlayerUpgrades` can replace the stock upgrade cards.
+- Player Upgrades includes Stamina, Strength, Business, Crafting, Driving, Security, Intelligence, Luck, Endurance, and Charisma.
+- Weapon selector opens at top center for slots 1-6 and stays inside safe area.
+- Door/property text appears as a modern centered card and stays inside safe area.
+- Radial menus clamp around the crosshair and close on ESC/release integrations.
+- Admin logs request/response networking is available only to staff.

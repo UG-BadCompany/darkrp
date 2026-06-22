@@ -22,6 +22,22 @@ function DarkRPUI.Layout.GetSafeRect()
     return padX, padY, ScrW() - padX * 2, ScrH() - padY * 2
 end
 
+function DarkRPUI.Layout.ClampToScreen(x, y, w, h)
+    local sx, sy, sw, sh = DarkRPUI.Layout.GetSafeRect()
+    x = math.Clamp(x or sx, sx, sx + sw - (w or 1))
+    y = math.Clamp(y or sy, sy, sy + sh - (h or 1))
+    return x, y
+end
+
+DarkRPUI.Anim = DarkRPUI.Anim or {}
+DarkRPUI.Anim.Fast = 0.10
+DarkRPUI.Anim.Normal = 0.16
+DarkRPUI.Anim.Slow = 0.25
+function DarkRPUI.Anim.Duration(v)
+    if DarkRPUI.Settings and DarkRPUI.Settings.reduce_motion then return math.min(v or DarkRPUI.Anim.Normal, 0.045) end
+    return (v or DarkRPUI.Anim.Normal) * ((DarkRPUI.Settings and DarkRPUI.Settings.animation_speed) or 1)
+end
+
 function DarkRPUI.Layout.ClampRect(x, y, w, h, padding)
     local sx, sy, sw, sh = DarkRPUI.Layout.GetSafeRect()
     if padding == false then sx, sy, sw, sh = 0, 0, ScrW(), ScrH() end
