@@ -1,1 +1,0 @@
--- Compatibility shim: scoreboard is implemented in lua/darkrp_ui/client/scoreboard/ modules.

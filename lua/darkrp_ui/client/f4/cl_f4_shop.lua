@@ -1,2 +1,0 @@
-DarkRPUI=DarkRPUI or {}; DarkRPUI.F4=DarkRPUI.F4 or {}
-function DarkRPUI.F4.BuildShop(parent) parent:Clear(); local scroll=DarkRPUI.UI.CreateScroll(parent); scroll:Dock(FILL); local items={}; for _,src in ipairs({DarkRPEntities or {}, CustomShipments or {}, FoodItems or {}}) do for _,v in ipairs(src) do items[#items+1]=v end end; for _,it in ipairs(items) do DarkRPUI.F4.CreateItemCard(scroll,it,function(x) DarkRPUI.F4.BuyItem(x) end):Dock(TOP) end end

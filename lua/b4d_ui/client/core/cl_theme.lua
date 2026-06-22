@@ -1,0 +1,1 @@
+B4DUI = B4DUI or {}; function B4DUI.SetTheme(name) if B4DUI.Themes[name] then B4DUI.ActiveThemeName=name; cookie.Set("b4d_ui_theme",name) end end; B4DUI.ActiveThemeName=cookie.GetString("b4d_ui_theme",B4DUI.Config.Theme)

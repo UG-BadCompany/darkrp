@@ -1,164 +1,80 @@
-# DarkRP Premium UI Suite
+# B4D UI
 
-A complete 2026 visual rebuild for DarkRP servers. The addon now uses an original Onyx-inspired dark gaming dashboard direction without copying Onyx branding, assets, logos, or layout one-to-one.
+B4D UI is a clean-room premium DarkRP interface addon built under the `B4DUI` namespace. It replaces the standard DarkRP HUD, F4 menu, scoreboard, notifications, door UI, weapon selector, and staff tooling with a consistent modern dark-glass design.
 
-## Full visual rebuild
+## Install
 
-- Rebuilt visual language around charcoal/navy glass frames, slate cards, thin blue accent lines, compact spacing, modern tabs, clean icons, animated rows, soft blur/dim overlays, thin scrollbars, and professional modal frames.
-- Shared premium component library powers frames, headers, sidebars, cards, rows, buttons, icon buttons, search boxes, dropdowns, toggles, sliders, model previews, progress bars, badges, modals, locked states, loading states, context menus, and scrollbars.
-- HUD, F4, scoreboard, admin menu, settings, notifications, weapon selector, door/property display, modals, radial menus, and overlays use the same design tokens instead of one-off Derma styling.
+1. Place this addon folder in `garrysmod/addons/b4d_ui`.
+2. Restart the server or change map.
+3. Configure `lua/b4d_ui/shared/sh_config.lua` and `lua/b4d_ui/shared/sh_theme.lua`.
+4. Staff can open the admin menu with `b4d_admin`.
 
-## Theme system
-
-Included presets:
-
-- Obsidian Blue
-- Midnight Purple
-- Carbon Red
-- Emerald City
-- Gold Luxury
-- Cream Light
-- Burgundy
-- Custom Accent
-
-The 2026 token set includes background, frame, frame header, sidebar, dark/light panels, cards, hover cards, rows, selected rows, borders, primary/secondary text, muted text, accent/accent hover/accent soft, success, money, warning, error, armor, hunger, wanted, shadow, glass, disabled, and locked colors.
-
-## Safe-area layout
-
-Global helpers prevent corner clipping and keep panels inside the playable screen:
-
-- `DarkRPUI.Layout.GetSafeRect()`
-- `DarkRPUI.Layout.ClampToScreen(x, y, w, h)`
-- `DarkRPUI.Layout.ClampRect(x, y, w, h, padding)`
-- `DarkRPUI.Layout.ClampPanel(panel, useSafeRect)`
-- `DarkRPUI.Layout.CenterFrame(w, h)`
-
-Debug the safe rectangle with:
+## File Structure
 
 ```text
-darkrpui_debug_safearea 1
+lua/autorun/b4d_ui_loader.lua
+lua/b4d_ui/shared/      Shared config, themes, fonts, utilities, permissions, admin registry
+lua/b4d_ui/server/      Networking, settings, admin validation, action handlers, logs
+lua/b4d_ui/client/core/ Client safe-area, theme, fonts, materials, storage, networking, animation
+lua/b4d_ui/client/ui/   Shared Derma component library
+lua/b4d_ui/client/f4/   B4D F4 modules
+lua/b4d_ui/client/hud/  B4D HUD modules
+lua/b4d_ui/client/scoreboard/ B4D Scoreboard modules
+lua/b4d_ui/client/admin/ B4D Admin frontend
+materials/b4d_ui/       Optional icons, logos, backgrounds
+sound/b4d_ui/           Optional UI sounds
 ```
 
-The safe-area path is used by HUD cards, ammo, notifications, agenda/laws/wanted/lockdown cards, F4, scoreboard, settings, admin, modals, context menus, door UI, radial menu, and weapon selector.
+## Features
 
-## Animation and typography
+- B4D HUD with player card, money, salary, health, armor, hunger, ammo, notifications, and module registration.
+- B4D F4 menu with Dashboard, Jobs, Shop, Inventory, Player Upgrades, Donate, Discord, Forum, Rules, Settings, and staff-only Admin tab.
+- B4D Scoreboard with TAB hold behavior, right-click cursor activation, player rows, job and ping columns.
+- B4D Admin with server-side action validation, rank hierarchy checks, cooldowns, logs, staff broadcasts, and ULX/SAM-style fallback hooks where possible.
+- B4D Settings foundation with client JSON persistence and server sync hooks.
+- Safe-area system with `b4d_ui_debug_safearea` debug convar.
+- Theme tokens for Obsidian Blue, Midnight Purple, Carbon Red, Emerald City, Gold Luxury, Cream Light, Burgundy, and Custom Accent.
 
-- Fonts: `DarkRPUI.Title`, `DarkRPUI.Section`, `DarkRPUI.Subtitle`, `DarkRPUI.Body`, `DarkRPUI.Small`, `DarkRPUI.Tiny`, `DarkRPUI.Number`, and `DarkRPUI.Icon`.
-- Animation helpers: `DarkRPUI.Anim.Fast`, `DarkRPUI.Anim.Normal`, `DarkRPUI.Anim.Slow`, `DarkRPUI.Anim.Duration(...)`, and `DarkRPUI.Anim.Lerp(...)`.
-- Reduce Motion keeps fades but removes aggressive motion when enabled.
+## Config Guide
 
-## F4 features
+Edit `lua/b4d_ui/shared/sh_config.lua`:
 
-Visible sidebar tabs:
+- `B4DUI.Config.Theme` sets the default theme.
+- `B4DUI.Config.Links` controls Donate, Discord, Forum, and Rules links.
+- `B4DUI.Config.HUD` toggles HUD modules.
+- `B4DUI.Config.F4.Tabs` controls visible F4 pages.
+- `B4DUI.Config.Scoreboard.Columns` controls default scoreboard columns.
 
-Dashboard, Jobs, Shop, Inventory, Player Upgrades, Donate, Discord, Forum, Rules, Settings, and Admin for staff.
+## Admin Permissions Guide
 
-Vehicles are removed from visible navigation. Skills is renamed to **Player Upgrades** everywhere.
+Edit `lua/b4d_ui/shared/sh_permissions.lua`:
 
-Highlights:
+- `B4DUI.RankWeights` defines rank hierarchy.
+- `B4DUI.Permissions` maps actions to minimum rank weight.
+- `B4DUI.CanTarget` prevents lower staff from targeting equal/higher ranks.
 
-- Centered glass F4 frame with safe-area clamping, close button, ESC close, animated open/close, no duplicate frames, and cursor cleanup.
-- Player profile card at the top of the sidebar with avatar, name, job, and job-color accent.
-- Dashboard command center with profile, job, wallet, vitals, level/XP placeholder, staff online, announcements, and quick-action cards.
-- Jobs use searchable premium cards, favorites, salary, slots, lock badges, vote/VIP/staff tags, hover animation, model previews, and a detail panel.
-- Job model handling supports string/table models, invalid model fallback, and auto-framing.
-- Shop is a single premium tab with internal top tabs for Entities, Weapons, Shipments, Ammo, and Food. Vehicles are not shown.
-- Purchase confirmation support is available through `DarkRPUI.Config.ConfirmPurchases`.
+## Shipment Whitelist Guide
 
-## Shipment job whitelist
+Use the Shop modules under `lua/b4d_ui/client/f4/` as the frontend location for DarkRP shipments. Add allowed entities/shipments to your server config and render them as item cards through the B4D F4 shop module.
 
-Configure in `lua/darkrp_ui/shared/sh_config.lua`:
+## Theme Guide
 
-```lua
-DarkRPUI.Config.ShipmentJobWhitelist = {
-    -- ["AK-47 Shipment"] = { TEAM_GUNDEALER = true, TEAM_BLACKMARKET = true },
-    -- ["Pistol Shipment"] = { TEAM_GUNDEALER = true }
-}
-DarkRPUI.Config.ShipmentWhitelistDefaultAllow = false
-DarkRPUI.Config.ShowLockedShipments = true
-```
+All UI should use `B4DUI.Color(token)` and values from `lua/b4d_ui/shared/sh_theme.lua`. Avoid random hardcoded colors in feature modules so every panel follows the selected theme.
 
-Shipment matching checks `shipment.name`, `shipment.entity`, `shipment.class`, and `shipment.weaponClass`. If a shipment is unavailable and locked shipments are enabled, the F4 shows a premium locked card and the info panel displays “Restricted to specific jobs.”
+## HUD Settings Guide
 
-## Player Upgrades
+HUD modules are registered through `B4DUI.HUD.Register(id, paintFunction)`. Toggle modules in `B4DUI.Config.HUD` or client settings.
 
-The old Skills naming has been replaced by **Player Upgrades**. Stock upgrade cards include Stamina, Strength, Business, Crafting, Driving, Security, Intelligence, Luck, Endurance, and Charisma. Servers can replace the page with:
+## Scoreboard Settings Guide
 
-```lua
-hook.Run("DarkRPUI.BuildPlayerUpgrades", parent)
-```
+Scoreboard columns and rank groups are configured in `B4DUI.Config.Scoreboard`. Column editor and rank editor modules are scaffolded for in-game management.
 
-Return `true` from the hook to use a custom upgrade backend.
+## Testing Checklist
 
-## HUD configuration
-
-The settings menu exposes theme, scale, roundness, margin, compact mode, 3D model/avatar preferences, main HUD visibility, ammo, agenda, pickup history, voice panels, alerts, blur, speedometer blur, notification queue, theme restriction, font scale, animation speed, reduce motion, and live preview-style cards.
-
-The HUD places money inside the main HUD card and keeps health, hunger, armor, salary, level, ammo, wanted, lockdown, agenda, laws, voice, and notification elements safe-area clamped.
-
-## Scoreboard behavior
-
-- Holding TAB opens the scoreboard.
-- Releasing TAB closes it and always disables the screen clicker.
-- Right-click while holding TAB enables the cursor for clickable rows and staff actions.
-- A fail-safe closes the scoreboard if TAB is no longer held.
-- The rebuilt scoreboard includes a left rail, search, column labels, premium player rows, ping colors, staff/VIP badges, context actions, and internal Settings, Ranks, and Columns pages.
-
-## Admin backend and frontend
-
-Server-authoritative net messages:
-
-- `DarkRPUI.Admin.Action`
-- `DarkRPUI.Admin.Notify`
-- `DarkRPUI.Admin.RequestPlayerInfo`
-- `DarkRPUI.Admin.PlayerInfo`
-- `DarkRPUI.Admin.RequestLogs`
-- `DarkRPUI.Admin.Logs`
-
-The backend validates staff rank, action existence, permissions, target validity, rank hierarchy, reason, duration, cooldown, hooks, and logs every action. Supported actions include bring, goto, return, freeze, unfreeze, spectate, unspectate, strip weapons, respawn, slay, kick, warn, ban placeholder/integration, jail placeholder/integration, unjail placeholder/integration, setjob placeholder/integration, setmoney placeholder/integration, noclip, god, and cloak placeholder.
-
-Configure permissions and rank power in `lua/darkrp_ui/shared/sh_config.lua` with `DarkRPUI.Config.AdminPermissions`, `DarkRPUI.Config.AdminPreventSameOrHigherRank`, and `DarkRPUI.Config.AdminRankPower`.
-
-Hooks:
-
-```lua
-hook.Run("DarkRPUI.CanAdminAction", admin, target, action, data)
-hook.Run("DarkRPUI.AdminAction", admin, target, action, data)
-hook.Run("DarkRPUI.AdminActionOverride", action, admin, target, data)
-```
-
-## Notifications, overlays, and property UI
-
-- Notifications are right-side toast cards with icons, title/message, colored accent strip, progress bar, and slide/fade stack animation.
-- Weapon selector is replaced by a top-center premium selector with slot boxes and active highlights.
-- Door/property text is replaced with a small centered premium card for owned/for-sale/locked states.
-- `DarkRPUI.Radial.Open(items, x, y, callback)` provides optional radial menus for doors, emotes, player interaction, and staff quick actions.
-- Connection-lost style overlay hooks are supported through the premium overlay file.
-
-## Testing checklist
-
-- No clipping at any corner.
-- Safe-area outline appears with `darkrpui_debug_safearea 1`.
-- F4 opens/closes.
-- ESC closes F4.
-- Vehicles tab is not visible.
-- Player Upgrades tab is visible.
-- Jobs show models.
-- Job details open.
-- Favorites save.
-- Shipments whitelist works.
-- Locked shipments look correct.
-- Money is inside HUD.
-- HUD settings save.
-- Scoreboard opens only while TAB is held.
-- Right-click while holding TAB enables cursor.
-- Cursor disables on release.
-- Admin actions work server-side.
-- Non-admins cannot use admin actions.
-- Rank protection works.
-- Notifications work safely.
-- Weapon selector works.
-- Door UI works.
-- Settings save.
-- No Lua errors.
-- No console spam.
+- Confirm loader prints no Lua errors on server start.
+- Confirm HUD replaces default DarkRP HUD elements.
+- Press F4 to open and close B4D F4.
+- Hold TAB to open B4D Scoreboard and release TAB to close it.
+- Right-click while TAB is held to enable cursor interaction.
+- Run `b4d_admin` as staff and test each action against permission and hierarchy rules.
+- Toggle `b4d_ui_debug_safearea 1` and verify panels stay inside the safe area.

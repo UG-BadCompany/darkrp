@@ -1,2 +1,0 @@
-DarkRPUI=DarkRPUI or {}; DarkRPUI.F4=DarkRPUI.F4 or {}
-function DarkRPUI.F4.BuildDashboard(parent) parent:Clear(); local ply=LocalPlayer(); local grid=vgui.Create("DIconLayout",parent); grid:Dock(FILL); grid:SetSpaceX(14); grid:SetSpaceY(14); for _,c in ipairs({{"Profile",ply:Nick()},{"Job",team.GetName(ply:Team())},{"Wallet",DarkRPUI.Util.FormatMoney(DarkRPUI.Util.DarkRPVar(ply,"money",0))},{"Vitals","HP "..ply:Health().." / Armor "..ply:Armor()}}) do local card=DarkRPUI.UI.MakeAnimatedCard(grid,c[1],c[2]); card:SetSize(260,118) end end

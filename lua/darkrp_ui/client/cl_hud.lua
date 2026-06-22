@@ -1,1 +1,0 @@
--- Compatibility shim: HUD is implemented in lua/darkrp_ui/client/hud/ element modules.

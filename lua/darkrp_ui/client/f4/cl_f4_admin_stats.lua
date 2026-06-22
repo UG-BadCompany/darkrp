@@ -1,1 +1,0 @@
-DarkRPUI=DarkRPUI or {}; DarkRPUI.F4=DarkRPUI.F4 or {}; function DarkRPUI.F4.BuildAdminStats(parent) parent:Clear(); DarkRPUI.UI.EmptyState(parent,"Admin stats","Live staff, economy, and action telemetry hooks are ready.") end
