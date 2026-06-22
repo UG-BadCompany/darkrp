@@ -144,7 +144,7 @@ function PANEL:InitActions()
             local lblTitle = listActions:Add('vox.Label')
             lblTitle:SetText(vox.lang:Get(category))
             lblTitle:SetTextColor(color_white)
-            lblTitle:Font('Overpass SemiBold@16')
+            lblTitle:Font('Montserrat@16')
             lblTitle:Dock(TOP)
             lblTitle:DockMargin(0, 0, 0, vox.ScaleTall(10))
 

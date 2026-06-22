@@ -39,8 +39,13 @@ function vox.admin.Open()
     frame:MakePopup()
     frame:SetTitle( 'Vox Admin' )
 
-    local theme = vox.hud and vox.hud:GetCurrentTheme()
-    local colors = theme and theme.colors or vox:Config( 'colors' )
+    local colors = vox.GetThemeColors and vox.GetThemeColors() or {}
+    colors.primary = colors.primary or Color( 20, 22, 28, 240 )
+    colors.secondary = colors.secondary or Color( 30, 34, 44, 240 )
+    colors.tertiary = colors.tertiary or Color( 45, 50, 62, 240 )
+    colors.accent = colors.accent or Color( 0, 174, 255 )
+    colors.textPrimary = colors.textPrimary or color_white
+    colors.textSecondary = colors.textSecondary or Color( 180, 190, 205 )
 
     local shell = frame:Add( 'DPanel' )
     shell:Dock( FILL )

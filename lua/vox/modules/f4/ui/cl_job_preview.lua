@@ -16,7 +16,7 @@ local function generateDescHTML(desc)
         <head>
             <meta charset="UTF-8">
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=Comfortaa&family=Overpass:wght@400;600&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Comfortaa&family=Roboto:wght@400;600&display=swap');
                 body {
                     color: white;
                     font-family: 'Comfortaa';

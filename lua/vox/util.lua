@@ -4,6 +4,11 @@ vox.ZeroFn = zeroFn
 vox.IncludeClient = CLIENT and include or AddCSLuaFile
 vox.IncludeServer = SERVER and include or zeroFn
 vox.IncludeShared = function(path)
+    if not file.Exists(path, 'LUA') then
+        vox:PrintWarning('Missing include: #', path)
+        return
+    end
+
     AddCSLuaFile(path)
     return include(path)
 end
@@ -11,7 +16,17 @@ end
 do
     local Explode = string.Explode
     local Left = string.Left
+    local missingIncludes = {}
+
     vox.Include = function(path)
+        if not file.Exists(path, 'LUA') then
+            if not missingIncludes[path] then
+                missingIncludes[path] = true
+                vox:PrintWarning('Missing include: #', path)
+            end
+            return
+        end
+
         local parts = Explode('/', path)
         local prefix = Left(parts[#parts], 2)
 
@@ -33,6 +48,11 @@ do
     local GetExtensionFromFilename = string.GetExtensionFromFilename
 
     local function IncludeFolder(path, recursive)
+        if not file.Exists(path, 'LUA') then
+            vox:PrintWarning('Missing include folder: #', path)
+            return
+        end
+
         local files, folders = Find(path .. '*', 'LUA')
 
         for _, name in ipairs(files) do
@@ -48,6 +68,69 @@ do
         end
     end
     vox.IncludeFolder = IncludeFolder
+end
+
+
+
+vox.FontFallbacks = vox.FontFallbacks or {
+    [ 'Overpass SemiBold' ] = 'Montserrat',
+    [ 'Overpass Bold' ] = 'Montserrat',
+    [ 'Overpass' ] = 'Roboto',
+    [ 'Montserrat' ] = 'Tahoma',
+    [ 'Roboto' ] = 'Tahoma',
+    [ 'Comfortaa' ] = 'Tahoma',
+    [ 'Comfortaa Bold' ] = 'Tahoma',
+    [ 'Comfortaa SemiBold' ] = 'Tahoma'
+}
+
+function vox.SafeColor( color, fallback )
+    if IsColor and IsColor( color ) then
+        return color
+    end
+
+    return fallback or color_white or Color( 255, 255, 255 )
+end
+
+function vox.SafeTheme()
+    local theme = {}
+
+    if vox.hud and vox.hud.GetCurrentTheme then
+        theme = vox.hud:GetCurrentTheme() or {}
+    end
+
+    theme.colors = theme.colors or {}
+    return theme
+end
+
+function vox.GetThemeColors()
+    local theme = vox.SafeTheme()
+    return theme.colors or {}, theme
+end
+
+function vox.SafeFont( preferred, fallback )
+    local font = preferred or fallback or 'Trebuchet24'
+    local visited = {}
+
+    while vox.FontFallbacks[ font ] and not visited[ font ] do
+        visited[ font ] = true
+        font = vox.FontFallbacks[ font ]
+    end
+
+    return font or fallback or 'Trebuchet24'
+end
+
+function vox.SafeMaterial( path, fallback, params )
+    if CLIENT and path and file.Exists( path, 'GAME' ) then
+        return Material( path, params )
+    end
+
+    if CLIENT and fallback then
+        return Material( fallback, params )
+    end
+end
+
+function vox.SafeIcon( path, fallback, params )
+    return vox.SafeMaterial( path, fallback or 'icon16/information.png', params )
 end
 
 function vox:Config(key)

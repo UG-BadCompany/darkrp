@@ -48,7 +48,9 @@ local fetchFont do
 
     function fetchFont(family)
         local overridedFont = hook.Call('vox.ui.OverrideFont', nil, family)
-        return (overridedFont or aliases[family] or family)
+        local aliasedFont = aliases[family] or family
+
+        return vox.SafeFont( overridedFont or aliasedFont, aliasedFont )
     end
 
     local function createAlias(alias, real)

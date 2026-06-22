@@ -25,28 +25,37 @@ local COLORS = {
 }
 
 function vox.hud:GetColor( id )
-    local themeTable = self:GetCurrentTheme()
-    local colorsTable = themeTable.colors
+    local themeTable = self:GetCurrentTheme() or {}
+    local colorsTable = themeTable.colors or {}
 
-    return ( colorsTable[ id ] )
+    return colorsTable[ id ]
 end
 
 function vox.hud:GetCurrentTheme()
+    local theme
+
     if ( self:GetOptionValue( 'restrict_themes' ) ) then
-        return self.themes[ 'default' ]
+        theme = self.themes[ 'default' ]
     else
         local themeID = CONVAR_THEME:GetString()
-        return ( self.themes[ themeID ] or self.themes[ 'default' ] )
+        theme = self.themes[ themeID ] or self.themes[ 'default' ]
     end
+
+    theme = theme or {}
+    theme.colors = theme.colors or {}
+
+    return theme
 end
 
 function vox.hud:IsDark()
-    return self:GetCurrentTheme().dark
+    local theme = self:GetCurrentTheme() or {}
+    return theme.dark or false
 end
 
 function vox.hud:CreateTheme( id, data )
+    data.colors = data.colors or {}
     local colors = data.colors
-    local _, _, lightness = ColorToHSL( colors.primary )
+    local _, _, lightness = ColorToHSL( colors.primary or Color( 20, 22, 28 ) )
     local isDark = lightness < .5
     local predefinedColors = COLORS[ isDark and 'dark' or 'light' ]
 
