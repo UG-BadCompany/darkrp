@@ -439,6 +439,59 @@ local function drawMainHUD( self, client, scrW, scrH )
     end
 end
 
+local function drawCommandStripHUD( self, client, scrW, scrH )
+    local space = hud.GetScreenPadding()
+    local w, h = scrW - space * 2, hud.ScaleTall( 54 )
+    local x, y = space, scrH - h - space
+    local theme = hud:GetCurrentTheme()
+    local colors = theme.colors
+    local accent = colors.accent
+    local teamColor = team.GetColor( client:Team() )
+    local animSpeed = FrameTime() * ( hud:GetOptionValue( 'reduce_motion' ) and 64 or hud:GetOptionValue( 'animation_speed' ) or 16 )
+    local healthFraction = math.Clamp( client:Health() / client:GetMaxHealth(), 0, 1 )
+    local maxArmor = math.max( client:GetMaxArmor() or 100, 1 )
+    local armorFraction = math.Clamp( client:Armor() / maxArmor, 0, 1 )
+    local money = client:getDarkRPVar( 'money' ) or 0
+
+    lerpHealth = Lerp( animSpeed, lerpHealth or healthFraction, healthFraction )
+    lerpArmor = Lerp( animSpeed, lerpArmor or armorFraction, armorFraction )
+    lerpMoney = Lerp( animSpeed, lerpMoney or money, money )
+
+    vox.DrawVoxPanel( x, y, w, h, colors, hud.GetRoundness() )
+    vox.DrawVoxBlade( x + hud.ScaleWide( 10 ), y + hud.ScaleTall( 8 ), hud.ScaleWide( 8 ), h - hud.ScaleTall( 16 ), accent )
+    vox.DrawVoxBlade( x + w - hud.ScaleWide( 20 ), y + hud.ScaleTall( 8 ), hud.ScaleWide( 8 ), h - hud.ScaleTall( 16 ), teamColor )
+    vox.DrawVoxScanlines( x + hud.ScaleWide( 22 ), y + hud.ScaleTall( 7 ), w - hud.ScaleWide( 44 ), h - hud.ScaleTall( 14 ), ColorAlpha( accent, 10 ), hud.ScaleTall( 7 ) )
+    vox.DrawVoxCornerTicks( x + hud.ScaleWide( 4 ), y + hud.ScaleTall( 4 ), w - hud.ScaleWide( 8 ), h - hud.ScaleTall( 8 ), ColorAlpha( accent, 100 ), hud.ScaleWide( 18 ) )
+
+    local nameW = hud.ScaleWide( 260 )
+    local job = client:getDarkRPVar( 'job' ) or team.GetName( client:Team() )
+    draw.SimpleText( string.upper( client:Name() ), hud.fonts.SmallBold, x + hud.ScaleWide( 34 ), y + hud.ScaleTall( 14 ), colors.textPrimary, 0, 1 )
+    draw.SimpleText( string.upper( job ), hud.fonts.ExtraTinyBold, x + hud.ScaleWide( 34 ), y + hud.ScaleTall( 34 ), teamColor, 0, 1 )
+
+    local statX = x + nameW + hud.ScaleWide( 18 )
+    local statW = ( w - nameW - hud.ScaleWide( 360 ) ) * .5
+    drawIndicator( statX, y + hud.ScaleTall( 18 ), statW, hud.ScaleTall( 16 ), WIMG_HEART, colors.negative, lerpHealth, math.Round( lerpHealth * 100 ) .. '%' )
+    drawIndicator( statX + statW + hud.ScaleWide( 22 ), y + hud.ScaleTall( 18 ), statW, hud.ScaleTall( 16 ), WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor, math.Round( lerpArmor * 100 ) .. '%' )
+
+    local econX = x + w - hud.ScaleWide( 310 )
+    local moneyFormatted = DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( math.Round( lerpMoney ) ) or tostring( math.Round( lerpMoney ) )
+    vox.DrawAngledRect( econX, y + hud.ScaleTall( 10 ), hud.ScaleWide( 128 ), h - hud.ScaleTall( 20 ), hud.ScaleWide( 9 ), ColorAlpha( colors.secondary, 220 ) )
+    draw.SimpleText( 'BALANCE', hud.fonts.ExtraTinyBold, econX + hud.ScaleWide( 12 ), y + hud.ScaleTall( 19 ), colors.textSecondary, 0, 1 )
+    draw.SimpleText( moneyFormatted, hud.fonts.TinyBold, econX + hud.ScaleWide( 116 ), y + hud.ScaleTall( 35 ), colors.money or colors.positive, 2, 1 )
+    vox.DrawAngledRect( econX + hud.ScaleWide( 140 ), y + hud.ScaleTall( 10 ), hud.ScaleWide( 138 ), h - hud.ScaleTall( 20 ), hud.ScaleWide( 9 ), ColorAlpha( colors.secondary, 220 ) )
+    draw.SimpleText( 'SALARY', hud.fonts.ExtraTinyBold, econX + hud.ScaleWide( 152 ), y + hud.ScaleTall( 19 ), colors.textSecondary, 0, 1 )
+    draw.SimpleText( formatSalary( client:getDarkRPVar( 'salary' ) or 0 ), hud.fonts.TinyBold, econX + hud.ScaleWide( 266 ), y + hud.ScaleTall( 35 ), colors.money or colors.positive, 2, 1 )
+end
+
+local function drawStyledMainHUD( self, client, scrW, scrH )
+    if ( hud:GetOptionValue( 'hud_style' ) == 1 ) then
+        drawCommandStripHUD( self, client, scrW, scrH )
+        return
+    end
+
+    drawMainHUD( self, client, scrW, scrH )
+end
+
 cvars.AddChangeCallback( 'cl_vox_hud_3d_models', function()
     recreateAvatar( hud.elements[ 'main' ] )
 end, 'hud.internal' )
@@ -455,7 +508,7 @@ end )
 
 hud:RegisterElement( 'main', {
     priority = 100,
-    drawFn = drawMainHUD,
+    drawFn = drawStyledMainHUD,
     initFunc = recreateAvatar,
     onSizeChanged = function( self )
         self.AvatarMask = nil -- It will force to recalculate the circle mask

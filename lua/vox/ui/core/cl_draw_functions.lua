@@ -79,12 +79,33 @@ function vox.DrawVoxPanel( x, y, w, h, colors, radius )
     radius = radius or 8
     local primary = colors.primary or Color( 10, 13, 20 )
     local secondary = colors.secondary or Color( 16, 22, 34 )
+    local tertiary = colors.tertiary or Color( 24, 32, 48 )
     local accent = colors.accent or Color( 0, 174, 255 )
+
     draw.RoundedBox( radius, x, y, w, h, ColorAlpha( primary, 238 ) )
     vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( accent, 20 ) )
+    vox.DrawMatGradient( x, y, w, h, BOTTOM, ColorAlpha( tertiary, 70 ) )
+
     surface.SetDrawColor( ColorAlpha( secondary, 210 ) )
     surface.DrawOutlinedRect( x + 1, y + 1, w - 2, h - 2, 1 )
     surface.SetDrawColor( ColorAlpha( accent, 90 ) )
     surface.DrawLine( x + 10, y + 1, x + math.min( w - 10, 82 ), y + 1 )
     surface.DrawLine( x + w - math.min( w - 10, 82 ), y + h - 2, x + w - 10, y + h - 2 )
+end
+
+function vox.DrawVoxCornerTicks( x, y, w, h, color, size )
+    size = size or 14
+    surface.SetDrawColor( color )
+    surface.DrawLine( x, y, x + size, y )
+    surface.DrawLine( x, y, x, y + size )
+    surface.DrawLine( x + w, y + h, x + w - size, y + h )
+    surface.DrawLine( x + w, y + h, x + w, y + h - size )
+end
+
+function vox.DrawVoxScanlines( x, y, w, h, color, step )
+    step = step or 6
+    surface.SetDrawColor( color )
+    for lineY = y, y + h, step do
+        surface.DrawLine( x, lineY, x + w, lineY )
+    end
 end
