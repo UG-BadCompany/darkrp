@@ -50,7 +50,9 @@ function PANEL:PerformLayout(w, h)
     self.container:Dock(FILL)
     self.container:DockMargin(margin, margin, margin, margin)
     self.container.Paint = function(_, cw, ch)
-        vox.DrawVoxPanel(0, 0, cw, ch, { primary = COLOR_PRIMARY, secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
+        vox.DrawVoxPanel(0, 0, cw, ch, { primary = ColorAlpha(COLOR_PRIMARY, 235), secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 12)
+        vox.DrawVoxBlade(vox.ScaleWide(14), vox.ScaleTall(12), vox.ScaleWide(6), ch - vox.ScaleTall(24), COLOR_ACCENT)
+        vox.DrawVoxCornerTicks(vox.ScaleWide(10), vox.ScaleTall(10), cw - vox.ScaleWide(20), ch - vox.ScaleTall(20), ColorAlpha(COLOR_ACCENT, 65), vox.ScaleWide(24))
     end
 
     self.sidebar:Dock(LEFT)
@@ -61,6 +63,7 @@ function PANEL:Paint(w, h)
         vox.DrawBlurExpensive(self, 9)
         vox.DrawVoxPanel(0, 0, w, h, { primary = vox.ColorBetween(COLOR_PRIMARY, color_black), secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
         vox.DrawVoxBlade(vox.ScaleWide(12), vox.ScaleTall(12), vox.ScaleWide(8), h - vox.ScaleTall(24), COLOR_ACCENT)
+        vox.DrawVoxCornerTicks(vox.ScaleWide(14), vox.ScaleTall(14), w - vox.ScaleWide(28), h - vox.ScaleTall(28), ColorAlpha(COLOR_ACCENT, 80), vox.ScaleWide(28))
     else
         self.BaseClass.Paint(self, w, h)
     end

@@ -152,7 +152,8 @@ function PANEL:Paint(w, h)
     if vox.DrawVoxAngledAccentBlade and not vox.DrawVoxCard then
         vox.DrawVoxAngledAccentBlade( 0, 6, 6, h - 12, teamColor )
     end
-    vox.DrawAngledRect( w - vox.ScaleWide(70), 0, vox.ScaleWide(70), h, vox.ScaleWide(16), ColorAlpha(teamColor, 20) )
+    vox.DrawAngledRect( w - vox.ScaleWide(88), 0, vox.ScaleWide(88), h, vox.ScaleWide(18), ColorAlpha(teamColor, isHovered and 42 or 22) )
+    draw.SimpleText(string.upper(IsValid(ply) and ply:GetUserGroup() or 'user'), vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(44), h * .5, ColorAlpha(teamColor, 230), 1, 1)
     if isHovered and vox.DrawVoxRow then
         vox.DrawVoxRow( 8, 1, w - 16, h - 2, { secondary = COLOR_SECONDARY, accent = teamColor }, { hovered = true, accent = teamColor, alpha = 0 } )
     end

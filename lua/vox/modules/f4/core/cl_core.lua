@@ -61,7 +61,8 @@ end
 
 function vox.f4.OpenFrame()
     local frame = vgui.Create('vox.f4.Frame')
-    frame:SetSize(ScrW() * .65, ScrH() * .65)
+    local scale = (vox.f4:GetOptionValue('scale') or 100) / 100
+    frame:SetSize(ScrW() * math.min(.78, .68 * scale), ScrH() * math.min(.82, .72 * scale))
     frame:Center()
     frame:MakePopup()
 

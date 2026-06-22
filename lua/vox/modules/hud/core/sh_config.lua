@@ -134,10 +134,10 @@ vox.hud:RegisterOption( 'hud_style', {
     min = 0,
     max = 3,
     combo = vox.hud.GetHUDPresetComboOptions and vox.hud:GetHUDPresetComboOptions() or {
-        { 'Vox Tactical Card', 0 },
-        { 'Vox Command Strip', 1 },
-        { 'Vox Minimal Edge', 2 },
-        { 'Vox Roleplay Profile', 3 }
+        { 'Compact Card', 0 },
+        { 'Horizontal Bar', 1 },
+        { 'Minimal Corner', 2 },
+        { 'Roleplay Profile', 3 }
     }
 } )
 
@@ -150,6 +150,47 @@ vox.hud:RegisterOption( 'animation_speed', {
     default = 16,
     min = 1,
     max = 32
+} )
+
+
+vox.hud:RegisterOption( 'hud_scale', {
+    title = 'HUD Scale',
+    desc = 'Controls the client HUD preview and visual scale preference',
+    category = 'appearance',
+    cami = 'vox_hud_edit',
+    type = 'int',
+    default = 100,
+    min = 80,
+    max = 125
+} )
+
+vox.hud:RegisterOption( 'font_size', {
+    title = 'Font Size',
+    desc = 'Adjusts premium UI readability preference',
+    category = 'appearance',
+    cami = 'vox_hud_edit',
+    type = 'int',
+    default = 100,
+    min = 85,
+    max = 120
+} )
+
+vox.hud:RegisterOption( 'compact_mode', {
+    title = 'Compact Mode',
+    desc = 'Tightens HUD and dashboard preview spacing',
+    category = 'appearance',
+    cami = 'vox_hud_edit',
+    type = 'bool',
+    default = false
+} )
+
+vox.hud:RegisterOption( 'blur_enabled', {
+    title = 'Blur On/Off',
+    desc = 'Enables glass blur on premium Vox panels where supported',
+    category = 'appearance',
+    cami = 'vox_hud_edit',
+    type = 'bool',
+    default = true
 } )
 
 vox.hud:RegisterOption( 'reduce_motion', {
