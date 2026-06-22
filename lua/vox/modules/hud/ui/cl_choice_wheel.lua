@@ -70,7 +70,7 @@ function PANEL:Paint( w, h )
             local textColor = isHovered and colors.accent or colors.textSecondary
             local outlineColor = not isHovered and colors.tertiary or colors.accent
 
-            choice.outlineColor = vox.LerpColor( animSpeed, choice.outlineColor or outlineColor, outlineColor )                                                                                                                                -- b7fe7d19-18c9-42a0-823d-06e7663479ef
+            choice.outlineColor = vox.LerpColor( animSpeed, choice.outlineColor or outlineColor, outlineColor )
             choice.bgColor = vox.LerpColor( animSpeed, choice.bgColor or bgColor, bgColor )
 
             local cos, sin = choice.cos, choice.sin
@@ -282,7 +282,7 @@ end
 
 vox.gui.Register( 'vox.hud.ChoiceWheel', PANEL )
 
--- DEBUG
+-- Vox local preview helper
 
 -- vox.gui.oldDebugPanel:Remove()
 -- vox.gui.Test( 'vox.hud.ChoiceWheel', 1, 1, function( this )

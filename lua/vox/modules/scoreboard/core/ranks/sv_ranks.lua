@@ -86,7 +86,7 @@ hook.Add('PostGamemodeLoaded', 'vox.scoreboard.LoadRanks', loadRanks)
 hook.Add('vox.PlayerNetworkReady', 'vox.scoreboard.SyncRanks', syncRanks)
 
 net.Receive('vox.scoreboard:DeleteRank', function(len, ply)
-    if ((ply.vox_scoreboard_NextNetRequest or 0) > CurTime()) then return end                                                                                                                                                                                                                     -- f57a421c-13b9-4a6d-beaf-215b44fe1613
+    if ((ply.vox_scoreboard_NextNetRequest or 0) > CurTime()) then return end
     ply.vox_scoreboard_NextNetRequest = CurTime() + .33
 
     local uniqueID = net.ReadString()

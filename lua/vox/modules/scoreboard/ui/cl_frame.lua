@@ -4,9 +4,6 @@ local COLOR_TERTIARY = vox:Config('colors.tertiary')
 local COLOR_ACCENT = vox:Config('colors.accent')
 local COLOR_GRAY = Color(149, 149, 149)
 
---[[------------------------------
-// ANCHOR Frame
---------------------------------]]
 local PANEL = {}
 
 function PANEL:Init()
@@ -52,6 +49,9 @@ function PANEL:PerformLayout(w, h)
 
     self.container:Dock(FILL)
     self.container:DockMargin(margin, margin, margin, margin)
+    self.container.Paint = function(_, cw, ch)
+        vox.DrawVoxPanel(0, 0, cw, ch, { primary = COLOR_PRIMARY, secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
+    end
 
     self.sidebar:Dock(LEFT)
 end
@@ -59,7 +59,8 @@ end
 function PANEL:Paint(w, h)
     if (self.blur) then
         vox.DrawBlurExpensive(self, 9)
-        draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(vox.ColorBetween(COLOR_PRIMARY, color_black), 230))
+        vox.DrawVoxPanel(0, 0, w, h, { primary = vox.ColorBetween(COLOR_PRIMARY, color_black), secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
+        vox.DrawVoxBlade(vox.ScaleWide(12), vox.ScaleTall(12), vox.ScaleWide(8), h - vox.ScaleTall(24), COLOR_ACCENT)
     else
         self.BaseClass.Paint(self, w, h)
     end
@@ -85,9 +86,7 @@ end
 
 vox.gui.Register('vox.Scoreboard.Frame', PANEL, 'vox.Frame')
 
---[[------------------------------
-// ANCHOR Debug
---------------------------------]]
+-- Vox local preview helper
 -- vox.gui.Test('vox.Scoreboard.Frame', .6, .6, function(self)
 --     vox.scoreboard.Frame = self
 --     self:Center()

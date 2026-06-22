@@ -146,7 +146,8 @@ function PANEL:AddColumn(index)
     panel:SetTall(vox.ScaleTall(70))
     panel:DockPadding(padding, padding, padding, padding)
     panel.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, COLOR_BG)
+        vox.DrawVoxPanel(0, 0, w, h, { primary = COLOR_BG, secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
+        vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(6), h - vox.ScaleTall(16), COLOR_ACCENT)
     end
 
     self.grid:AddItem(panel)

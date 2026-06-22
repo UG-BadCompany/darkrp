@@ -1,7 +1,7 @@
 vox:Addon('scoreboard', {
     color = Color(65, 162, 211),
     author = 'Vox UI',
-    version = '1.0.5',
+    version = '2.1.0',
     licensee = 'vox-ui'
 })
 
