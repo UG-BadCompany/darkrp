@@ -1,10 +1,11 @@
 DarkRPUI = DarkRPUI or {}; DarkRPUI.Admin = DarkRPUI.Admin or {}
 local actions={
-    {id="bring", label="Bring", tone="accent"},{id="goto", label="Goto", tone="info"},{id="freeze", label="Freeze", tone="warning"},{id="jail", label="Jail", tone="warning"},{id="warn", label="Warn", tone="error"},{id="kick", label="Kick", tone="error"},{id="ban", label="Ban", tone="error"},{id="spectate", label="Spectate", tone="accent"},{id="reports", label="Reports", tone="info"}
+    {id="bring", label="Bring", tone="accent"},{id="goto", label="Goto", tone="info"},{id="returnply", label="Return", tone="info"},{id="freeze", label="Freeze", tone="warning"},{id="unfreeze", label="Unfreeze", tone="success"},{id="spectate", label="Spectate", tone="accent"},{id="unspectate", label="Unspectate", tone="accent"},{id="stripweapons", label="Strip Weapons", tone="warning"},{id="respawn", label="Respawn", tone="success"},{id="slay", label="Slay", tone="error"},{id="kick", label="Kick", tone="error"},{id="ban", label="Ban", tone="error"},{id="warn", label="Warn", tone="warning"},{id="jail", label="Jail", tone="warning"},{id="unjail", label="Unjail", tone="success"},{id="setjob", label="Set Job", tone="info"},{id="setmoney", label="Set Money", tone="success"}
 }
 local selected
 local searchText=""
-function DarkRPUI.Admin.Send(action,target) if not IsValid(target) then return end net.Start("DarkRPUI.AdminAction"); net.WriteString(action); net.WriteUInt(target:EntIndex(),16); net.SendToServer(); DarkRPUI.Notify("info","Admin action",action.." -> "..target:Nick()) end
+local function canLocal(action) local perms=(DarkRPUI.Config.AdminPermissions or {})[DarkRPUI.Util.PlayerGroup(LocalPlayer())] or {}; return perms[action] == true end
+function DarkRPUI.Admin.Send(action,target,data) if not IsValid(target) and action ~= "unspectate" then return end net.Start("DarkRPUI.Admin.Action"); net.WriteString(action); net.WriteUInt(IsValid(target) and target:EntIndex() or 0,16); net.WriteTable(data or {}); net.SendToServer(); DarkRPUI.Notify("info","Admin request",action..(IsValid(target) and (" -> "..target:Nick()) or "")) end
 local function plyLine(ply) return (ply:SteamID() or "BOT").." • "..(team.GetName(ply:Team()) or "Unknown") end
 local function drawPlayerCard(row, ply, active)
     row.Hover=DarkRPUI.UI.HoverLerp(row,12); local f=math.max(row.Hover,active and 1 or 0)
@@ -32,7 +33,7 @@ function DarkRPUI.Admin.Open(target)
     end
     local grid=vgui.Create("DIconLayout",detail); grid:SetPos(22,126); grid:SetSize(304,278); grid:SetSpaceX(10); grid:SetSpaceY(10)
     local function rebuildActions()
-        grid:Clear(); for _,a in ipairs(actions) do local b=vgui.Create("DButton",grid); b:SetSize(147,42); b:SetText(a.label); DarkRPUI.UI.StyleButton(b,DarkRPUI.Color(a.tone)); DarkRPUI.UI.AttachTooltip(b,"Run "..a.label.." on the selected player."); b.DoClick=function() if not IsValid(selected) then DarkRPUI.Notify("warning","No player selected","Choose a player first."); return end; DarkRPUI.UI.Confirm("Confirm admin action","Run "..a.label.." on "..selected:Nick().."?","Run","Cancel",function(ok) if ok then DarkRPUI.Admin.Send(a.id,selected) end end) end end
+        grid:Clear(); for _,a in ipairs(actions) do if canLocal(a.id) then local b=vgui.Create("DButton",grid); b:SetSize(147,42); b:SetText(a.label); DarkRPUI.UI.StyleButton(b,DarkRPUI.Color(a.tone)); DarkRPUI.UI.AttachTooltip(b,"Run "..a.label.." on the selected player."); b.DoClick=function() if not IsValid(selected) then DarkRPUI.Notify("warning","No player selected","Choose a player first."); return end; DarkRPUI.UI.Confirm("Confirm admin action","Run "..a.label.." on "..selected:Nick().."?","Run","Cancel",function(ok) if ok then DarkRPUI.Admin.Send(a.id,selected,{reason="Requested from DarkRPUI",duration=0}) end end) end end end
     end
     left.Rebuild=function()
         list:Clear(); for _,ply in ipairs(player.GetAll()) do local hay=string.lower(ply:Nick().." "..plyLine(ply)); if searchText=="" or string.find(hay,searchText,1,true) then local row=vgui.Create("DButton",list); row:Dock(TOP); row:DockMargin(0,0,0,10); row:SetTall(64); row:SetText(""); row.Paint=function(s) drawPlayerCard(s,ply,selected==ply) end; row.DoClick=function() DarkRPUI.UI.PlayClick(); selected=ply; detail:InvalidateLayout(true) end end end
@@ -47,3 +48,5 @@ function DarkRPUI.Admin.OpenPanel(parent)
     for _,ply in ipairs(player.GetAll()) do local row=DarkRPUI.UI.MakeAnimatedCard(list,"",""); row:Dock(TOP); row:DockMargin(0,0,0,10); row:SetTall(68); row.PaintOver=function(s) drawPlayerCard(s,ply,false) end; row.DoClick=function() selected=ply; DarkRPUI.Admin.Open(ply) end end
 end
 concommand.Add("darkrpui_admin", function() DarkRPUI.Admin.Open() end)
+
+net.Receive("DarkRPUI.Admin.Notify", function() local ok=net.ReadBool(); local title=net.ReadString(); local msg=net.ReadString(); DarkRPUI.Notify(ok and "success" or "error", title, msg) end)

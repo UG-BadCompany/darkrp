@@ -40,14 +40,32 @@ C.ThemeOptions = { accentPresets = { blue = Color(79,140,255), purple = Color(15
 C.F4Tabs = {
     { id = "dashboard", name = "Dashboard", icon = "◈" }, { id = "jobs", name = "Jobs", icon = "●" },
     { id = "entities", name = "Entities", icon = "▣" }, { id = "weapons", name = "Weapons", icon = "⌁" },
-    { id = "shipments", name = "Shipments", icon = "▤" }, { id = "vehicles", name = "Vehicles", icon = "◆" },
+    { id = "shipments", name = "Shipments", icon = "▤" },
     { id = "ammo", name = "Ammo", icon = "▪" }, { id = "food", name = "Food", icon = "◍" },
-    { id = "inventory", name = "Inventory", icon = "▧" }, { id = "skills", name = "Skills", icon = "✦" },
+    { id = "inventory", name = "Inventory", icon = "▧" }, { id = "player_upgrades", name = "Player Upgrades", icon = "✦" },
     { id = "store", name = "Store", icon = "★" }, { id = "rules", name = "Rules", icon = "!" },
     { id = "settings", name = "Settings", icon = "⚙" }, { id = "admin", name = "Admin", icon = "⚑", staffOnly = true }
 }
 C.Placeholders = {
     inventory = "Inventory integration point: override hook DarkRPUI.BuildInventoryPanel or register a module.",
-    skills = "Skills/XP integration point: provide DarkRPUI.GetLevelData(ply) or use DarkRP vars level/xp.",
+    player_upgrades = "Player Upgrades/XP integration point: provide DarkRPUI.GetLevelData(ply) or use DarkRP vars level/xp.",
     store = "Store integration point: set ServerLinks.Store or hook DarkRPUI.OpenStore."
 }
+
+
+-- Premium shipment access controls. Keys may match shipment.name, entity, class, or weaponClass.
+C.ShipmentJobWhitelist = C.ShipmentJobWhitelist or {
+    -- ["AK-47 Shipment"] = { TEAM_GUNDEALER = true, TEAM_BLACKMARKET = true },
+    -- ["Pistol Shipment"] = { TEAM_GUNDEALER = true }
+}
+C.ShipmentWhitelistDefaultAllow = false
+C.ShowLockedShipments = true
+
+-- Server-authoritative admin permissions and rank protection.
+C.AdminPermissions = C.AdminPermissions or {
+    superadmin = { bring=true, goto=true, returnply=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, stripweapons=true, respawn=true, slay=true, kick=true, ban=true, warn=true, setjob=true, setmoney=true, jail=true, unjail=true },
+    admin = { bring=true, goto=true, returnply=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, stripweapons=true, respawn=true, slay=true, kick=true, warn=true, jail=true, unjail=true },
+    moderator = { bring=true, goto=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, warn=true }
+}
+C.AdminPreventSameOrHigherRank = true
+C.AdminRankPower = C.AdminRankPower or { user=0, vip=0, moderator=20, mod=20, admin=50, superadmin=100, owner=999 }
