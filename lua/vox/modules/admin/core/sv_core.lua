@@ -5,9 +5,17 @@ vox.admin.Actions = vox.admin.Actions or {}
 vox.admin.Logs = vox.admin.Logs or {}
 vox.admin.Cooldowns = vox.admin.Cooldowns or {}
 
+local MAX_REASON_LENGTH = 160
+local MAX_DURATION_MINUTES = 525600
+local LOG_LIMIT = 200
+
+local function normalizeGroup(group)
+    return string.lower(tostring(group or 'user'))
+end
+
 local function rankWeight(ply)
     if not IsValid(ply) then return 0 end
-    local group = ply.GetUserGroup and ply:GetUserGroup() or 'user'
+    local group = normalizeGroup(ply.GetUserGroup and ply:GetUserGroup() or 'user')
     return (vox.admin.Hierarchy and vox.admin.Hierarchy[group]) or (ply:IsSuperAdmin() and 100) or (ply:IsAdmin() and 50) or 0
 end
 
@@ -19,16 +27,82 @@ local function notify(ply, ok, msg)
     net.Send(ply)
 end
 
+local function staffNotify(admin, actionID, target)
+    local adminName = IsValid(admin) and admin:Nick() or 'Console'
+    local targetName = IsValid(target) and target:Nick() or 'server'
+    local msg = adminName .. ' used ' .. actionID .. ' on ' .. targetName
+
+    for _, ply in ipairs(player.GetHumans()) do
+        if ply ~= admin and ply:IsAdmin() then
+            notify(ply, true, msg)
+        end
+    end
+end
+
+local function hasULXAccess(ply, actionID)
+    if not ULib or not ULib.ucl or not ULib.ucl.query then return nil end
+    local ok = ULib.ucl.query(ply, 'ulx ' .. actionID)
+    if ok == nil and actionID == 'returnply' then ok = ULib.ucl.query(ply, 'ulx return') end
+    return ok == true
+end
+
+local function hasSAMAccess(ply, actionID)
+    if not sam or not sam.player or not sam.player.has_permission then return nil end
+    local permission = actionID == 'returnply' and 'return' or actionID
+    return sam.player.has_permission(ply, permission) == true
+end
+
+local function fallbackAccess(admin, action)
+    if not IsValid(admin) then return false end
+    local minAccess = normalizeGroup(action.minAccess or 'admin')
+    if minAccess == 'superadmin' then return admin:IsSuperAdmin() end
+    if minAccess == 'admin' then return admin:IsAdmin() end
+
+    local adminWeight = rankWeight(admin)
+    local requiredWeight = (vox.admin.Hierarchy and vox.admin.Hierarchy[minAccess]) or 0
+    return adminWeight >= requiredWeight
+end
+
+local function checkPrivilege(admin, action, target)
+    if admin:IsSuperAdmin() then return true end
+
+    if CAMI and CAMI.PlayerHasAccess then
+        local ok, allowed = pcall(CAMI.PlayerHasAccess, admin, 'vox_admin_' .. action.id, nil, target)
+        if ok and allowed ~= nil then return allowed == true end
+    end
+
+    local ulxAllowed = hasULXAccess(admin, action.id)
+    if ulxAllowed ~= nil then return ulxAllowed end
+
+    local samAllowed = hasSAMAccess(admin, action.id)
+    if samAllowed ~= nil then return samAllowed end
+
+    return fallbackAccess(admin, action)
+end
+
+local function findPlayer(identifier)
+    identifier = tostring(identifier or '')
+    if identifier == '' then return nil end
+
+    for _, ply in ipairs(player.GetAll()) do
+        if ply:SteamID() == identifier or ply:SteamID64() == identifier or tostring(ply:UserID()) == identifier then
+            return ply
+        end
+    end
+end
+
 function vox.admin:Log(admin, action, target, reason)
     local row = {
         time = os.time(),
         admin = IsValid(admin) and (admin:Nick() .. ' [' .. admin:SteamID() .. ']') or 'Console',
         action = action,
-        target = IsValid(target) and (target:Nick() .. ' [' .. target:SteamID() .. ']') or 'none',
+        target = IsValid(target) and (target:Nick() .. ' [' .. target:SteamID() .. ']') or 'server',
         reason = reason or ''
     }
+
     table.insert(self.Logs, 1, row)
-    if #self.Logs > 200 then table.remove(self.Logs) end
+    if #self.Logs > LOG_LIMIT then table.remove(self.Logs) end
+
     self:Print('# -> # (#)', row.admin, action, row.target)
     file.CreateDir('vox_admin')
     file.Append('vox_admin/audit.log', util.TableToJSON(row) .. '\n')
@@ -39,31 +113,53 @@ function vox.admin:CanRun(admin, id, target)
     if not action then return false, 'Unknown Vox Admin action.' end
     if not isfunction(action.run) then return false, 'Vox Admin action has no server handler.' end
     if not IsValid(admin) or not admin:IsPlayer() then return false, 'Invalid admin.' end
-    if self.Cooldowns[admin] and self.Cooldowns[admin] > CurTime() then return false, 'Action cooldown active.' end
-    if action.target and not IsValid(target) then return false, 'Invalid target.' end
-    local ok = admin:IsSuperAdmin()
-    if CAMI and CAMI.PlayerHasAccess then
-        local success, camiOk = pcall(CAMI.PlayerHasAccess, admin, 'vox_admin_' .. id, nil, target, { Fallback = action.minAccess or 'admin' })
-        if success and camiOk ~= nil then ok = camiOk end
+
+    local cooldownEnd = self.Cooldowns[admin] or 0
+    if cooldownEnd > CurTime() then
+        return false, string.format('Action cooldown active (%.1fs).', cooldownEnd - CurTime())
     end
-    if not ok then ok = admin:IsAdmin() and (action.minAccess or 'admin') == 'admin' end
-    if not ok then return false, 'You do not have permission.' end
-    if action.target and target ~= admin and rankWeight(admin) <= rankWeight(target) then return false, 'Rank hierarchy blocks this action.' end
+
+    if action.target then
+        if not IsValid(target) or not target:IsPlayer() then return false, 'Invalid target.' end
+        if target:IsBot() and action.blockBots then return false, 'This action cannot target bots.' end
+    end
+
+    if not checkPrivilege(admin, action, target) then return false, 'You do not have permission.' end
+
+    if action.target and target ~= admin and rankWeight(admin) <= rankWeight(target) then
+        return false, 'Rank hierarchy blocks this action.'
+    end
+
     return true
 end
 
 function vox.admin:Run(admin, id, target, reason, duration)
     local ok, err = self:CanRun(admin, id, target)
     if not ok then notify(admin, false, err) return false end
-    self.Cooldowns[admin] = CurTime() + (self.Actions[id].cooldown or self.CooldownSeconds or 0.75)
-    reason = tostring(reason or 'No reason provided'):sub(1, 160)
-    duration = math.Clamp(tonumber(duration) or 0, 0, 525600)
-    local success, result = pcall(self.Actions[id].run, admin, target, reason, duration)
-    if not success or result == false then notify(admin, false, isstring(result) and result or 'Action failed gracefully.') return false end
-    if isstring(result) then notify(admin, false, result) return false end
+
+    local action = self.Actions[id]
+    self.Cooldowns[admin] = CurTime() + (action.cooldown or self.CooldownSeconds or 0.75)
+
+    reason = tostring(reason or 'No reason provided'):Trim():sub(1, MAX_REASON_LENGTH)
+    if reason == '' then reason = 'No reason provided' end
+    duration = math.Clamp(tonumber(duration) or 0, 0, MAX_DURATION_MINUTES)
+
+    local success, result = pcall(action.run, admin, target, reason, duration)
+    if not success then
+        self:Log(admin, id .. '_error', target, result)
+        notify(admin, false, 'Action errored; see server console/audit log.')
+        ErrorNoHalt('[Vox Admin] ' .. id .. ' failed: ' .. tostring(result) .. '\n')
+        return false
+    end
+
+    if result == false or isstring(result) then
+        notify(admin, false, isstring(result) and result or 'Action failed gracefully.')
+        return false
+    end
+
     self:Log(admin, id, target, reason)
     notify(admin, true, 'Vox Admin action completed: ' .. id)
-    for _, ply in ipairs(player.GetHumans()) do if ply ~= admin and ply:IsAdmin() then notify(ply, true, admin:Nick() .. ' used ' .. id) end end
+    staffNotify(admin, id, target)
     return true
 end
 
@@ -73,6 +169,33 @@ local function reg(id, fn, target)
     action.run = fn
     vox.admin:RegisterAction(id, action)
 end
+
+local function commandAvailable(command)
+    if not concommand or not concommand.GetTable then return true end
+    local commands = concommand.GetTable()
+    return not commands or commands[command] ~= nil
+end
+
+local function runULX(command, target, duration, reason)
+    if not ulx or not commandAvailable('ulx') then return false end
+    if duration ~= nil then
+        RunConsoleCommand('ulx', command, target:Nick(), tostring(duration), reason or '')
+    else
+        RunConsoleCommand('ulx', command, target:Nick())
+    end
+    return true
+end
+
+local function runSAM(command, target, duration, reason)
+    if not sam or not commandAvailable('sam') then return false end
+    if duration ~= nil then
+        RunConsoleCommand('sam', command, target:SteamID(), tostring(duration), reason or '')
+    else
+        RunConsoleCommand('sam', command, target:SteamID())
+    end
+    return true
+end
+
 reg('bring', function(a,t) t.VoxAdminReturnPos=t:GetPos(); t:SetPos(a:GetPos()+a:GetForward()*80); return true end)
 reg('goto', function(a,t) a.VoxAdminReturnPos=a:GetPos(); a:SetPos(t:GetPos()+t:GetForward()*80); return true end)
 reg('returnply', function(a,t) if not t.VoxAdminReturnPos then return 'No return position.' end t:SetPos(t.VoxAdminReturnPos); return true end)
@@ -87,10 +210,10 @@ reg('spectate', function(a,t) a:Spectate(OBS_MODE_IN_EYE); a:SpectateEntity(t); 
 reg('unspectate', function(a) a:UnSpectate(); a:Spawn(); return true end, false)
 reg('noclip', function(a,t) t:SetMoveType(t:GetMoveType()==MOVETYPE_NOCLIP and MOVETYPE_WALK or MOVETYPE_NOCLIP); return true end)
 reg('god', function(a,t) if t:HasGodMode() then t:GodDisable() else t:GodEnable() end return true end)
-reg('ban', function(a,t,r,d) if ulx then RunConsoleCommand('ulx','ban',t:Nick(),tostring(d or 0),r); return true end if sam then RunConsoleCommand('sam','ban',t:SteamID(),tostring(d or 0),r); return true end return 'Ban is integration-ready; connect ULX/SAM/your ban system before enabling.' end)
-reg('jail', function(a,t,r,d) if ulx then RunConsoleCommand('ulx','jail',t:Nick(),tostring(d or 0)); return true end if sam then RunConsoleCommand('sam','jail',t:SteamID(),tostring(d or 0)); return true end return 'Jail is integration-ready placeholder.' end)
-reg('unjail', function(a,t) if ulx then RunConsoleCommand('ulx','unjail',t:Nick()); return true end if sam then RunConsoleCommand('sam','unjail',t:SteamID()); return true end return 'Unjail is integration-ready placeholder.' end)
-reg('setjob', function(a,t,r,d) local name = tostring(r or '') if name == '' then return 'Provide a job/team name as the reason.' end for id, data in pairs(RPExtraTeams or {}) do if string.lower(data.name or '') == string.lower(name) or tostring(id) == name then t:changeTeam(id, true, true) return true end end return 'Unknown DarkRP job: ' .. name end)
+reg('ban', function(a,t,r,d) if runULX('ban', t, d, r) then return true end if runSAM('ban', t, d, r) then return true end return 'No ULX/SAM ban command is available on this server.' end)
+reg('jail', function(a,t,r,d) if runULX('jail', t, d, r) then return true end if runSAM('jail', t, d, r) then return true end return 'No ULX/SAM jail command is available on this server.' end)
+reg('unjail', function(a,t) if runULX('unjail', t) then return true end if runSAM('unjail', t) then return true end return 'No ULX/SAM unjail command is available on this server.' end)
+reg('setjob', function(a,t,r,d) local name = tostring(r or '') if name == '' or name == 'No reason provided' then return 'Provide a job/team name as the reason.' end for id, data in pairs(RPExtraTeams or {}) do if string.lower(data.name or '') == string.lower(name) or tostring(id) == name then t:changeTeam(id, true, true) return true end end return 'Unknown DarkRP job: ' .. name end)
 reg('setmoney', function(a,t,r,d) local amount = tonumber(r) or tonumber(d) if not amount then return 'Provide a numeric money amount as the reason.' end local current = t.getDarkRPVar and (t:getDarkRPVar('money') or 0) or 0 if t.addMoney then t:addMoney(amount - current) elseif t.setDarkRPVar then t:setDarkRPVar('money', amount) else return 'DarkRP money API unavailable.' end return true end)
 reg('cloak', function(a,t) t:SetNoDraw(not t:GetNoDraw()); t:DrawShadow(not t:GetNoDraw()); return true end)
 
@@ -104,8 +227,8 @@ end)
 
 concommand.Add('vox_admin_action', function(ply, _, args)
     if not IsValid(ply) then return end
-    local id, steamid = args[1], args[2]
-    local target
-    for _, p in ipairs(player.GetAll()) do if p:SteamID() == steamid or p:SteamID64() == steamid then target = p break end end
+    local id, targetID = args[1], args[2]
+    local action = vox.admin.Actions[id]
+    local target = action and action.target and findPlayer(targetID) or nil
     vox.admin:Run(ply, id, target, args[3] or '', tonumber(args[4]) or 0)
 end)

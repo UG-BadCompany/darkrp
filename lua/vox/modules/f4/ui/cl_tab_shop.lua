@@ -26,7 +26,12 @@ function PANEL:Init()
     self.toolbar:SetTall(vox.ScaleTall(80))
     self.toolbar:DockMargin(0, 0, 0, vox.ScaleTall(10))
     self.toolbar.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+        if vox.DrawVoxPanel then
+            vox.DrawVoxPanel(0, 0, w, h, { primary = colorSecondary, secondary = colorTertiary, accent = vox:Config('colors.accent') }, 8)
+            vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(6), h - vox.ScaleTall(20), vox:Config('colors.accent'))
+        else
+            draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+        end
     end
     self.toolbar.PerformLayout = function(panel, w, h)
         self.topRow:SetTall(h / 2)
@@ -43,9 +48,10 @@ function PANEL:Init()
     self.navbar:SetKeepTabContent(true)
     -- self.navbar:SetRoundness(8)
     self.navbar.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorTertiary, true, true)
-        surface.SetDrawColor(colorLine)
-        surface.DrawRect(0, h - 1, w, 1)
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorTertiary, 210), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(64), 0, vox.ScaleWide(64), h, vox.ScaleWide(12), ColorAlpha(vox:Config('colors.accent'), 30))
+        surface.SetDrawColor(ColorAlpha(vox:Config('colors.accent'), 90))
+        surface.DrawRect(vox.ScaleWide(16), h - 1, w - vox.ScaleWide(32), 1)
     end
     self.navbar.OnTabSelected = function(panel, tab, content)
         local convar = convars[tab.ItemType]
