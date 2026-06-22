@@ -3,7 +3,7 @@ DarkRPUI.Config = DarkRPUI.Config or {}
 
 local C = DarkRPUI.Config
 C.CommandPrefix = "darkrpui"
-C.DefaultTheme = "dark_professional"
+C.DefaultTheme = "obsidian_blue"
 C.Features = { f4 = true, hud = true, scoreboard = true, notifications = true, admin = true, blur = true, sounds = true, compact = false }
 C.EnableF4Menu, C.EnableHUD, C.EnableScoreboard, C.EnableNotifications, C.EnableAdminTools = true, true, true, true, true
 C.HideDefaultDarkRPHUD, C.HideDefaultDarkRPAgenda, C.HideDefaultDarkRPLockdown, C.HideDefaultDarkRPArrested = true, false, false, true
@@ -35,7 +35,7 @@ C.Rules = {
     "Use common sense; staff may intervene in edge cases."
 }
 C.RulesText = table.concat(C.Rules, "\n\n")
-C.HUD = { scale = 1, showAgenda = true, showLaws = true, showAmmo = true, showVoice = true, maxLaws = 6 }
+C.HUD = { scale = 1, showAgenda = true, showLaws = true, showAmmo = true, showVoice = true, maxLaws = 6, showMoney = true, showSalary = true, showHunger = true, showLevel = true }
 C.ThemeOptions = { accentPresets = { blue = Color(79,140,255), purple = Color(155,105,255), emerald = Color(60,210,130), orange = Color(255,160,70) } }
 C.F4Tabs = {
     { id = "dashboard", name = "Dashboard", icon = "◈" }, { id = "jobs", name = "Jobs", icon = "●" },
