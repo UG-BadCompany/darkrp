@@ -552,17 +552,7 @@ local function drawRoleplayProfileHUD( self, client, scrW, scrH )
     end
 end
 
-hud:RegisterHUDPreset( 'tactical_card', { name = 'Vox Tactical Card', style = 0, drawFn = drawMainHUD } )
-hud:RegisterHUDPreset( 'command_strip', { name = 'Vox Command Strip', style = 1, drawFn = drawCommandStripHUD } )
-hud:RegisterHUDPreset( 'minimal_edge', { name = 'Vox Minimal Edge', style = 2, drawFn = drawMinimalEdgeHUD } )
-hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Vox Roleplay Profile', style = 3, drawFn = drawRoleplayProfileHUD } )
-
 hud.Presets = hud.PresetRegistry
-
-hud.DrawVoxTacticalCard = drawMainHUD
-hud.DrawVoxCommandStrip = drawCommandStripHUD
-hud.DrawVoxMinimalEdge = drawMinimalEdgeHUD
-hud.DrawVoxRoleplayProfile = drawRoleplayProfileHUD
 
 local function drawStyledMainHUD( self, client, scrW, scrH )
     local preset = hud:GetCurrentHUDPreset()
