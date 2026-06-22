@@ -152,8 +152,7 @@ function PANEL:Paint(w, h)
         vox.DrawAngledRect( w - vox.ScaleWide(70), 0, vox.ScaleWide(70), h, vox.ScaleWide(16), ColorAlpha(teamColor, 20) )
     end
     if isHovered then
-        surface.SetDrawColor( ColorAlpha( teamColor, 38 ) )
-        surface.DrawRect( 8, 1, w - 16, h - 2 )
+        vox.DrawVoxRowHover( 8, 1, w - 16, h - 2, teamColor, 1 )
     end
 
     local mask = rounded and self.maskAllRounded or self.maskExpanded
