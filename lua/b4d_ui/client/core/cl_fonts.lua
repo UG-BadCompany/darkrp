@@ -1,1 +1,0 @@
-B4DUI = B4DUI or {}; function B4DUI.CreateFonts() for _,f in pairs(B4DUI.Fonts) do surface.CreateFont(f.name,{font=f.font,size=ScreenScale(f.size/3),weight=f.weight,extended=true}) end end; hook.Add("OnScreenSizeChanged","B4DUI.Fonts",B4DUI.CreateFonts); B4DUI.CreateFonts()

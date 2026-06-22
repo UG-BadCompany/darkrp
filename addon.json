@@ -1,6 +1,0 @@
-{
-  "title": "B4D UI",
-  "type": "servercontent",
-  "tags": ["roleplay", "realism"],
-  "ignore": ["Doc/*", "old/*", ".git/*"]
-}
