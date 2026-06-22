@@ -11,7 +11,7 @@ A premium, client-focused DarkRP interface suite for Garry's Mod. It replaces th
 - **Scoreboard** opens only while TAB is held, uses premium rows, avatars, job color stripes, staff/VIP badges, colored ping, SteamID copy, and admin action integration placeholders.
 - **Notifications** safely wrap legacy and DarkRP notifications after `GAMEMODE` is available, with stacked animated toast cards, type icons, progress bars, slide animations, and sound settings.
 - **Reusable UI components** include premium buttons, cards, search boxes, combo boxes, close buttons, model previews, empty states, confirmation modals, shared animation helpers, consistent radius, hover behavior, spacing, fonts, and accent colors.
-- **Themes/settings** provide consistent radius, spacing, font usage, accent colors, blur, sounds, notification placement, HUD scale, compact mode, and saved favorites.
+- **Themes/settings** provide consistent radius, spacing, font usage, accent colors, blur, sounds, notification placement, HUD scale, compact mode, tooltip and low-resolution behavior, confirmation flow defaults, and saved favorites.
 
 ## Controls
 
@@ -58,3 +58,7 @@ Client settings are stored in `data/darkrp_ui/settings.txt` and include theme, H
 - Hold and release TAB to confirm scoreboard appears only while held and mouse control is restored.
 - Trigger legacy and DarkRP notifications before/after gamemode initialization and confirm there are no Lua errors.
 - Toggle blur, sounds, compact mode, notification position, and HUD scale in settings.
+- Right-click scoreboard rows and confirm the DermaMenu matches the premium panel/card styling.
+- Open settings and admin panels from F4 and confirm every button, combo box, slider card, popup, scrollbar, empty state, tooltip, and notification follows the same spacing, radius, shadow, accent, and font language.
+- Test at 1280x720 and ultrawide resolutions to confirm HUD scale, F4 clamping, scoreboard sizing, and notification stacks remain readable without clipping.
+- Trigger confirmation popups and locked-state flows for jobs/purchases/admin actions and confirm they animate, close, and play click sounds without trapping input.

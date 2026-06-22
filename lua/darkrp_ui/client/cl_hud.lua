@@ -12,14 +12,14 @@ local function bar(icon,label,value,frac,col,x,y,w,compact)
     surface.SetDrawColor(DarkRPUI.WithAlpha(color_white,24)); surface.DrawRect(x+2,y+26,math.max(0,w*DarkRPUI.Util.Clamp(frac,0,1)-4),2)
 end
 local function card(x,y,w,h,title,body,col,alpha,icon)
-    alpha=alpha or 1; DarkRPUI.UI.DrawShadow(x,y,w,h,95*alpha); DarkRPUI.UI.OutlinedBox(15,x,y,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),235*alpha),DarkRPUI.WithAlpha(DarkRPUI.Color("border"),255*alpha)); surface.SetDrawColor((col or DarkRPUI.Color("accent")).r,(col or DarkRPUI.Color("accent")).g,(col or DarkRPUI.Color("accent")).b,210*alpha); surface.DrawRect(x,y,4,h)
+    alpha=alpha or 1; DarkRPUI.UI.ShadowedBox(16,x,y,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),235*alpha),DarkRPUI.WithAlpha(DarkRPUI.Color("border"),255*alpha),100*alpha); surface.SetDrawColor((col or DarkRPUI.Color("accent")).r,(col or DarkRPUI.Color("accent")).g,(col or DarkRPUI.Color("accent")).b,210*alpha); surface.DrawRect(x,y,4,h)
     if icon then DarkRPUI.UI.Text(icon,"DarkRPUI.Body",x+14,y+10,col or DarkRPUI.Color("accent")); DarkRPUI.UI.Text(title,"DarkRPUI.Small",x+40,y+11,col or DarkRPUI.Color("accent")) else DarkRPUI.UI.Text(title,"DarkRPUI.Small",x+14,y+10,col or DarkRPUI.Color("accent")) end
     draw.DrawText(body or "","DarkRPUI.Tiny",x+14,y+34,DarkRPUI.WithAlpha(DarkRPUI.Color("subtext"),255*alpha),TEXT_ALIGN_LEFT)
 end
 hook.Add("HUDPaint", "DarkRPUI.HUD.Paint", function()
     if not DarkRPUI.Config.EnableHUD or (DarkRPUI.Settings and DarkRPUI.Settings.hud == false) then return end
     local ply=LocalPlayer(); if not IsValid(ply) then return end
-    local compact=DarkRPUI.Settings and DarkRPUI.Settings.compact; local s=(DarkRPUI.Settings and DarkRPUI.Settings.hud_scale or 1) * (compact and .9 or 1); local pad=DarkRPUI.Util.Scale(22*s); local w=DarkRPUI.Util.Scale((compact and 330 or 450)*s); local h=DarkRPUI.Util.Scale((compact and 104 or 154)*s); local y=ScrH()-h-pad
+    local compact=DarkRPUI.Settings and DarkRPUI.Settings.compact; local resScale=(DarkRPUI.Config.LowResolutionScale ~= false) and math.Clamp(ScrW()/1280, .78, 1) or 1; local s=(DarkRPUI.Settings and DarkRPUI.Settings.hud_scale or 1) * (compact and .9 or 1) * resScale; local pad=DarkRPUI.Util.Scale(22*s); local w=DarkRPUI.Util.Scale((compact and 330 or 450)*s); local h=DarkRPUI.Util.Scale((compact and 104 or 154)*s); local y=ScrH()-h-pad
     local hp=lerp("hp",math.Clamp(ply:Health(),0,100),10); local ar=lerp("ar",math.Clamp(ply:Armor(),0,100),10); local hunger=lerp("hunger",DarkRPUI.Util.DarkRPVar(ply,"Energy",100),10)
     local money=DarkRPUI.Util.DarkRPVar(ply,"money",0); if state.lastMoney and money ~= state.lastMoney then state.moneyFlash=1 end; state.lastMoney=money; state.moneyFlash=DarkRPUI.UI.LerpValue(state.moneyFlash,0,6); state.money=DarkRPUI.UI.LerpValue(state.money or money,money,7); state.salary=DarkRPUI.UI.LerpValue(state.salary or 0,DarkRPUI.Util.DarkRPVar(ply,"salary",0),7)
     DarkRPUI.UI.ShadowedBox(18,pad,y,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),238),DarkRPUI.Color("border"),115); surface.SetDrawColor(team.GetColor(ply:Team())); surface.DrawRect(pad,y,5,h)
