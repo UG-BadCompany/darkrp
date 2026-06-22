@@ -59,3 +59,13 @@ function DarkRPUI.Layout.SizeForScreen(w, h, maxW, maxH)
     local sx, sy, sw, sh = DarkRPUI.Layout.GetSafeRect()
     return math.min(w or sw, maxW or sw, sw), math.min(h or sh, maxH or sh, sh)
 end
+
+function DarkRPUI.Layout.CenterFrame(w, h)
+    local sx, sy, sw, sh = DarkRPUI.Layout.GetSafeRect()
+    w = math.min(w or sw, sw)
+    h = math.min(h or sh, sh)
+    return sx + (sw - w) / 2, sy + (sh - h) / 2, w, h
+end
+function DarkRPUI.Anim.Lerp(current, target, speed)
+    return Lerp(math.Clamp(FrameTime() * (speed or 12), 0, 1), current or 0, target or 0)
+end

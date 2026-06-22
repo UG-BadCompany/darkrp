@@ -38,13 +38,17 @@ C.RulesText = table.concat(C.Rules, "\n\n")
 C.HUD = { scale = 1, showAgenda = true, showLaws = true, showAmmo = true, showVoice = true, maxLaws = 6, showMoney = true, showSalary = true, showHunger = true, showLevel = true }
 C.ThemeOptions = { accentPresets = { blue = Color(79,140,255), purple = Color(155,105,255), emerald = Color(60,210,130), orange = Color(255,160,70) } }
 C.F4Tabs = {
-    { id = "dashboard", name = "Dashboard", icon = "◈", group = "Character" }, { id = "jobs", name = "Jobs", icon = "●", group = "Character" },
-    { id = "entities", name = "Entities", icon = "▣", group = "Market" }, { id = "weapons", name = "Weapons", icon = "⌁", group = "Market" },
-    { id = "shipments", name = "Shipments", icon = "▤", group = "Market" },
-    { id = "ammo", name = "Ammo", icon = "▪", group = "Market" }, { id = "food", name = "Food", icon = "◍", group = "Market" },
-    { id = "inventory", name = "Inventory", icon = "▧" }, { id = "player_upgrades", name = "Player Upgrades", icon = "✦", group = "Progression" },
-    { id = "store", name = "Store", icon = "★", group = "Server" }, { id = "rules", name = "Rules", icon = "!", group = "Server" },
-    { id = "settings", name = "Settings", icon = "⚙", group = "Server" }, { id = "admin", name = "Admin", icon = "⚑", group = "Staff", staffOnly = true }
+    { id = "dashboard", name = "Dashboard", subtitle = "General information", icon = "◈", group = "Character" },
+    { id = "jobs", name = "Jobs", subtitle = "Choose your path", icon = "●", group = "Character" },
+    { id = "shop", name = "Shop", subtitle = "Purchase goods", icon = "▣", group = "Market" },
+    { id = "inventory", name = "Inventory", subtitle = "Your items", icon = "▧", group = "Progression" },
+    { id = "player_upgrades", name = "Player Upgrades", subtitle = "Improve character", icon = "✦", group = "Progression" },
+    { id = "donate", name = "Donate", subtitle = "Support the server", icon = "★", group = "Community" },
+    { id = "discord", name = "Discord", subtitle = "Join community", icon = "◍", group = "Community" },
+    { id = "forum", name = "Forum", subtitle = "Server forums", icon = "▤", group = "Community" },
+    { id = "rules", name = "Rules", subtitle = "Read rules", icon = "!", group = "Server" },
+    { id = "settings", name = "Settings", subtitle = "Configure UI", icon = "⚙", group = "Server" },
+    { id = "admin", name = "Admin", subtitle = "Staff tools", icon = "⚑", group = "Staff", staffOnly = true }
 }
 C.Placeholders = {
     inventory = "Inventory integration point: override hook DarkRPUI.BuildInventoryPanel or register a module.",

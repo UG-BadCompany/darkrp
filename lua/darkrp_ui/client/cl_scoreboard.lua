@@ -1,5 +1,6 @@
 DarkRPUI = DarkRPUI or {}; DarkRPUI.Scoreboard = DarkRPUI.Scoreboard or {}
 local cursor=false
+local activePage="players"
 local function badgeText(ply) if DarkRPUI.Util.IsAdmin(ply) then return "STAFF", DarkRPUI.Color("warning") end if DarkRPUI.Util.IsVIP(ply) then return "VIP", DarkRPUI.Color("accent") end end
 local function pingColor(p) if p < 70 then return DarkRPUI.Color("success") elseif p < 140 then return DarkRPUI.Color("warning") end return DarkRPUI.Color("error") end
 local adminActions={"bring","goto","freeze","unfreeze","spectate","stripweapons","respawn","slay","kick","ban","warn"}
@@ -17,9 +18,11 @@ function DarkRPUI.Scoreboard.Open()
     if IsValid(DarkRPUI.Scoreboard.Frame) then return end
     setCursor(false)
     local f=vgui.Create("DFrame"); DarkRPUI.Scoreboard.Frame=f; local fw,fh=DarkRPUI.Layout.SizeForScreen(1120,760); f:SetSize(fw,fh); f:Center(); DarkRPUI.Layout.ClampPanel(f,true); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:SetMouseInputEnabled(true); f:SetKeyboardInputEnabled(false); DarkRPUI.UI.AnimatePanelIn(f)
-    f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,5); DarkRPUI.UI.ShadowedBox(22,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),240),DarkRPUI.Color("border"),125); DarkRPUI.UI.Text("Server Roster","DarkRPUI.Title",24,20); DarkRPUI.UI.Text("Hold TAB to view • Right-click to use cursor/actions", "DarkRPUI.Small",26,60,DarkRPUI.Color("subtext")); DarkRPUI.UI.Badge(w-130,28,#player.GetAll().." ONLINE",DarkRPUI.Color("accent")) end
-    local searchHolder,search=DarkRPUI.UI.PremiumSearch(f,"Search by name, job, rank, SteamID..."); searchHolder:SetPos(24,92); searchHolder:SetSize(f:GetWide()-48,42)
-    local list=vgui.Create("DScrollPanel",f); list:SetPos(24,142); list:SetSize(f:GetWide()-48,f:GetTall()-166); DarkRPUI.UI.StyleScrollbar(list)
+    f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,5); DarkRPUI.UI.ShadowedBox(22,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),240),DarkRPUI.Color("border"),125); DarkRPUI.UI.Text("SERVER ROSTER","DarkRPUI.Title",w/2,20,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER); DarkRPUI.UI.Text("Hold TAB to view • Right-click to use cursor/actions", "DarkRPUI.Small",w/2,52,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER); DarkRPUI.UI.Badge(w-130,28,#player.GetAll().." ONLINE",DarkRPUI.Color("accent")) end
+    local rail=vgui.Create("DPanel",f); rail:SetPos(18,88); rail:SetSize(54,f:GetTall()-106); rail.Paint=function(_,w,h) DarkRPUI.UI.RoundedBox(16,0,0,w,h,DarkRPUI.Color("sidebarDark")) end
+    local content=vgui.Create("DPanel",f); content:SetPos(86,88); content:SetSize(f:GetWide()-110,f:GetTall()-112); content.Paint=nil
+    local function buildSettingsPage(kind) content:Clear(); local title=kind=="ranks" and "RANK EFFECTS" or kind=="columns" and "COLUMN CONFIGURATION" or "SCOREBOARD SETTINGS"; DarkRPUI.UI.MakeHeader(content,title,"Modern configurable scoreboard tooling."):Dock(TOP); local grid=vgui.Create("DIconLayout",content); grid:Dock(FILL); grid:SetSpaceX(12); grid:SetSpaceY(12); local rows=(kind=="columns") and {"Column #1","Column #2","Column #3","Column #4","Column #5"} or (kind=="ranks" and {"Rank Identifier","Display Name","Effect","Color","Preview","Save"} or {"Title input","Group Teams","Colorized Gradient","Blur Theme","Show Avatars","Show Mic Icons","Show Ping Bars","Show Staff Actions"}); for _,r in ipairs(rows) do local c=DarkRPUI.UI.MakeAnimatedCard(grid,r,"Configurable premium option"); c:SetSize(260,96) end end
+    local function buildPlayersPage() content:Clear(); local searchHolder,search=DarkRPUI.UI.PremiumSearch(content,"Search… (Name/SteamID)"); searchHolder:Dock(TOP); searchHolder:SetTall(42); local header=vgui.Create("DPanel",content); header:Dock(TOP); header:SetTall(30); header.Paint=function(_,w,h) DarkRPUI.UI.Text("PLAYER","DarkRPUI.Tiny",12,8,DarkRPUI.Color("muted")); DarkRPUI.UI.Text("JOB", "DarkRPUI.Tiny", w-560,8,DarkRPUI.Color("muted")); DarkRPUI.UI.Text("RANK", "DarkRPUI.Tiny", w-430,8,DarkRPUI.Color("muted")); DarkRPUI.UI.Text("MONEY", "DarkRPUI.Tiny", w-310,8,DarkRPUI.Color("muted")); DarkRPUI.UI.Text("PING", "DarkRPUI.Tiny", w-70,8,DarkRPUI.Color("muted")) end; local list=vgui.Create("DScrollPanel",content); list:Dock(FILL); list:DockMargin(0,6,0,0); DarkRPUI.UI.StyleScrollbar(list)
     local function rebuild()
         list:Clear(); local q=string.lower(search:GetValue() or ""); local players=player.GetAll(); table.sort(players,function(a,b) return (team.GetName(a:Team()) or "") < (team.GetName(b:Team()) or "") end)
         for _,ply in ipairs(players) do local hay=string.lower(table.concat({ply:Nick(), team.GetName(ply:Team()) or "", DarkRPUI.Util.PlayerGroup(ply), ply:SteamID()}," ")); if q=="" or string.find(hay,q,1,true) then
@@ -31,6 +34,10 @@ function DarkRPUI.Scoreboard.Open()
         end end
     end
     search.OnChange=rebuild; rebuild()
+    end
+    local pages={{"players","👥"},{"settings","⚙"},{"ranks","◆"},{"columns","▥"},{"return","↩"}}
+    for _,pg in ipairs(pages) do local b=DarkRPUI.UI.MakeIconButton(rail,pg[2],function() if pg[1]=="return" then DarkRPUI.Scoreboard.Close(); return end; activePage=pg[1]; if activePage=="players" then buildPlayersPage() else buildSettingsPage(activePage) end end); b:Dock(TOP); b:DockMargin(8,8,8,0); b:SetTall(38); b.ActiveFunc=function() return activePage==pg[1] end end
+    activePage="players"; buildPlayersPage()
 end
 hook.Add("ScoreboardShow","DarkRPUI.Scoreboard.Show",function() if DarkRPUI.Config.EnableScoreboard then DarkRPUI.Scoreboard.Open(); return false end end)
 hook.Add("ScoreboardHide","DarkRPUI.Scoreboard.Hide",function() DarkRPUI.Scoreboard.Close() end)

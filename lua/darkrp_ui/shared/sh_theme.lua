@@ -59,6 +59,20 @@ DarkRPUI.RegisterTheme("clean_light", theme("Clean Light", 16, {
 }))
 DarkRPUI.RegisterTheme("custom_accent", theme("Custom Accent", 18, table.Copy(DarkRPUI.Themes.obsidian_blue.colors)))
 DarkRPUI.Themes.dark_professional = DarkRPUI.Themes.obsidian_blue
+if not istable(DarkRPUI.Theme) then DarkRPUI.Theme = {} end
+
+-- 2026 design-token compatibility table requested by server owners.
+DarkRPUI.Theme.ObsidianBlue = {
+    background = C(15,17,23,245), frame = C(21,24,32,248), frameHeader = C(28,32,41,250), sidebar = C(32,37,46,250), sidebarDark = C(25,29,37,250),
+    panel = C(31,35,44,245), panelDark = C(22,25,32,245), panelLight = C(39,44,54,245), card = C(36,41,51,245), cardDark = C(29,33,41,245), cardHover = C(46,53,64,250),
+    row = C(30,34,42,230), rowHover = C(42,49,60,245), rowSelected = C(45,157,255,35), border = C(55,65,78,150), borderSoft = C(255,255,255,10),
+    text = C(245,247,250), textSoft = C(190,198,210), muted = C(125,136,150), accent = C(45,157,255), accentHover = C(75,175,255), accentSoft = C(45,157,255,45),
+    success = C(70,220,125), money = C(68,230,120), warning = C(255,195,70), error = C(245,80,90), armor = C(70,130,255), hunger = C(245,190,60), wanted = C(190,75,255),
+    shadow = C(0,0,0,160), glass = C(15,17,23,210), disabled = C(80,85,95), locked = C(120,125,135)
+}
+DarkRPUI.RegisterTheme("cream_light", theme("Cream Light", 16, { background=C(246,241,230), panel=C(255,251,243), card=C(255,255,250), cardHover=C(248,239,222), border=C(214,196,164), text=C(35,31,26), muted=C(112,96,76), accent=C(64,128,245), success=C(38,170,100), warning=C(200,135,35), error=C(205,60,72), shadow=C(120,96,60,80), glass=C(255,248,235,170) }))
+DarkRPUI.RegisterTheme("burgundy", theme("Burgundy", 18, { background=C(24,9,15), panel=C(39,15,25), card=C(54,22,35), cardHover=C(74,30,48), border=C(104,48,65), text=C(255,242,247), muted=C(196,144,160), accent=C(220,70,112), success=C(72,215,138), warning=C(255,190,70), error=C(255,80,95), shadow=C(0,0,0,205), glass=C(220,70,112,30) }))
+DarkRPUI.Themes.clean_light.name = "Cream Light"
 
 local function resolveTheme(id)
     local active = id or DarkRPUI.ActiveTheme or (DarkRPUI.Settings and DarkRPUI.Settings.theme) or DarkRPUI.Config.DefaultTheme
@@ -70,7 +84,6 @@ local function resolveTheme(id)
     return t
 end
 
-if not istable(DarkRPUI.Theme) then DarkRPUI.Theme = {} end
 DarkRPUI.Theme.Default = {
     name = "Obsidian Blue", background = C(18,20,27,245), frame = C(24,27,36,248), sidebar = C(30,35,43,248),
     panel = C(32,36,45,245), panelDark = C(20,22,29,245), card = C(37,42,51,245), cardHover = C(43,50,61,250),
@@ -81,7 +94,8 @@ DarkRPUI.Theme.Default = {
 }
 setmetatable(DarkRPUI.Theme, { __call = function(_, id) return resolveTheme(id) end })
 function DarkRPUI.Color(name, alpha)
-    local c = (DarkRPUI.Theme().colors and DarkRPUI.Theme().colors[name]) or color_white
+    local themeObj = DarkRPUI.Theme()
+    local c = (themeObj.colors and themeObj.colors[name]) or DarkRPUI.Theme.ObsidianBlue[name] or DarkRPUI.Theme.Default[name] or color_white
     if alpha then return Color(c.r,c.g,c.b,alpha) end
     return c
 end
