@@ -556,6 +556,18 @@ local function drawRoleplayProfileHUD( self, client, scrW, scrH )
     end
 end
 
+hud.Presets = {
+    tactical_card = { name = 'Vox Tactical Card', style = 0, drawFn = drawMainHUD },
+    command_strip = { name = 'Vox Command Strip', style = 1, drawFn = drawCommandStripHUD },
+    minimal_edge = { name = 'Vox Minimal Edge', style = 2, drawFn = drawMinimalEdgeHUD },
+    roleplay_profile = { name = 'Vox Roleplay Profile', style = 3, drawFn = drawRoleplayProfileHUD }
+}
+
+hud.DrawVoxTacticalCard = drawMainHUD
+hud.DrawVoxCommandStrip = drawCommandStripHUD
+hud.DrawVoxMinimalEdge = drawMinimalEdgeHUD
+hud.DrawVoxRoleplayProfile = drawRoleplayProfileHUD
+
 local function drawStyledMainHUD( self, client, scrW, scrH )
     local style = hud:GetOptionValue( 'hud_style' )
     if ( style == 1 ) then
