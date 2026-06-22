@@ -58,3 +58,33 @@ hook.Add("HUDPaint", "DarkRPUI.DoorProperty.Paint", function()
 end)
 
 hook.Add("ShutDown", "DarkRPUI.ConnectionLost.Mark", function() DarkRPUI.ConnectionLost = true end)
+
+-- Premium overhead identity cards: minimal, distance-faded name/job/wanted display.
+hook.Add("PostPlayerDraw", "DarkRPUI.OverheadIdentity.Paint", function(ply)
+    if ply == LocalPlayer() or not IsValid(ply) or not ply:Alive() then return end
+    if DarkRPUI.Settings and DarkRPUI.Settings.overhead_ui == false then return end
+    local lp=LocalPlayer(); if not IsValid(lp) then return end
+    local dist=lp:GetPos():DistToSqr(ply:GetPos()); local max=DarkRPUI.Util.Scale(520)^2; if dist > max then return end
+    local a=math.Clamp(255-(dist/max)*255,0,255); local pos=ply:EyePos()+Vector(0,0,12); local ang=EyeAngles(); ang:RotateAroundAxis(ang:Right(),90); ang:RotateAroundAxis(ang:Up(),-90)
+    cam.Start3D2D(pos, Angle(0,ang.y,90), 0.065)
+        local name=ply:Nick(); local job=team.GetName(ply:Team()) or "Citizen"; local col=team.GetColor(ply:Team()) or DarkRPUI.Color("accent")
+        surface.SetFont("DarkRPUI.Body"); local nw=surface.GetTextSize(name); surface.SetFont("DarkRPUI.Small"); local jw=surface.GetTextSize(job); local w=math.max(nw,jw)+42; local h=54
+        DarkRPUI.UI.ShadowedBox(12,-w/2,-h,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),math.min(a,220)),DarkRPUI.WithAlpha(DarkRPUI.Color("border"),a),70*a/255)
+        DarkRPUI.UI.Text(name,"DarkRPUI.Body",0,-48,DarkRPUI.WithAlpha(DarkRPUI.Color("text"),a),TEXT_ALIGN_CENTER)
+        DarkRPUI.UI.Text(job,"DarkRPUI.Small",0,-25,Color(col.r,col.g,col.b,a),TEXT_ALIGN_CENTER)
+        if DarkRPUI.Util.DarkRPVar(ply,"wanted",false) then DarkRPUI.UI.Text("★ WANTED","DarkRPUI.Tiny",0,-8,DarkRPUI.WithAlpha(DarkRPUI.Color("error"),a),TEXT_ALIGN_CENTER) end
+    cam.End3D2D()
+end)
+
+-- Theme-aware connection lost overlay for timeout/reconnect screens.
+hook.Add("HUDPaint", "DarkRPUI.ConnectionLostOverlay.Paint", function()
+    if not DarkRPUI.ConnectionLost then return end
+    local w,h=ScrW(),ScrH(); surface.SetDrawColor(DarkRPUI.WithAlpha(DarkRPUI.Color("background"),235)); surface.DrawRect(0,0,w,h)
+    local bw,bh=420,220; local x,y=w/2-bw/2,h/2-bh/2
+    DarkRPUI.UI.ShadowedBox(22,x,y,bw,bh,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),245),DarkRPUI.Color("border"),150)
+    DarkRPUI.UI.Text("⌁","DarkRPUI.Title",w/2,y+34,DarkRPUI.Color("error"),TEXT_ALIGN_CENTER)
+    DarkRPUI.UI.Text("CONNECTION LOST","DarkRPUI.Title",w/2,y+82,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER)
+    DarkRPUI.UI.Text("Attempting to reconnect. You can retry or disconnect.","DarkRPUI.Small",w/2,y+122,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER)
+    DarkRPUI.UI.RoundedBox(12,x+52,y+160,146,40,DarkRPUI.Color("accent")); DarkRPUI.UI.Text("Reconnect","DarkRPUI.Body",x+125,y+170,color_white,TEXT_ALIGN_CENTER)
+    DarkRPUI.UI.RoundedBox(12,x+222,y+160,146,40,DarkRPUI.Color("card")); DarkRPUI.UI.Text("Disconnect","DarkRPUI.Body",x+295,y+170,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER)
+end)
