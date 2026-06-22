@@ -138,7 +138,9 @@ function PANEL:Paint(w, h)
     local ply = self:GetPlayer()
     local teamColor = IsValid( ply ) and team.GetColor( ply:Team() ) or ( vox.hud and vox.hud:GetColor( 'accent' ) ) or color_white
 
-    if vox.DrawVoxPanel then
+    if vox.DrawVoxCard then
+        vox.DrawVoxCard( 0, 0, w, h, { primary = color, secondary = COLOR_SECONDARY, accent = teamColor }, { hovered = isHovered, accent = teamColor, radius = 8, bladeWidth = 6 } )
+    elseif vox.DrawVoxPanel then
         vox.DrawVoxPanel( 0, 0, w, h, { primary = color, secondary = COLOR_SECONDARY, accent = teamColor }, 8 )
     elseif (self.blur) then
         draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(color, 230), true, true, rounded, rounded)
@@ -147,12 +149,12 @@ function PANEL:Paint(w, h)
         draw.RoundedBoxEx(8, lineThickness, lineThickness, w - lineThickness * 2, h - lineThickness * 2, color, true, true, rounded, rounded)
     end
 
-    if vox.DrawVoxBlade then
-        vox.DrawVoxBlade( 0, 6, 6, h - 12, teamColor )
-        vox.DrawAngledRect( w - vox.ScaleWide(70), 0, vox.ScaleWide(70), h, vox.ScaleWide(16), ColorAlpha(teamColor, 20) )
+    if vox.DrawVoxAngledAccentBlade and not vox.DrawVoxCard then
+        vox.DrawVoxAngledAccentBlade( 0, 6, 6, h - 12, teamColor )
     end
-    if isHovered then
-        vox.DrawVoxRowHover( 8, 1, w - 16, h - 2, teamColor, 1 )
+    vox.DrawAngledRect( w - vox.ScaleWide(70), 0, vox.ScaleWide(70), h, vox.ScaleWide(16), ColorAlpha(teamColor, 20) )
+    if isHovered and vox.DrawVoxRow then
+        vox.DrawVoxRow( 8, 1, w - 16, h - 2, { secondary = COLOR_SECONDARY, accent = teamColor }, { hovered = true, accent = teamColor, alpha = 0 } )
     end
 
     local mask = rounded and self.maskAllRounded or self.maskExpanded

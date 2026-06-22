@@ -38,6 +38,12 @@ function PANEL:LoadOptions()
         } )
     end
 
+    local presetOptions = {}
+    for _, opt in ipairs( vox.hud:GetHUDPresetComboOptions() ) do
+        presetOptions[ #presetOptions + 1 ] = { name = opt[ 1 ], key = tostring( opt[ 2 ] ) }
+    end
+    self:AddOption( 'combo', 'hud_style', 'cl_vox_hud_hud_style', { options = presetOptions, serverOptionID = 'hud_hud_style' } )
+
     self:AddOption( 'int', 'scale', 'cl_vox_hud_scale' )
     self:AddOption( 'int', 'roundness', 'cl_vox_hud_roundness', { step = 4 } )
     self:AddOption( 'int', 'margin', 'cl_vox_hud_screen_padding', { step = 5 } )
@@ -80,13 +86,21 @@ function PANEL:AddOption( optionType, id, convarName, data )
             convarObject:SetBool( newBool )
         end
     elseif ( optionType == 'combo' ) then
-        local value = convarObject:GetString()
+        local value = convarObject and convarObject:GetString() or tostring( vox.inconfig:Get( data.serverOptionID or '' ) or '' )
 
         local combo = field:Add( 'vox.ComboBox' )
+        combo.serverOptionID = data.serverOptionID
         combo:SetWide( vox.ScaleWide( 175 ) )
         combo:Dock( RIGHT )
         combo.OnSelect = function( panel, index, text, data )
-            convarObject:SetString( data )
+            if convarObject then
+                convarObject:SetString( data )
+            elseif data ~= nil then
+                net.Start( 'vox.inconfig:Set' )
+                    net.WriteString( panel.serverOptionID or '' )
+                    net.WriteString( vox.TypeToString( tonumber( data ) or data ) )
+                net.SendToServer()
+            end
         end
 
         for i, opt in ipairs( data.options or {} ) do
@@ -159,7 +173,11 @@ function PANEL:CreateField( text, desc )
     field.centerChild = true
     field.padding = padding
     field.Paint = function( p, w, h )
-        draw.RoundedBox( 8, 0, 0, w, h, COLOR_SECONDARY )
+        if vox.DrawVoxRow then
+            vox.DrawVoxRow( 0, 0, w, h, { secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, { hovered = p:IsHovered(), accent = COLOR_ACCENT, alpha = 225 } )
+        else
+            draw.RoundedBox( 8, 0, 0, w, h, COLOR_SECONDARY )
+        end
         draw.SimpleText( text, FONT_NAME, padding, h * .5, COLOR_ACCENT, 0, 4 )
         draw.SimpleText( desc, FONT_DESC, padding, h * .5, COLOR_GRAY, 0, 0 )
     end
