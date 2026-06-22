@@ -12,7 +12,7 @@ vox.scoreboard:RegisterOption('title', {
     category = 'General',
     cami = 'vox_scoreboard_edit',
     type = 'string',
-    default = 'VOX SCOREBOARD'
+    default = 'Vox Scoreboard'
 })
 
 vox.scoreboard:RegisterOption('scale', {

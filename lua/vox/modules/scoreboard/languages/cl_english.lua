@@ -48,6 +48,8 @@ LANG['scoreboard_btn_return'] = 'Return'
 LANG['scoreboard_btn_respawn'] = 'Respawn'
 LANG['scoreboard_btn_slay'] = 'Slay'
 LANG['scoreboard_btn_spectate'] = 'Spectate'
+LANG['scoreboard_btn_kick'] = 'Kick'
+LANG['scoreboard_btn_warn'] = 'Warn'
 
 -- Words
 LANG['rank_id'] = 'Rank Identifier'
@@ -62,11 +64,11 @@ LANG['create_new'] = 'Create New'
 LANG['column'] = 'Column'
 
 -- Settings
-LANG['addon_settings_u'] = 'SETTINGS'
+LANG['addon_settings_u'] = 'VOX SETTINGS'
 LANG['scoreboard_ranks_u'] = 'RANKS'
 LANG['scoreboard_columns_u'] = 'COLUMNS'
 
-LANG['scoreboard.title.name'] = 'Title'
+LANG['scoreboard.title.name'] = 'Vox Scoreboard Title'
 LANG['scoreboard.title.desc'] = 'Input the title for the frame'
 
 LANG['scoreboard.group_teams.name'] = 'Group Teams'

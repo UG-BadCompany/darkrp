@@ -1,170 +1,81 @@
---[[
+-- Vox UI premium theme presets. All HUD elements should consume these tokens.
+local function voxTheme(primary, secondary, tertiary, accent, extras)
+    extras = extras or {}
+    local colors = {
+            primary = primary,
+            secondary = secondary,
+            tertiary = tertiary,
+            quaternary = Color(8, 11, 16),
+            accent = accent,
+            textPrimary = Color(246, 248, 255),
+            textSecondary = Color(166, 178, 204),
+            textTertiary = Color(96, 110, 138),
+            positive = Color(52, 211, 153),
+            money = Color(52, 211, 153),
+            negative = Color(255, 80, 105),
+            armor = Color(88, 166, 255),
+            hunger = Color(245, 197, 66),
+            xp = Color(245, 197, 66),
+            lockdown = Color(255, 80, 105)
+        }
+    for key, value in pairs( extras ) do
+        colors[ key ] = value
+    end
+    return { colors = colors }
+end
 
-Author: tochnonement
-Email: tochnonement@gmail.com
+vox.hud:CreateTheme( 'default', voxTheme(
+    Color(10, 13, 20), Color(16, 22, 34), Color(24, 32, 48), Color(0, 174, 255)
+) )
 
-21/08/2024
+vox.hud:CreateTheme( 'vox_obsidian', voxTheme(
+    Color(9, 11, 16), Color(14, 19, 29), Color(23, 31, 45), Color(0, 174, 255)
+) )
 
---]]
+vox.hud:CreateTheme( 'vox_midnight', voxTheme(
+    Color(8, 14, 28), Color(13, 24, 42), Color(20, 38, 62), Color(72, 149, 255)
+) )
 
---[[
-    ***************
-      WARNING
-      This configuration is intended for advanced users familiar with Lua scripting.
-      Modifying this file without proper knowledge may result in unintended behavior or instability.
-    ***************
-]]
+vox.hud:CreateTheme( 'vox_royal_purple', voxTheme(
+    Color(16, 12, 28), Color(26, 18, 45), Color(42, 28, 68), Color(177, 94, 255)
+) )
 
-vox.hud:CreateTheme( 'default', {
-    colors = {
-        primary = vox:Config( 'colors.primary' ),
-        secondary = vox:Config( 'colors.secondary' ),
-        tertiary = vox:Config( 'colors.tertiary' ),
-        accent = vox:Config( 'colors.accent' ),
+vox.hud:CreateTheme( 'vox_carbon_red', voxTheme(
+    Color(16, 14, 16), Color(27, 21, 23), Color(46, 30, 34), Color(255, 66, 92)
+) )
+
+vox.hud:CreateTheme( 'vox_emerald', voxTheme(
+    Color(8, 18, 16), Color(12, 31, 27), Color(18, 50, 42), Color(52, 211, 153)
+) )
+
+vox.hud:CreateTheme( 'vox_gold', voxTheme(
+    Color(18, 15, 10), Color(33, 27, 16), Color(56, 44, 22), Color(245, 197, 66)
+) )
+
+vox.hud:CreateTheme( 'vox_light', voxTheme(
+    Color(230, 235, 245), Color(244, 247, 252), Color(255, 255, 255), Color(0, 124, 255), {
+        quaternary = Color(216, 224, 238),
+        textPrimary = Color(20, 27, 39),
+        textSecondary = Color(74, 86, 108),
+        textTertiary = Color(120, 132, 154)
     }
-} )
+) )
 
+vox.hud:CreateTheme( 'custom_accent', voxTheme(
+    Color(10, 13, 20), Color(16, 22, 34), Color(24, 32, 48), vox:Config( 'colors.accent' )
+) )
 
-vox.hud:CreateTheme( 'vox', {
-    colors = {
-        primary = Color( 16, 19, 27 ),
-        secondary = Color( 23, 27, 38 ),
-        tertiary = Color( 32, 38, 55 ),
-        quaternary = Color( 11, 14, 20 ),
-        accent = Color( 118, 92, 255 ),
-        textPrimary = Color( 245, 247, 255 ),
-        textSecondary = Color( 190, 198, 218 ),
-        textTertiary = Color( 128, 140, 170 ),
-        positive = Color( 57, 217, 138 ),
-        negative = Color( 255, 84, 112 ),
-        lockdown = Color( 255, 84, 112 ),
-    }
-} )
-
-vox.hud:CreateTheme( 'gray', {
-    colors = {
-        primary = Color( 172, 172, 172),
-        secondary = Color( 197, 197, 197),
-        tertiary = Color( 225, 225, 225),
-        accent = Color( 101, 40, 206),
-    }
-} )
-
-vox.hud:CreateTheme( 'golden_dawn', {
-    colors = {
-        primary = Color( 195, 189, 154),
-        secondary = Color( 224, 207, 143),
-        tertiary = Color( 230, 205, 129),
-        accent = Color( 44, 44, 255),
-        textPrimary = Color( 40, 35, 19),
-        textSecondary = Color( 59, 50, 14),
-        textTertiary = Color( 90, 83, 53),
-    }
-} )
-
-vox.hud:CreateTheme( 'sky_blue', {
-    colors = {
-        primary = Color(186, 227, 252),
-        secondary = Color(210, 235, 255),
-        tertiary = Color(232, 243, 255),
-        accent = Color(0, 89, 255),
-        textPrimary = Color(25, 45, 60),
-        textSecondary = Color(50, 75, 100),
-        textTertiary = Color(80, 110, 140),
-    }
-} )
-
-vox.hud:CreateTheme( 'mint_light', {
-    colors = {
-        primary = Color(202, 230, 217),
-        secondary = Color(223, 241, 232),
-        tertiary = Color(240, 250, 244),
-        accent = Color(0, 162, 78),
-        textPrimary = Color(34, 52, 42),
-        textSecondary = Color(57, 82, 69),
-        textTertiary = Color(92, 118, 104),
-    }
-} )
-
-vox.hud:CreateTheme( 'lavender', {
-    colors = {
-        primary = Color(230, 230, 250),
-        secondary = Color(245, 245, 255),
-        tertiary = Color(255, 250, 255),
-        accent = Color(138, 43, 226),
-        textPrimary = Color(50, 50, 80),
-        textSecondary = Color(70, 70, 100),
-        textTertiary = Color(100, 100, 130),
-    }
-} )
-
-vox.hud:CreateTheme( 'green_apple', {
-    colors = {
-        primary = Color(144, 238, 144),
-        secondary = Color(168, 255, 168),
-        tertiary = Color(192, 255, 192),
-        accent = Color(218, 24, 24),  -- Насыщенный зеленый
-        textPrimary = Color(40, 70, 40),
-        textSecondary = Color(60, 90, 60),
-        textTertiary = Color(90, 120, 90),
-    }
-} )
-
-vox.hud:CreateTheme( 'elegance', {
-    colors = {
-        primary = Color(34, 40, 48),
-        secondary = Color(32, 36, 42),
-        tertiary = Color(40, 45, 53),
-        accent = Color(60, 179, 113),
-    }
-} )
-
-vox.hud:CreateTheme( 'ocean_wave', {
-    colors = {
-        primary = Color(24, 32, 44),
-        secondary = Color(30, 40, 52),
-        tertiary = Color(37, 50, 61),
-        quaternary = Color(24, 32, 44),
-        accent = Color(70, 130, 180),
-    }
-} )
-
-vox.hud:CreateTheme( 'violet_night', {
-    colors = {
-        primary = Color(48, 25, 52),
-        secondary = Color(58, 31, 63),
-        tertiary = Color(72, 40, 78),
-        quaternary = Color(48, 25, 52),
-        accent = Color(186, 85, 211),
-    }
-} )
-
-vox.hud:CreateTheme( 'forest', {
-    colors = {
-        primary = Color(34, 44, 34),
-        secondary = Color(42, 54, 42),
-        tertiary = Color(50, 64, 50),
-        quaternary = Color(34, 44, 34),
-        accent = Color(152, 251, 152),
-    }
-} )
-
-vox.hud:CreateTheme( 'rose_garden', {
-    colors = {
-        primary = Color(44, 24, 34),
-        secondary = Color(52, 28, 42),
-        tertiary = Color(61, 33, 50),
-        quaternary = Color(44, 24, 34),
-        accent = Color(255, 105, 180),
-    }
-} )
-
-vox.hud:CreateTheme( 'rustic_ember', {
-    colors = {
-        primary = Color(44, 29, 24),
-        secondary = Color(52, 34, 29),
-        tertiary = Color(61, 40, 34),
-        quaternary = Color(44, 29, 24),
-        accent = Color(255, 99, 71),
-    }
-} )
+-- Legacy names retained so existing saves do not break.
+vox.hud.themes.vox = vox.hud.themes.default
+vox.hud.themes.gray = vox.hud.themes.vox_light
+vox.hud.themes.golden_dawn = vox.hud.themes.vox_gold
+vox.hud.themes.sky_blue = vox.hud.themes.vox_midnight
+vox.hud.themes.mint_light = vox.hud.themes.vox_emerald
+vox.hud.themes.lavender = vox.hud.themes.vox_royal_purple
+vox.hud.themes.green_apple = vox.hud.themes.vox_emerald
+vox.hud.themes.elegance = vox.hud.themes.vox_obsidian
+vox.hud.themes.ocean_wave = vox.hud.themes.vox_midnight
+vox.hud.themes.violet_night = vox.hud.themes.vox_royal_purple
+vox.hud.themes.forest = vox.hud.themes.vox_emerald
+vox.hud.themes.rose_garden = vox.hud.themes.vox_carbon_red
+vox.hud.themes.rustic_ember = vox.hud.themes.vox_carbon_red

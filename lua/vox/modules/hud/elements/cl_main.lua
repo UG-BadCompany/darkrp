@@ -10,7 +10,7 @@ Email: tochnonement@gmail.com
 local hud = vox.hud
 local COLOR_BAR = Color( 200, 200, 200, 10 )
 local COLOR_GRAY = Color( 183, 183, 183)
-local COLOR_XP = Color( 202, 183, 14)
+local COLOR_XP = Color( 245, 197, 66 )
 
 local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
 local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
@@ -37,7 +37,7 @@ local function formatSalary( salary )
     -- local iters = ( 3600 / GAMEMODE.Config.paydelay )
     -- local full = math.Round( salary * iters )
     -- local formatted = '+' .. DarkRP.formatMoney( full ) .. '/h'
-    return '+ ' .. DarkRP.formatMoney( salary )
+    return '+ ' .. ( DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( salary ) or tostring( salary ) )
 end
 
 local function drawIndicator( x, y, w, h, material, color, fraction )
@@ -183,7 +183,7 @@ local updateSlowLabels do
 end
 
 local function drawMainHUD( self, client, scrW, scrH )
-    local showJob = not CONVAR_COMPACT:GetBool()
+    local showJob = not CONVAR_COMPACT:GetBool() and hud:GetOptionValue( 'display_job' )
     local space = hud.GetScreenPadding()
     local padding = hud.ScaleTall( 10 )
     local w, h = hud.ScaleWide( 300 ), hud.ScaleTall( showJob and 120 or 100 )
@@ -201,9 +201,10 @@ local function drawMainHUD( self, client, scrW, scrH )
     local isDark = theme.isDark
 
     -- Player variables
-    local animSpeed = FrameTime() * 16
+    local animSpeed = FrameTime() * ( hud:GetOptionValue( 'reduce_motion' ) and 64 or hud:GetOptionValue( 'animation_speed' ) or 16 )
     local healthFraction = math.Clamp( client:Health() / client:GetMaxHealth(), 0, 1 )
-    local armorFraction = math.Clamp( client:Armor() / client:GetMaxArmor(), 0, 1 )
+    local maxArmor = math.max( client:GetMaxArmor() or 100, 1 )
+    local armorFraction = math.Clamp( client:Armor() / maxArmor, 0, 1 )
     local money = client:getDarkRPVar( 'money' ) or 0
 
     lerpHealth = Lerp( animSpeed, lerpHealth or healthFraction, healthFraction )
@@ -212,11 +213,12 @@ local function drawMainHUD( self, client, scrW, scrH )
 
     local name = client:Name()
     local teamColor = team.GetColor( client:Team() )
-    local moneyFormatted = DarkRP.formatMoney( math.Round( lerpMoney ) )
+    local moneyFormatted = ( DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( math.Round( lerpMoney ) ) or tostring( math.Round( lerpMoney ) ) )
     local salary = client:getDarkRPVar( 'salary' ) or 0
     local salaryFormatted = formatSalary( salary )
-    local hasHunger = not DarkRP.disabledDefaults[ 'modules' ][ 'hungermod' ]
-    local hasArmor = math.Round( lerpArmor, 2 ) > 0
+    local darkRPDefaults = DarkRP and DarkRP.disabledDefaults and DarkRP.disabledDefaults[ 'modules' ]
+    local hasHunger = hud:GetOptionValue( 'display_hunger' ) and not ( darkRPDefaults and darkRPDefaults[ 'hungermod' ] )
+    local hasArmor = hud:GetOptionValue( 'display_armor' ) and math.Round( lerpArmor, 2 ) > 0
     local rectAmount = ( hasHunger or hasArmor ) and 2 or 1
     local rectH = hud.ScaleTall( UNSCALED_BAR_ICON_SIZE )
 
@@ -232,8 +234,13 @@ local function drawMainHUD( self, client, scrW, scrH )
     local labelY = y + padding
 
     -- Draw background
-    hud.DrawRoundedBox( x, y, w, h, colorPrimary )
-    hud.DrawRoundedBoxEx( x, y, avatarSpaceWidth, h, colorSecondary, true, false, true )
+    hud.DrawRoundedBox( x, y, w, h, ColorAlpha( colorPrimary, 238 ) )
+    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( colors.accent, 18 ) )
+    hud.DrawRoundedBoxEx( x, y, avatarSpaceWidth, h, ColorAlpha( colorSecondary, 245 ), true, false, true )
+    surface.SetDrawColor( colors.accent )
+    surface.DrawRect( x, y, hud.ScaleWide( 3 ), h )
+    surface.DrawLine( x + avatarSpaceWidth, y + 1, x + avatarSpaceWidth + hud.ScaleWide( 26 ), y + 1 )
+    surface.DrawLine( x + w - hud.ScaleWide( 34 ), y + h - 2, x + w - 2, y + h - 2 )
 
     -- Draw labels
     local labelMaxW = w - avatarSpaceWidth - padding * 2
@@ -252,8 +259,13 @@ local function drawMainHUD( self, client, scrW, scrH )
         teamHeight = 0
     end
 
-    local _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.Small, labelX, labelY + nameHeight + teamHeight, colorTextSecondary, 0, 0 )
-    draw.SimpleText( salaryFormatted, hud.fonts.Small, x + w - padding, labelY + nameHeight + teamHeight, colorTextSecondary, 2, 0 )
+    local moneyHeight = 0
+    if ( hud:GetOptionValue( 'display_money' ) ) then
+        _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, labelX, labelY + nameHeight + teamHeight, colors.money or colors.positive, 0, 0 )
+    end
+    if ( hud:GetOptionValue( 'display_salary' ) ) then
+        draw.SimpleText( salaryFormatted, hud.fonts.Small, x + w - padding, labelY + nameHeight + teamHeight, colorTextSecondary, 2, 0 )
+    end
 
     render.SetScissorRect( 0, 0, 0, 0, false )
 
@@ -331,7 +343,9 @@ local function drawMainHUD( self, client, scrW, scrH )
     local totalIndictatorsH = rectAmount * rectH + ( rectAmount - 1 ) * rectSpace
     local rectY = footerY0 - totalIndictatorsH * .5
 
-    drawIndicator( labelX, rectY, lineW, rectH, WIMG_HEART, Color( 197, 54, 54), lerpHealth )
+    if ( hud:GetOptionValue( 'display_health' ) ) then
+        drawIndicator( labelX, rectY, lineW, rectH, WIMG_HEART, colors.negative, lerpHealth )
+    end
 
     rectY = rectY + rectH + rectSpace
 
@@ -342,10 +356,10 @@ local function drawMainHUD( self, client, scrW, scrH )
 
         lerpHunger = Lerp( animSpeed, lerpHunger or hungerFraction, hungerFraction )
 
-        drawIndicator( labelX, rectY, halfLineWidth, rectH, WIMG_FOOD, Color( 197, 157, 54), lerpHunger )
-        drawIndicator( labelX + halfLineWidth + iconSpace, rectY, halfLineWidth, rectH, WIMG_SHIELD, Color( 54, 102, 197), lerpArmor )
+        drawIndicator( labelX, rectY, halfLineWidth, rectH, WIMG_FOOD, colors.hunger or Color( 245, 197, 66 ), lerpHunger )
+        drawIndicator( labelX + halfLineWidth + iconSpace, rectY, halfLineWidth, rectH, WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor )
     elseif ( hasArmor ) then
-        drawIndicator( labelX, rectY, lineW, rectH, WIMG_SHIELD, Color( 54, 102, 197), lerpArmor )
+        drawIndicator( labelX, rectY, lineW, rectH, WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor )
     end
 
     -- Draw help
@@ -387,14 +401,14 @@ local function drawMainHUD( self, client, scrW, scrH )
         hud.DrawRoundedBox( x, blockY, w, addBlockH, colorPrimary )
 
         local textW = draw.SimpleText( vox.lang:Get( 'hud.level.name' ) .. ': ', hud.fonts.Tiny, x + padding, blockY + padding, colorTextSecondary, 0, 0 )
-        draw.SimpleText( level, hud.fonts.SmallBold, x + padding + textW, blockY + padding, ( isDark and COLOR_XP or colorTextPrimary ), 0, 0 )
+        draw.SimpleText( level, hud.fonts.SmallBold, x + padding + textW, blockY + padding, ( isDark and ( colors.xp or COLOR_XP ) or colorTextPrimary ), 0, 0 )
 
         local textW2 = draw.SimpleText( ' / ' .. maxXP, hud.fonts.Tiny, x + w - padding, blockY + padding, colorTextSecondary, 2, 0 )
         draw.SimpleText( xp, hud.fonts.TinyBold, x + w - padding - textW2, blockY + padding, colorTextPrimary, 2, 0 )
 
         hud.DrawRoundedBox( x + padding, blockY + addBlockH - padding - rectH, w - padding * 2, rectH, ColorAlpha( colorTextPrimary, isDark and 10 or 200 ) )
         vox.hud.ScissorRect( x + padding, blockY + addBlockH - padding - rectH, ( w - padding * 2 ) * nextLevelFraction, rectH, function()
-            hud.DrawRoundedBox( x + padding, blockY + addBlockH - padding - rectH, w - padding * 2, rectH, COLOR_XP )
+            hud.DrawRoundedBox( x + padding, blockY + addBlockH - padding - rectH, w - padding * 2, rectH, ( colors.xp or COLOR_XP ) )
         end )
     end
 end

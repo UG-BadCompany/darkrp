@@ -48,7 +48,11 @@ local function registerAdminButton(cmd, cmdData)
                 targetID = ply:Name()
             end
 
-            RunConsoleCommand(handler.uniqueID, command, targetID)
+            if ( handler.uniqueID == 'vox_admin_action' ) then
+                RunConsoleCommand('vox_admin_action', command == 'return' and 'returnply' or command, ply:SteamID())
+            else
+                RunConsoleCommand(handler.uniqueID, command, targetID)
+            end
         end,
         getVisible = function(client)
             local handler = vox.scoreboard.adminHandler
@@ -103,6 +107,8 @@ registerAdminButton('bring', {})
 registerAdminButton('return', {})
 registerAdminButton('respawn', {})
 registerAdminButton('slay', {})
+registerAdminButton('kick', {})
+registerAdminButton('warn', {})
 
 --[[------------------------------
 Admin modes
@@ -165,6 +171,15 @@ vox.WaitForGamemode('vox.scoreboard.InitButtons', function()
     if (vox.scoreboard.adminHandler) then
         vox.scoreboard:PrintSuccess('Found admin handler: ' .. vox.scoreboard.adminHandler.uniqueID)
     else
-        vox.scoreboard:PrintWarning('Admin handler has not been found.')
+        vox.scoreboard.adminHandler = {
+            uniqueID = 'vox_admin_action',
+            data = {
+                idFormat = TYPE_STEAMID32,
+                hasPermission = function(client, cmd)
+                    return IsValid(client) and client:IsAdmin()
+                end
+            }
+        }
+        vox.scoreboard:PrintSuccess('Using built-in Vox Admin fallback.')
     end
 end)

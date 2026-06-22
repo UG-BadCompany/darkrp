@@ -82,7 +82,7 @@ function vox.f4.OpenAdminSettings()
     frame:SetSize(ScrW() * .66, ScrH() * .66)
     frame:Center()
     frame:MakePopup()
-    frame:SetTitle('Vox DarkRP (ADMIN)')
+    frame:SetTitle('Vox Admin')
 
     local p = vox.ScaleTall(15)
     local content = frame:Add('Panel')

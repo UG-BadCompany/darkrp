@@ -10,7 +10,7 @@ Email: tochnonement@gmail.com
 CAMI.RegisterPrivilege({
     Name = 'vox_f4_edit',
     MinAccess = 'superadmin',
-    Description = 'Allows to configure Vox DarkRP'
+    Description = 'Allows to configure Vox Menu'
 })
 
 vox.f4:RegisterOption('title', {
@@ -19,7 +19,7 @@ vox.f4:RegisterOption('title', {
     category = 'General',
     cami = 'vox_f4_edit',
     type = 'string',
-    default = 'Vox DarkRP'
+    default = 'Vox Menu'
 })
 
 vox.f4:RegisterOption('colored_items', {

@@ -23,7 +23,7 @@ function vox.hud.OpenSettings()
     frame:SetSize( ScrW() * .5, ScrH() * .65 )
     frame:Center()
     frame:MakePopup()
-    frame:SetTitle( 'VOX HUD' )
+    frame:SetTitle( 'Vox HUD' )
 
     local content = frame:Add( 'Panel' )
     content:DockPadding( padding, padding, padding, padding )
