@@ -1,64 +1,117 @@
-# DarkRP UI
+# DarkRP Premium UI Suite
 
-A premium, client-focused DarkRP interface suite for Garry's Mod. It replaces the default rough Derma feel with a consistent modern theme, animated panels, safe DarkRP integration points, and client-side preferences.
+A complete modern UI overhaul for DarkRP servers: HUD, F4, scoreboard, notifications, settings, admin tools, popups, cards, filters, model previews, and shared premium components now use one cohesive glass-dashboard design.
 
-## Current Features
+## Visual overhaul
 
-- **F4 command center** with a command-center dashboard, animated tab transitions, premium job/shop cards, searchable/sortable job browsing, category filters, larger selected-item preview, rich job details, polished salary/player/slot displays, click sounds, and client-side favorites.
-- **Premium job browser** reads `RPExtraTeams` directly, supports `job.model` as a string or table, validates model paths when possible, falls back to `models/player/kleiner.mdl`, caches model lists, avoids broken-model errors, auto-frames DModelPanel cameras, and lets users click multi-model previews to cycle appearances.
-- **Job status indicators** include favorite, locked, VIP, staff, and vote badges, plus clearer requirements and loadout text in the selected job panel.
-- **HUD** includes animated health, armor, hunger, money, salary, ammo, voice, wanted, lockdown, agenda, and laws displays with compact mode and scaling support.
-- **Scoreboard** opens only while TAB is held, uses premium rows, avatars, job color stripes, staff/VIP badges, colored ping, SteamID copy, and admin action integration placeholders.
-- **Notifications** safely wrap legacy and DarkRP notifications after `GAMEMODE` is available, with stacked animated toast cards, type icons, progress bars, slide animations, and sound settings.
-- **Reusable UI components** include premium buttons, cards, search boxes, combo boxes, close buttons, model previews, empty states, confirmation modals, shared animation helpers, consistent radius, hover behavior, spacing, fonts, and accent colors.
-- **Themes/settings** provide consistent radius, spacing, font usage, accent colors, blur, sounds, notification placement, HUD scale, compact mode, tooltip and low-resolution behavior, confirmation flow defaults, and saved favorites.
+- Premium dark-glass panels, rounded cards, accent borders, soft shadows, animated hover states, premium buttons, search boxes, dropdowns, modals, empty states, locked states, and scrollbars.
+- Responsive sizing and safe padding for 720p, 1080p, 1440p, and 4K.
+- HUD money is inside the main HUD card; health, armor, hunger, salary, wanted, lockdown, ammo, agenda, laws, voice, and level placeholders share the active theme.
+- The F4 sidebar no longer shows Vehicles. Vehicle source support remains in code for later reuse.
+- Skills has been renamed to **Player Upgrades** across config, placeholders, and UI.
 
-## Controls
+## Theme system
 
-- Press **F4** to open the DarkRP command menu.
-- Press **F4 again**, **ESC**, or the premium close button to close the F4 menu.
-- Press and hold **TAB** to show the scoreboard.
-- Release **TAB** to close the scoreboard and restore normal mouse behavior.
-- Click a job card to inspect it in the large right-side preview.
-- Click the star on a job card to favorite/unfavorite it; favorites are saved client-side.
-- Click a multi-model preview to cycle available models.
-- Click a scoreboard row to copy that player’s SteamID.
+Included presets:
 
-## F4 Close Behavior
+- Obsidian Blue
+- Midnight Purple
+- Carbon Red
+- Emerald City
+- Gold Luxury
+- Clean Light
+- Custom Accent
 
-The F4 frame is single-instance safe. If it is already open, pressing F4 again starts the animated close path instead of creating a duplicate frame. Close actions disable input, fade out the panel, remove it safely, and release the screen clicker.
+Every theme defines premium tokens for background, panel, card, card hover, border, text, muted/subtext, accent, success, warning, error, shadow, glass, disabled, locked, and highlight. UI systems consume these tokens instead of ad-hoc Derma colors.
 
-## TAB Scoreboard Behavior
+## HUD configuration
 
-The scoreboard is intended to be visible only while TAB is held. `ScoreboardShow` opens it, `ScoreboardHide` closes it, and a lightweight fail-safe closes it if TAB is no longer down so mouse input is not trapped after release.
+Client-side settings include HUD position, HUD scale, HUD style, compact/full mode, module visibility for money/salary/hunger/level/ammo/agenda/laws, blur, theme preset, accent color, animation speed, font scale, notification position/sounds, reduce motion, and reset defaults. The Settings tab includes live HUD, notification, button, and card previews.
 
-## Theme and Settings Info
+## F4 menu
 
-Client settings are stored in `data/darkrp_ui/settings.txt` and include theme, HUD enabled state, HUD scale, blur, notifications, notification position, sounds, compact mode, and favorites. Server owners can edit shared defaults in `lua/darkrp_ui/shared/sh_config.lua` and theme colors/radius in `lua/darkrp_ui/shared/sh_theme.lua`.
+Visible tabs:
 
-## Known Integration Placeholders
+Dashboard, Jobs, Entities, Weapons, Shipments, Ammo, Food, Inventory, Player Upgrades, Store, Rules, Settings, and Admin for staff.
 
-- Inventory panel: override/register an inventory module for the `inventory` F4 tab.
-- Skills/XP: provide `DarkRPUI.GetLevelData(ply)` or DarkRP vars `level`, `xp`, and `xpmax`.
-- Store: wire the `store` tab to your donation/store provider.
-- Admin actions: connect moderation commands in `DarkRPUI.Admin.Send` to your admin system permissions.
-- Server links: update Discord, rules, and store URLs in config.
-- Custom restriction messaging: integrate server-specific VIP/staff/custom-check failure copy where desired.
+Jobs use `DModelPanel`, support string/table models, fallback safely to Kleiner, auto-frame the model, rotate on hover, and allow local favorite jobs. Shop cards show name, price, description, category/preview where available, animated hover, and purchase buttons.
 
-## Testing Checklist
+## Shipment job whitelist
 
-- Open F4 repeatedly and confirm no duplicate frames or stuck screen clicker.
-- Close F4 with F4, ESC, and the close button and confirm all paths animate out cleanly.
-- Search, sort, filter jobs, favorite jobs, reconnect, and confirm favorites persist.
-- Verify every `RPExtraTeams` job displays a model and multi-model jobs can cycle models.
-- Confirm invalid/missing job models fall back to `models/player/kleiner.mdl` without Lua errors.
-- Select locked/VIP/staff/vote jobs and confirm indicators/actions are clear.
-- Change money, salary, health, armor, hunger, wanted, lockdown, voice, ammo, laws, and agenda values and confirm HUD animations.
-- Toggle compact mode and HUD scale and confirm the HUD remains readable at common resolutions.
-- Hold and release TAB to confirm scoreboard appears only while held and mouse control is restored.
-- Trigger legacy and DarkRP notifications before/after gamemode initialization and confirm there are no Lua errors.
-- Toggle blur, sounds, compact mode, notification position, and HUD scale in settings.
-- Right-click scoreboard rows and confirm the DermaMenu matches the premium panel/card styling.
-- Open settings and admin panels from F4 and confirm every button, combo box, slider card, popup, scrollbar, empty state, tooltip, and notification follows the same spacing, radius, shadow, accent, and font language.
-- Test at 1280x720 and ultrawide resolutions to confirm HUD scale, F4 clamping, scoreboard sizing, and notification stacks remain readable without clipping.
-- Trigger confirmation popups and locked-state flows for jobs/purchases/admin actions and confirm they animate, close, and play click sounds without trapping input.
+Add whitelist rules in `lua/darkrp_ui/shared/sh_config.lua`:
+
+```lua
+DarkRPUI.Config.ShipmentJobWhitelist = {
+    -- ["AK-47 Shipment"] = { TEAM_GUNDEALER = true, TEAM_BLACKMARKET = true },
+    -- ["Pistol Shipment"] = { TEAM_GUNDEALER = true }
+}
+DarkRPUI.Config.ShipmentWhitelistDefaultAllow = false
+DarkRPUI.Config.ShowLockedShipments = true
+```
+
+Shipment matching checks `shipment.name`, `shipment.entity`, `shipment.class`, and `shipment.weaponClass`. If a shipment is unavailable and locked shipments are enabled, the F4 shows a premium locked card and the info panel displays “Restricted to specific jobs.”
+
+## TAB scoreboard behavior
+
+- Holding TAB opens the scoreboard.
+- Releasing TAB closes the scoreboard and always disables the screen clicker.
+- While holding TAB, right-click unlocks the cursor for clickable rows/actions.
+- Player rows support SteamID copy, Steam profile opening, and staff action menus.
+- A fail-safe closes the scoreboard when TAB is no longer held, preventing stuck cursors.
+
+## Admin backend
+
+The admin UI now requests server-side actions through these net messages:
+
+- `DarkRPUI.Admin.Action`
+- `DarkRPUI.Admin.Notify`
+- `DarkRPUI.Admin.RequestPlayerInfo`
+- `DarkRPUI.Admin.PlayerInfo`
+
+The server validates requester rank, action permission, target validity, and same/higher-rank protection before running anything. Supported working actions include bring, goto, return, freeze, unfreeze, spectate, unspectate, strip weapons, respawn, slay, and kick. Ban, warn, jail, unjail, set job, and set money expose clean integration hooks and polished placeholder responses when no supported admin mod integration is present.
+
+Configuration:
+
+```lua
+DarkRPUI.Config.AdminPreventSameOrHigherRank = true
+DarkRPUI.Config.AdminRankPower = { user = 0, vip = 0, moderator = 20, admin = 50, superadmin = 100, owner = 999 }
+DarkRPUI.Config.AdminPermissions = { -- see sh_config.lua for defaults }
+```
+
+Hooks:
+
+```lua
+hook.Run("DarkRPUI.CanAdminAction", admin, target, action, data)
+hook.Run("DarkRPUI.AdminAction", admin, target, action, data)
+```
+
+## Known integrations/placeholders
+
+- Inventory, Player Upgrades/XP, and Store are integration-ready placeholders.
+- Ban/warn/jail/unjail/setjob/setmoney should be wired to your chosen admin/economy stack through the provided hooks when ULX/SAM behavior differs by server version.
+
+## Testing checklist
+
+- F4 opens/closes.
+- ESC closes F4.
+- Vehicles tab is not visible.
+- Player Upgrades tab is visible.
+- Jobs show models.
+- Job model fallback works.
+- Shipments respect whitelist.
+- Locked shipments display correctly.
+- Money is inside main HUD.
+- HUD does not clip at screen edge.
+- HUD settings save.
+- TAB opens scoreboard.
+- Releasing TAB closes scoreboard.
+- Right-click while holding TAB enables cursor.
+- Scoreboard row actions are clickable.
+- Cursor disables on TAB release.
+- Admin actions run server-side.
+- Non-admin users cannot run admin actions.
+- Lower ranks cannot target equal/higher ranks when enabled.
+- Notifications work before/after DarkRP loads.
+- No Lua errors.
+- No cursor stuck.
+- No console spam.

@@ -39,6 +39,25 @@ local function jobSalary(job) return job and (job.salary or job.Salary or 0) or 
 local function jobPlayers(teamId) local count=0 for _,p in ipairs(player.GetAll()) do if p:Team()==teamId then count=count+1 end end return count end
 local function jobMax(job) return job and (job.max or job.Max or 0) or 0 end
 local function weaponText(job) local weapons=job and (job.weapons or job.Weapons) or {}; if #weapons == 0 then return "Standard loadout" end return table.concat(weapons, ", ") end
+
+local function shipmentKeys(it) return { it and it.name, it and it.Name, it and it.entity, it and it.class, it and it.weaponClass } end
+local function shipmentWhitelist(it)
+    local cfg = (DarkRPUI.Config and DarkRPUI.Config.ShipmentJobWhitelist) or {}
+    for _,k in ipairs(shipmentKeys(it)) do if k and cfg[k] ~= nil then return cfg[k] end end
+end
+local function shipmentAllowed(it)
+    if currentTab ~= "shipments" then return true end
+    local wl = shipmentWhitelist(it); local defaultAllow = DarkRPUI.Config.ShipmentWhitelistDefaultAllow == true
+    if wl == nil then return defaultAllow end
+    local teamId = LocalPlayer():Team()
+    for key,allowed in pairs(wl) do
+        local resolved = isnumber(key) and key or _G[tostring(key)]
+        if allowed and resolved == teamId then return true end
+        if allowed == false and resolved == teamId then return false end
+    end
+    return defaultAllow and true or false
+end
+
 local function isJobLocked(job) local grp=DarkRPUI.Util.PlayerGroup(LocalPlayer()); if job and job.customCheck and not job.customCheck(LocalPlayer()) then return true end; if job and job.allowed and not job.allowed[grp] then return true end; return false end
 local function canShowJob(job) if not job then return false end if job.customCheck and job.CustomCheckFailMsg and not job.customCheck(LocalPlayer()) then return true end return true end
 local function addAnim(panel, index) panel:SetAlpha(0); panel.DarkRPUIEntrance=0; timer.Simple((index or 1)*0.012, function() if IsValid(panel) then panel:AlphaTo(255, DarkRPUI.UI.AnimSpeed(1.15), 0); panel.DarkRPUIEntrance=1 end end) end
@@ -63,6 +82,7 @@ local function buildInfoPanel(parent)
         DarkRPUI.UI.ShadowedBox(18,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),235),DarkRPUI.Color("border"),120)
         if not selectedItem then DarkRPUI.UI.Text("Select an item","DarkRPUI.Subtitle",24,26); DarkRPUI.UI.Text("Details, requirements, preview, and actions appear here.","DarkRPUI.Small",24,58,DarkRPUI.Color("subtext")); return end
         DarkRPUI.UI.Text(itemName(selectedItem),"DarkRPUI.Subtitle",24,24)
+        if currentTab=="shipments" and not shipmentAllowed(selectedItem) then DarkRPUI.UI.Text("Restricted to specific jobs.","DarkRPUI.Small",24,82,DarkRPUI.Color("locked")) end
         draw.DrawText(itemDesc(selectedItem),"DarkRPUI.Tiny",24,54,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT)
     end
     info.Refresh=function()
@@ -85,7 +105,8 @@ local function buildInfoPanel(parent)
         y=statRow(info,y,"!","Requirements",isJobLocked(selectedItem) and "VIP / staff / custom check" or "Available",isJobLocked(selectedItem) and DarkRPUI.Color("error") or DarkRPUI.Color("success"))
         if currentTab=="jobs" then y=statRow(info,y,"⌁","Loadout",weaponText(selectedItem),DarkRPUI.Color("warning")) end
         if currentTab=="jobs" then local favKey=jobCommand(selectedItem) or itemName(selectedItem); local fav=DarkRPUI.UI.MakeIconButton(info,favorites[favKey] and "★ Favorite" or "☆ Favorite",function(b) favorites[favKey]=not favorites[favKey] or nil; DarkRPUI.Settings=DarkRPUI.Settings or {}; DarkRPUI.Settings.favorites=favorites; if DarkRPUI.SaveSettings then DarkRPUI.SaveSettings() end; b:SetText(favorites[favKey] and "★ Favorite" or "☆ Favorite") end); fav:SetPos(24,info:GetTall()-124); fav:SetSize(info:GetWide()-48,40) end
-        local act=vgui.Create("DButton",info); act:SetPos(24,info:GetTall()-70); act:SetSize(info:GetWide()-48,48); act:SetText(currentTab=="jobs" and (isJobLocked(selectedItem) and "Requirements Not Met" or "Become Job") or "Purchase"); DarkRPUI.UI.StyleButton(act, isJobLocked(selectedItem) and DarkRPUI.Color("error") or DarkRPUI.Color("accent")); act.DoClick=function() DarkRPUI.UI.PlayClick(); if isJobLocked(selectedItem) then DarkRPUI.Notify("warning","Job locked","You do not meet this job requirement."); return end; if currentTab=="jobs" then buyCommand(jobCommand(selectedItem)) else buyItem(selectedItem) end end
+        local lockedShipment = currentTab=="shipments" and not shipmentAllowed(selectedItem)
+        local act=vgui.Create("DButton",info); act:SetPos(24,info:GetTall()-70); act:SetSize(info:GetWide()-48,48); act:SetText(lockedShipment and "Restricted" or (currentTab=="jobs" and (isJobLocked(selectedItem) and "Requirements Not Met" or "Become Job") or "Purchase")); DarkRPUI.UI.StyleButton(act, (lockedShipment or isJobLocked(selectedItem)) and DarkRPUI.Color("error") or DarkRPUI.Color("accent")); act.DoClick=function() DarkRPUI.UI.PlayClick(); if lockedShipment then DarkRPUI.Notify("warning","Shipment locked","Restricted to specific jobs."); return end; if isJobLocked(selectedItem) then DarkRPUI.Notify("warning","Job locked","You do not meet this job requirement."); return end; if currentTab=="jobs" then buyCommand(jobCommand(selectedItem)) else buyItem(selectedItem) end end
     end
     return info
 end
@@ -138,7 +159,7 @@ local function buildShop(body, tab, info)
     local grid=vgui.Create("DIconLayout",scroll); grid:Dock(FILL); grid:SetSpaceX(14); grid:SetSpaceY(14)
     local function rebuild()
         grid:Clear(); local q=string.lower(search:GetValue() or ""); local items=(sources[tab] and sources[tab]()) or {}; local n=0
-        for _,it in ipairs(items) do local hay=string.lower(itemName(it).." "..itemDesc(it)); if q=="" or string.find(hay,q,1,true) then n=n+1; local price=itemPrice(it); local card=DarkRPUI.UI.MakeAnimatedCard(grid,"",""); card:SetSize(280,178); addAnim(card,n); card.DoClick=function() selectedItem=it; info.Refresh() end; local mdl=DarkRPUI.UI.MakeModelPreview(card, modelList(it), false); mdl:SetPos(12,12); mdl:SetSize(82,100); card.PaintOver=function(_,w,h) DarkRPUI.UI.Text(itemName(it),"DarkRPUI.Subtitle",104,16); draw.DrawText(itemDesc(it),"DarkRPUI.Tiny",104,44,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT); if price then DarkRPUI.UI.Badge(104,104,DarkRPUI.Util.FormatMoney(price),DarkRPUI.Color("success")) end; DarkRPUI.UI.Badge(12,124,#modelList(it)>1 and (#modelList(it).." models") or "preview",DarkRPUI.Color("accent")) end; local b=vgui.Create("DButton",card); b:SetText("Buy"); b:SetPos(190,132); b:SetSize(74,32); DarkRPUI.UI.StyleButton(b,DarkRPUI.Color("success")); b.DoClick=function() DarkRPUI.UI.PlayClick(); buyItem(it) end end end
+        for _,it in ipairs(items) do local allowed=shipmentAllowed(it); if tab ~= "shipments" or allowed or DarkRPUI.Config.ShowLockedShipments ~= false then local hay=string.lower(itemName(it).." "..itemDesc(it)); if q=="" or string.find(hay,q,1,true) then n=n+1; local price=itemPrice(it); local card=DarkRPUI.UI.MakeAnimatedCard(grid,"",""); card:SetSize(280,178); addAnim(card,n); card.DoClick=function() selectedItem=it; info.Refresh() end; local mdl=DarkRPUI.UI.MakeModelPreview(card, modelList(it), false); mdl:SetPos(12,12); mdl:SetSize(82,100); card.PaintOver=function(_,w,h) DarkRPUI.UI.Text(itemName(it),"DarkRPUI.Subtitle",104,16); draw.DrawText(itemDesc(it),"DarkRPUI.Tiny",104,44,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT); if price then DarkRPUI.UI.Badge(104,104,DarkRPUI.Util.FormatMoney(price),DarkRPUI.Color("success")) end; DarkRPUI.UI.Badge(12,124,#modelList(it)>1 and (#modelList(it).." models") or "preview",DarkRPUI.Color("accent")) end; local locked = tab=="shipments" and not allowed; card.PaintOver=function(_,w,h) DarkRPUI.UI.Text(itemName(it),"DarkRPUI.Subtitle",104,16); draw.DrawText(locked and "Restricted to specific jobs." or itemDesc(it),"DarkRPUI.Tiny",104,44,locked and DarkRPUI.Color("locked") or DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT); if price then DarkRPUI.UI.Badge(104,104,DarkRPUI.Util.FormatMoney(price),DarkRPUI.Color("success")) end; if locked then DarkRPUI.UI.Badge(12,124,"🔒 LOCKED",DarkRPUI.Color("locked")) else DarkRPUI.UI.Badge(12,124,#modelList(it)>1 and (#modelList(it).." models") or "preview",DarkRPUI.Color("accent")) end end; local b=vgui.Create("DButton",card); b:SetText(locked and "Locked" or "Buy"); b:SetEnabled(not locked); b:SetPos(190,132); b:SetSize(74,32); DarkRPUI.UI.StyleButton(b,locked and DarkRPUI.Color("disabled") or DarkRPUI.Color("success")); b.DoClick=function() DarkRPUI.UI.PlayClick(); if locked then return end; buyItem(it) end end end end
         if n==0 then DarkRPUI.UI.EmptyState(grid,"Nothing available","No configured DarkRP data matched this filter.") end
     end
     search.OnChange=rebuild; rebuild()

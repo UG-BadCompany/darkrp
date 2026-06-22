@@ -7,6 +7,9 @@ local function theme(name, radius, colors)
     colors.subtext = colors.subtext or colors.muted
     colors.info = colors.info or colors.accent
     colors.overlay = colors.overlay or colors.glass
+    colors.disabled = colors.disabled or C(80,88,100,180)
+    colors.locked = colors.locked or colors.error
+    colors.highlight = colors.highlight or colors.accent
     return { name=name, radius=radius or 16, colors=colors }
 end
 
