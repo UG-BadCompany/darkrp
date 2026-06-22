@@ -10,7 +10,6 @@ local sources = {
     entities=function() return DarkRPEntities or {} end,
     weapons=function() local out={} for _,v in ipairs(CustomShipments or {}) do if v.separate then out[#out+1]=v end end return out end,
     shipments=function() local out={} for _,v in ipairs(CustomShipments or {}) do if not v.noship then out[#out+1]=v end end return out end,
-    vehicles=function() return CustomVehicles or {} end,
     ammo=function() return (GAMEMODE and GAMEMODE.AmmoTypes) or {} end,
     food=function() return FoodItems or {} end
 }
@@ -153,6 +152,22 @@ local function buildJobs(body, info)
     combo.OnSelect=function(_,_,v) category=v; rebuild() end; sortBox.OnSelect=function(_,_,v) sort=v; rebuild() end; search.OnChange=rebuild; rebuild()
 end
 
+
+local function buildPlayerUpgrades(body)
+    local scroll=DarkRPUI.UI.ScrollPanel(body); scroll:Dock(FILL); scroll:DockMargin(0,8,0,0)
+    local grid=vgui.Create("DIconLayout",scroll); grid:Dock(FILL); grid:SetSpaceX(14); grid:SetSpaceY(14)
+    local upgrades={{"Stamina","Run longer and recover faster","◆"},{"Strength","Improve carrying power and melee presence","✦"},{"Business","Better shop margins and commerce tools","$"},{"Crafting","Blueprint and production bonuses","▣"},{"Driving","Vehicle handling and delivery perks","⌁"},{"Security","Lock, alarm, and defense integrations","◈"},{"Intelligence","XP, research, and scanner bonuses","●"}}
+    for i,u in ipairs(upgrades) do
+        local c=DarkRPUI.UI.MakeAnimatedCard(grid,"",""); c:SetSize(260,164); addAnim(c,i)
+        c.PaintOver=function(_,w,h)
+            DarkRPUI.UI.Text(u[3],"DarkRPUI.Title",18,16,DarkRPUI.Color("accent")); DarkRPUI.UI.Text(u[1],"DarkRPUI.Subtitle",62,20);
+            draw.DrawText(u[2],"DarkRPUI.Small",18,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT)
+            DarkRPUI.UI.RoundedBox(5,18,112,w-36,8,DarkRPUI.Color("border")); DarkRPUI.UI.RoundedBox(5,18,112,(w-36)*(0.12+(i%4)*0.18),8,DarkRPUI.Color("accent"))
+            DarkRPUI.UI.Badge(18,132,"INTEGRATION READY",DarkRPUI.Color("info"))
+        end
+    end
+end
+
 local function buildShop(body, tab, info)
     local searchHolder, search = makeSearch(body, "Search "..tab.."...", nil); searchHolder:Dock(TOP); searchHolder:DockMargin(0,0,0,12)
     local scroll=vgui.Create("DScrollPanel",body); scroll:Dock(FILL); DarkRPUI.UI.StyleScrollbar(scroll)
@@ -171,18 +186,18 @@ end
 function DarkRPUI.F4.Open()
     if IsValid(DarkRPUI.F4.Frame) then DarkRPUI.F4.Close(); return end
     selectedItem=nil; currentTab="dashboard"
-    local f=vgui.Create("DFrame"); DarkRPUI.F4.Frame=f; f:SetSize(math.max(820,ScrW()*0.92),math.max(620,ScrH()*0.90)); f:SetSize(math.min(f:GetWide(),ScrW()-24),math.min(f:GetTall(),ScrH()-24)); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); f:SetKeyboardInputEnabled(true); DarkRPUI.UI.AnimateIn(f)
+    local f=vgui.Create("DFrame"); DarkRPUI.F4.Frame=f; local fw,fh=DarkRPUI.Layout.SizeForScreen(math.max(820,ScrW()*0.92),math.max(620,ScrH()*0.90)); f:SetSize(fw,fh); f:Center(); DarkRPUI.Layout.ClampPanel(f,true); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); f:SetKeyboardInputEnabled(true); DarkRPUI.UI.AnimateIn(f)
     f.OnKeyCodePressed=function(_,key) if key==KEY_ESCAPE then DarkRPUI.F4.Close() end end
     f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,8); DarkRPUI.UI.ShadowedBox(22,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),238),DarkRPUI.Color("border")); DarkRPUI.UI.Text(GetHostName() or "DarkRP Server","DarkRPUI.Title",30,22); local ply=LocalPlayer(); DarkRPUI.UI.Text(ply:Nick().."  •  "..DarkRPUI.Util.FormatMoney(DarkRPUI.Util.DarkRPVar(ply,"money",0)).."  •  "..(team.GetName(ply:Team()) or "Citizen"),"DarkRPUI.Small",32,62,DarkRPUI.Color("subtext")) end
     local close=DarkRPUI.UI.MakeCloseButton(f, DarkRPUI.F4.Close); close:SetPos(f:GetWide()-64,20)
-    local nav=vgui.Create("DPanel",f); nav:SetPos(22,96); nav:SetSize(220,f:GetTall()-118); nav.Paint=function(_,w,h) DarkRPUI.UI.ShadowedBox(18,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border")) end
-    local body=vgui.Create("DPanel",f); body:SetPos(264,96); body:SetSize(f:GetWide()-630,f:GetTall()-118); body.Paint=nil
-    local info=buildInfoPanel(f); info:SetPos(f:GetWide()-354,96); info:SetTall(f:GetTall()-118)
+    local navWrap=vgui.Create("DPanel",f); navWrap:SetPos(22,84); navWrap:SetSize(206,f:GetTall()-106); navWrap.Paint=function(_,w,h) DarkRPUI.UI.ShadowedBox(16,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border")) end; local nav=vgui.Create("DScrollPanel",navWrap); nav:Dock(FILL); nav:DockMargin(6,10,6,10); DarkRPUI.UI.StyleScrollbar(nav)
+    local body=vgui.Create("DPanel",f); body:SetPos(248,84); body:SetSize(math.max(280,f:GetWide()-616),f:GetTall()-106); body.Paint=nil
+    local info=buildInfoPanel(f); info:SetWide(math.min(DarkRPUI.Util.Scale(320), math.max(260, f:GetWide()*0.28))); info:SetPos(f:GetWide()-info:GetWide()-22,84); info:SetTall(f:GetTall()-106); body:SetWide(math.max(280, info:GetX()-body:GetX()-18))
     local function render(tab,name)
         currentTab=tab; selectedItem=nil; body:Clear(); body:SetAlpha(0); body:AlphaTo(255,DarkRPUI.UI.AnimSpeed(1),0); info.Refresh(); DarkRPUI.UI.PlayClick(); local head=DarkRPUI.UI.MakeHeader(body,name,"Premium animated controls, filters, sorting, and server-safe data."); head:Dock(TOP); head:DockMargin(0,0,0,6)
-        if tab=="dashboard" then buildDashboard(body) elseif tab=="jobs" then buildJobs(body,info) elseif tab=="rules" then local card=DarkRPUI.UI.MakeAnimatedCard(body,"Server Rules",""); card:Dock(FILL); card.PaintOver=function(_,w,h) draw.DrawText((DarkRPUI.Config and DarkRPUI.Config.RulesText) or "No rules configured.","DarkRPUI.Body",22,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end elseif tab=="settings" then DarkRPUI.SettingsPanel(body) elseif tab=="admin" then DarkRPUI.Admin.OpenPanel(body) elseif sources[tab] then buildShop(body,tab,info) else DarkRPUI.UI.EmptyState(body,"Coming soon",(DarkRPUI.Config.Placeholders and DarkRPUI.Config.Placeholders[tab]) or "This premium module is ready for integration.") end
+        if tab=="dashboard" then buildDashboard(body) elseif tab=="jobs" then buildJobs(body,info) elseif tab=="rules" then local card=DarkRPUI.UI.MakeAnimatedCard(body,"Server Rules",""); card:Dock(FILL); card.PaintOver=function(_,w,h) draw.DrawText((DarkRPUI.Config and DarkRPUI.Config.RulesText) or "No rules configured.","DarkRPUI.Body",22,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end elseif tab=="settings" then DarkRPUI.SettingsPanel(body) elseif tab=="player_upgrades" then buildPlayerUpgrades(body) elseif tab=="admin" then DarkRPUI.Admin.OpenPanel(body) elseif sources[tab] then buildShop(body,tab,info) else DarkRPUI.UI.EmptyState(body,"Coming soon",(DarkRPUI.Config.Placeholders and DarkRPUI.Config.Placeholders[tab]) or "This premium module is ready for integration.") end
     end
-    for _,t in ipairs((DarkRPUI.Config and DarkRPUI.Config.F4Tabs) or {}) do if not t.staffOnly or DarkRPUI.Util.IsAdmin(LocalPlayer()) then local b=DarkRPUI.UI.MakeIconButton(nav,t.icon.."  "..t.name,function() render(t.id,t.name) end); b:Dock(TOP); b:DockMargin(12,8,12,0); b:SetTall(42); b.ActiveFunc=function() return currentTab==t.id end end end
+    for _,t in ipairs((DarkRPUI.Config and DarkRPUI.Config.F4Tabs) or {}) do if not t.staffOnly or DarkRPUI.Util.IsAdmin(LocalPlayer()) then local b=DarkRPUI.UI.MakeIconButton(nav,t.icon.."  "..t.name,function() render(t.id,t.name) end); b:Dock(TOP); b:DockMargin(8,5,8,0); b:SetTall(34); b.ActiveFunc=function() return currentTab==t.id end end end
     render("dashboard","Dashboard")
 end
 hook.Add("ShowSpare2", "DarkRPUI.F4.Override", function() if not DarkRPUI.Config or DarkRPUI.Config.EnableF4Menu ~= false then DarkRPUI.F4.Open(); return false end end)

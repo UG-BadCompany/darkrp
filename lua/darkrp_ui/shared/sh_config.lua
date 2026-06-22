@@ -38,13 +38,13 @@ C.RulesText = table.concat(C.Rules, "\n\n")
 C.HUD = { scale = 1, showAgenda = true, showLaws = true, showAmmo = true, showVoice = true, maxLaws = 6, showMoney = true, showSalary = true, showHunger = true, showLevel = true }
 C.ThemeOptions = { accentPresets = { blue = Color(79,140,255), purple = Color(155,105,255), emerald = Color(60,210,130), orange = Color(255,160,70) } }
 C.F4Tabs = {
-    { id = "dashboard", name = "Dashboard", icon = "◈" }, { id = "jobs", name = "Jobs", icon = "●" },
-    { id = "entities", name = "Entities", icon = "▣" }, { id = "weapons", name = "Weapons", icon = "⌁" },
-    { id = "shipments", name = "Shipments", icon = "▤" },
-    { id = "ammo", name = "Ammo", icon = "▪" }, { id = "food", name = "Food", icon = "◍" },
-    { id = "inventory", name = "Inventory", icon = "▧" }, { id = "player_upgrades", name = "Player Upgrades", icon = "✦" },
-    { id = "store", name = "Store", icon = "★" }, { id = "rules", name = "Rules", icon = "!" },
-    { id = "settings", name = "Settings", icon = "⚙" }, { id = "admin", name = "Admin", icon = "⚑", staffOnly = true }
+    { id = "dashboard", name = "Dashboard", icon = "◈", group = "Character" }, { id = "jobs", name = "Jobs", icon = "●", group = "Character" },
+    { id = "entities", name = "Entities", icon = "▣", group = "Market" }, { id = "weapons", name = "Weapons", icon = "⌁", group = "Market" },
+    { id = "shipments", name = "Shipments", icon = "▤", group = "Market" },
+    { id = "ammo", name = "Ammo", icon = "▪", group = "Market" }, { id = "food", name = "Food", icon = "◍", group = "Market" },
+    { id = "inventory", name = "Inventory", icon = "▧" }, { id = "player_upgrades", name = "Player Upgrades", icon = "✦", group = "Progression" },
+    { id = "store", name = "Store", icon = "★", group = "Server" }, { id = "rules", name = "Rules", icon = "!", group = "Server" },
+    { id = "settings", name = "Settings", icon = "⚙", group = "Server" }, { id = "admin", name = "Admin", icon = "⚑", group = "Staff", staffOnly = true }
 }
 C.Placeholders = {
     inventory = "Inventory integration point: override hook DarkRPUI.BuildInventoryPanel or register a module.",
@@ -63,9 +63,12 @@ C.ShowLockedShipments = true
 
 -- Server-authoritative admin permissions and rank protection.
 C.AdminPermissions = C.AdminPermissions or {
-    superadmin = { bring=true, goto=true, returnply=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, stripweapons=true, respawn=true, slay=true, kick=true, ban=true, warn=true, setjob=true, setmoney=true, jail=true, unjail=true },
-    admin = { bring=true, goto=true, returnply=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, stripweapons=true, respawn=true, slay=true, kick=true, warn=true, jail=true, unjail=true },
-    moderator = { bring=true, goto=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, warn=true }
+    superadmin = { bring=true, goto=true, returnply=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, stripweapons=true, respawn=true, slay=true, kick=true, ban=true, warn=true, setjob=true, setmoney=true, jail=true, unjail=true, cloak=true, noclip=true, god=true },
+    admin = { bring=true, goto=true, returnply=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, stripweapons=true, respawn=true, slay=true, kick=true, warn=true, jail=true, unjail=true, cloak=true, noclip=true, god=true },
+    moderator = { bring=true, goto=true, freeze=true, unfreeze=true, spectate=true, unspectate=true, warn=true, noclip=true }
 }
 C.AdminPreventSameOrHigherRank = true
 C.AdminRankPower = C.AdminRankPower or { user=0, vip=0, moderator=20, mod=20, admin=50, superadmin=100, owner=999 }
+
+C.AdminActionCooldown = C.AdminActionCooldown or 1.5
+C.AdminBroadcastToStaff = C.AdminBroadcastToStaff ~= false

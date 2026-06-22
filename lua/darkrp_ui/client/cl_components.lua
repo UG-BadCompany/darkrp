@@ -191,11 +191,41 @@ function UI.LockedState(parent, title, body)
     return p
 end
 function UI.Confirm(title, body, yes, no, cb)
-    local f=vgui.Create("DFrame"); f:SetSize(420,210); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); UI.AnimateIn(f)
+    local f=vgui.Create("DFrame"); f:SetSize(DarkRPUI.Layout.SizeForScreen(420,210)); f:Center(); DarkRPUI.Layout.ClampPanel(f,true); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); UI.AnimateIn(f)
     f.Paint=function(s,w,h) UI.DrawBlur(s,5); UI.ShadowedBox(18,0,0,w,h,DarkRPUI.Color("background"),DarkRPUI.Color("border"),110); UI.Text(title or "Confirm","DarkRPUI.Subtitle",24,22); draw.DrawText(body or "Are you sure?","DarkRPUI.Small",24,58,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT) end
     local yb=vgui.Create("DButton",f); yb:SetText(yes or "Confirm"); yb:SetPos(24,142); yb:SetSize(178,42); UI.StyleButton(yb,DarkRPUI.Color("success")); yb.DoClick=function() UI.PlayClick(); if cb then cb(true) end; UI.SafeRemoveAnimated(f) end
     local nb=vgui.Create("DButton",f); nb:SetText(no or "Cancel"); nb:SetPos(218,142); nb:SetSize(178,42); UI.StyleButton(nb,DarkRPUI.Color("error")); nb.DoClick=function() UI.PlayClick(); if cb then cb(false) end; UI.SafeRemoveAnimated(f) end
 end
+
+
+-- Global safe-area debug and layout-aware component constructors.
+DarkRPUI.DebugSafeAreaConVar = DarkRPUI.DebugSafeAreaConVar or CreateClientConVar("darkrpui_debug_safearea", "0", true, false, "Draw DarkRPUI safe layout bounds")
+hook.Add("HUDPaint", "DarkRPUI.Layout.DebugSafeArea", function()
+    if not DarkRPUI.DebugSafeAreaConVar or not DarkRPUI.DebugSafeAreaConVar:GetBool() or not DarkRPUI.Layout then return end
+    local x,y,w,h = DarkRPUI.Layout.GetSafeRect()
+    surface.SetDrawColor(DarkRPUI.Color("accent"))
+    surface.DrawOutlinedRect(x,y,w,h,2)
+    DarkRPUI.UI.Text("DarkRPUI Safe Area", "DarkRPUI.Tiny", x + 8, y + 6, DarkRPUI.Color("accent"))
+end)
+
+function UI.ClampToSafe(panel) if DarkRPUI.Layout then DarkRPUI.Layout.ClampPanel(panel, true) end return panel end
+function UI.SafePanel(parent) local p=UI.PremiumPanel(parent); p.PerformLayout=function(s) if not IsValid(parent) and DarkRPUI.Layout then DarkRPUI.Layout.ClampPanel(s,true) end end; return p end
+function UI.GlassPanel(parent) local p=UI.PremiumPanel(parent); p.Paint=function(s,w,h) UI.DrawBlur(s, DarkRPUI.Settings and DarkRPUI.Settings.blur_strength or 6); UI.ShadowedBox(18,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("panel"),220),DarkRPUI.Color("border"),95) end; return p end
+function UI.ActionButton(parent, text, onClick, accent) return UI.PremiumButton(parent, text, onClick, accent) end
+function UI.IconButton(parent, text, onClick) return UI.PremiumIconButton(parent, text, onClick) end
+function UI.SearchBox(parent, placeholder, onChange) return UI.PremiumSearchBox(parent, placeholder, onChange) end
+function UI.Dropdown(parent) return UI.PremiumDropdown(parent) end
+function UI.Toggle(parent, initial, onChange) return UI.PremiumToggle(parent, initial, onChange) end
+function UI.Slider(parent) return UI.PremiumSlider(parent) end
+function UI.ColorPresetButton(parent, col, onClick) local b=vgui.Create("DButton",parent); b:SetText(""); b.Paint=function(_,w,h) UI.ShadowedBox(10,0,0,w,h,col or DarkRPUI.Color("accent"),DarkRPUI.Color("border"),40) end; b.DoClick=onClick or function() end; return b end
+function UI.StatPill(parent, label, value, col) local p=vgui.Create("DPanel",parent); p.Paint=function(_,w,h) UI.RoundedBox(9,0,0,w,h,DarkRPUI.Color("card")); UI.Text(label,"DarkRPUI.Tiny",10,7,DarkRPUI.Color("subtext")); UI.Text(tostring(value or "—"),"DarkRPUI.Tiny",w-10,7,col or DarkRPUI.Color("text"),TEXT_ALIGN_RIGHT) end; return p end
+function UI.ProgressBar(parent, frac, col) local p=vgui.Create("DPanel",parent); p.Frac=frac or 0; p.Paint=function(s,w,h) UI.RoundedBox(h/2,0,0,w,h,DarkRPUI.Color("border")); UI.RoundedBox(h/2,0,0,w*math.Clamp(s.Frac or 0,0,1),h,col or DarkRPUI.Color("accent")) end; return p end
+function UI.ScrollPanel(parent) local s=vgui.Create("DScrollPanel",parent); UI.StyleScrollbar(s); return s end
+function UI.LockedOverlay(parent, text) local p=vgui.Create("DPanel",parent); p:Dock(FILL); p.Paint=function(_,w,h) UI.RoundedBox(14,0,0,w,h,DarkRPUI.WithAlpha(color_black,170)); UI.Text("🔒 "..(text or "Locked"),"DarkRPUI.Subtitle",w/2,h/2-10,DarkRPUI.Color("locked"),TEXT_ALIGN_CENTER) end; return p end
+function UI.LoadingSkeleton(parent) return UI.LoadingState(parent, "Loading...") end
+function UI.Tooltip(panel, text) return UI.AttachTooltip(panel, text) end
+function UI.ContextMenu() local m=DermaMenu(); UI.StyleDermaMenu(m); return m end
+function UI.Modal(title, body, yes, no, cb) return UI.Confirm(title, body, yes, no, cb) end
 
 -- Public premium component constructors. These aliases keep menus consistent and
 -- give downstream server owners a stable component system to reuse.
