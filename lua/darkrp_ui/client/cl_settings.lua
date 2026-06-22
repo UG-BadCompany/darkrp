@@ -1,65 +1,45 @@
 DarkRPUI = DarkRPUI or {}; DarkRPUI.Settings = DarkRPUI.Settings or {}; DarkRPUI.Config = DarkRPUI.Config or {}; DarkRPUI.UI = DarkRPUI.UI or {}
-
 local UI = DarkRPUI.UI
-local selectedCategory = "interface"
+local selectedCategory = "theme"
 local categories = {
-    {id="interface", icon="◈", name="Interface", desc="Menus, blur, motion"},
-    {id="hud", icon="▣", name="HUD", desc="Scale, compact layout"},
-    {id="theme", icon="◆", name="Theme", desc="Palette and accent"},
-    {id="alerts", icon="◍", name="Alerts", desc="Sounds and toasts"}
+    {id="theme", icon="◆", name="Theme", desc="Preset and accent"}, {id="hud", icon="▣", name="HUD", desc="Layout and visibility"},
+    {id="f4", icon="◈", name="F4", desc="Menus and cards"}, {id="notifications", icon="◍", name="Notifications", desc="Toasts and sounds"},
+    {id="performance", icon="⌁", name="Performance", desc="Blur and animation"}, {id="accessibility", icon="✦", name="Accessibility", desc="Motion and font scale"}
 }
-local accents = { Color(79,140,255), Color(155,105,255), Color(60,210,130), Color(255,190,70), Color(255,80,96), Color(90,220,220) }
-
-local function save(toast)
-    if DarkRPUI.SaveSettings then DarkRPUI.SaveSettings() end
-    if DarkRPUI.SyncSettings then DarkRPUI.SyncSettings() end
-    if toast and DarkRPUI.Notify then DarkRPUI.Notify("success", "Settings saved", "Your premium UI preferences were updated.") end
-end
-local function card(parent, title, desc, h)
-    local p=vgui.Create("DPanel",parent); p:Dock(TOP); p:DockMargin(0,0,0,14); p:SetTall(h or 82); p.Hover=0
-    p.Paint=function(s,w,hh)
-        s.Hover=UI.LerpValue(s.Hover,s:IsHovered() and 1 or 0,12)
-        UI.ShadowedBox(16,0,0,w,hh,UI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),UI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),70+35*s.Hover)
-        surface.SetDrawColor(DarkRPUI.WithAlpha(DarkRPUI.Color("accent"),205)); surface.DrawRect(0,12,4,hh-24)
-        UI.Text(title,"DarkRPUI.Subtitle",18,14); UI.Text(desc or "","DarkRPUI.Small",18,43,DarkRPUI.Color("subtext"))
+local accents={Color(74,142,255),Color(166,107,255),Color(235,64,82),Color(48,220,151),Color(245,190,80),Color(55,118,245)}
+local function save(toast) DarkRPUI.Config.AnimationSpeed=(DarkRPUI.Settings.reduce_motion and 0.04 or 0.16)*(DarkRPUI.Settings.animation_speed or 1); if DarkRPUI.SaveSettings then DarkRPUI.SaveSettings() end; if DarkRPUI.SyncSettings then DarkRPUI.SyncSettings() end; if toast and DarkRPUI.Notify then DarkRPUI.Notify("success","Settings saved","Your premium UI preferences were updated.") end end
+local function card(parent,title,desc,h) local p=vgui.Create("DPanel",parent); p:Dock(TOP); p:DockMargin(0,0,0,14); p:SetTall(h or 84); p.Hover=0; p.Paint=function(s,w,hh) s.Hover=UI.HoverLerp(s,12); UI.ShadowedBox(16,0,0,w,hh,UI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),UI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),72); surface.SetDrawColor(DarkRPUI.Color("accent")); surface.DrawRect(0,12,4,hh-24); UI.Text(title,"DarkRPUI.Subtitle",18,14); UI.Text(desc or "","DarkRPUI.Small",18,43,DarkRPUI.Color("subtext")) end; return p end
+local function toggle(parent,title,desc,key) local c=card(parent,title,desc,78); local t=UI.PremiumToggle(c,DarkRPUI.Settings[key] ~= false,function(v) DarkRPUI.Settings[key]=v; save(true) end); t:SetSize(74,34); c.PerformLayout=function() t:SetPos(c:GetWide()-94,22) end end
+local function slider(parent,title,desc,key,min,max,dec) local c=card(parent,title,desc,98); local s=vgui.Create("DNumSlider",c); s:SetPos(18,58); s:SetSize(c:GetWide()-36,30); s:SetText(""); s:SetMin(min); s:SetMax(max); s:SetDecimals(dec or 2); s:SetValue(DarkRPUI.Settings[key] or 1); c.PerformLayout=function() s:SetWide(c:GetWide()-36) end; UI.StyleTextEntry(s.TextArea); s.OnValueChanged=function(_,v) DarkRPUI.Settings[key]=v; save(false) end end
+local function combo(parent,title,desc,key,values) local c=card(parent,title,desc,92); local b=UI.PremiumComboBox(c); b:SetSize(250,40); b:SetValue(DarkRPUI.Settings[key] or values[1]); for _,v in ipairs(values) do b:AddChoice(v,v) end; c.PerformLayout=function() b:SetPos(c:GetWide()-270,26) end; b.OnSelect=function(_,_,_,id) DarkRPUI.Settings[key]=id; save(true) end end
+local function previews(parent) local c=card(parent,"Live previews","HUD, notification, button, and card styling update with the active theme.",220); c.PaintOver=function(_,w,h) UI.ShadowedBox(16,18,70,330,118,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),70); UI.Text("Preview Citizen","DarkRPUI.Subtitle",38,88); UI.Text("Civil Protection • "..DarkRPUI.Util.FormatMoney(42000),"DarkRPUI.Small",38,114,DarkRPUI.Color("subtext")); UI.RoundedBox(5,38,148,130,8,DarkRPUI.Color("success")); UI.RoundedBox(5,184,148,110,8,DarkRPUI.Color("accent")); UI.ShadowedBox(14,370,76,w-390,74,DarkRPUI.Color("card"),DarkRPUI.Color("accent"),60); UI.Text("✓ Notification","DarkRPUI.Subtitle",392,90,DarkRPUI.Color("success")); UI.Text("Premium toast preview with progress.","DarkRPUI.Small",392,118,DarkRPUI.Color("subtext")); UI.RoundedBox(4,392,136,180,4,DarkRPUI.Color("success")); UI.ShadowedBox(12,370,164,180,38,DarkRPUI.Color("accent"),DarkRPUI.Color("border"),45); UI.Text("Premium Button","DarkRPUI.Body",460,173,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER) end end
+local function themes(parent)
+    local c=card(parent,"Theme preset","Obsidian Blue, Midnight Purple, Carbon Red, Emerald City, Gold Luxury, Clean Light, or Custom Accent.",170)
+    local x=18
+    for id,t in SortedPairs(DarkRPUI.Themes or {}) do
+        local b=vgui.Create("DButton",c); b:SetText(""); b:SetPos(x,72); b:SetSize(150,74)
+        b.Paint=function(_,w,h)
+            UI.ShadowedBox(14,0,0,w,h,t.colors.panel,t.colors.border,50)
+            UI.RoundedBox(8,12,12,44,16,t.colors.accent); UI.RoundedBox(8,12,36,88,10,t.colors.card)
+            UI.Text(t.name,"DarkRPUI.Tiny",12,56,t.colors.text)
+            if (DarkRPUI.Settings.theme or DarkRPUI.ActiveTheme)==id then UI.Badge(w-50,10,"ON",t.colors.success) end
+        end
+        b.DoClick=function() DarkRPUI.Settings.theme=id; if DarkRPUI.SetTheme then DarkRPUI.SetTheme(id) end; save(true) end
+        x=x+162
     end
-    return p
+    local a=card(parent,"Accent color","Used by Custom Accent and shared glow states.",116)
+    for i,col in ipairs(accents) do
+        local b=vgui.Create("DButton",a); b:SetText(""); b:SetPos(18+(i-1)*58,62); b:SetSize(44,36)
+        b.Paint=function(_,w,h) UI.ShadowedBox(12,0,0,w,h,col,DarkRPUI.Color("border"),45) end
+        b.DoClick=function() DarkRPUI.Settings.accent={col.r,col.g,col.b}; DarkRPUI.Settings.theme="custom_accent"; DarkRPUI.SetTheme("custom_accent"); save(true) end
+    end
 end
-local function toggle(parent, title, desc, key)
-    local c=card(parent,title,desc,78); local t=vgui.Create("DButton",c); t:SetText(""); t:SetSize(74,34); t:SetPos(0,22); t.AlignRight=function() t:SetPos(c:GetWide()-94,22) end; c.PerformLayout=function() t:AlignRight() end; t.Anim=0
-    t.Paint=function(s,w,h) s.Anim=UI.LerpValue(s.Anim,DarkRPUI.Settings[key] and 1 or 0,14); UI.RoundedBox(17,0,0,w,h,UI.LerpColor(s.Anim,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.RoundedBox(14,4+36*s.Anim,4,26,26,DarkRPUI.Color("text")); surface.SetDrawColor(DarkRPUI.WithAlpha(color_white,35)); surface.DrawRect(8,5,w-16,2) end
-    t.DoClick=function() UI.PlayClick(); DarkRPUI.Settings[key]=not DarkRPUI.Settings[key]; save(true) end
-end
-local function slider(parent, title, desc, key, min, max, dec)
-    local c=card(parent,title,desc,98); local s=vgui.Create("DNumSlider",c); s:SetPos(18,58); s:SetSize(c:GetWide()-36,30); s:SetText(""); s:SetMin(min); s:SetMax(max); s:SetDecimals(dec or 2); s:SetValue(DarkRPUI.Settings[key] or 1); c.PerformLayout=function() s:SetWide(c:GetWide()-36) end
-    s.Label:SetTextColor(DarkRPUI.Color("subtext")); s.TextArea:SetFont("DarkRPUI.Tiny"); UI.StyleTextEntry(s.TextArea)
-    s.Slider.Paint=function(_,w,h) UI.RoundedBox(5,8,h/2-4,w-16,8,DarkRPUI.Color("border")); UI.RoundedBox(5,8,h/2-4,(w-16)*s.Slider:GetSlideX(),8,DarkRPUI.Color("accent")) end
-    s.Slider.Knob.Paint=function(k,w,h) UI.ShadowedBox(10,0,0,w,h,DarkRPUI.Color("accent"),DarkRPUI.Color("text"),45) end
-    s.OnValueChanged=function(_,v) DarkRPUI.Settings[key]=v; save(false) end
-end
-local function combo(parent, title, desc, key, values)
-    local c=card(parent,title,desc,92); local b=vgui.Create("DComboBox",c); b:SetSize(230,40); b:SetPos(0,26); b:SetValue(DarkRPUI.Settings[key] or values[1]); c.PerformLayout=function() b:SetPos(c:GetWide()-250,26) end; for _,v in ipairs(values) do b:AddChoice(v,v) end; UI.StyleCombo(b); b.OnSelect=function(_,_,_,id) DarkRPUI.Settings[key]=id; save(true) end
-end
-local function themeCards(parent)
-    local c=card(parent,"Theme previews","Choose the base dashboard look.",154); local x=18
-    for id,t in pairs(DarkRPUI.Themes or {}) do local b=vgui.Create("DButton",c); b:SetText(""); b:SetPos(x,62); b:SetSize(168,72); b.Hover=0; b.Paint=function(s,w,h) s.Hover=UI.HoverLerp(s,12); local active=(DarkRPUI.Settings.theme or DarkRPUI.ActiveTheme)==id; UI.ShadowedBox(14,0,0,w,h,t.colors.panel,t.colors.accent,55+35*s.Hover); UI.RoundedBox(8,12,12,42,16,t.colors.accent); UI.RoundedBox(8,12,36,92,10,t.colors.card); UI.Text(t.name,"DarkRPUI.Tiny",12,54,t.colors.text); if active then UI.Badge(w-58,10,"LIVE",t.colors.success) end end; b.DoClick=function() DarkRPUI.Settings.theme=id; if DarkRPUI.SetTheme then DarkRPUI.SetTheme(id) end; save(true) end; x=x+184 end
-end
-local function accentCards(parent)
-    local c=card(parent,"Accent color","Preview accent chips for a unified UI language.",122); for i,col in ipairs(accents) do local b=vgui.Create("DButton",c); b:SetText(""); b:SetPos(18+(i-1)*58,64); b:SetSize(44,38); b.Hover=0; b.Paint=function(s,w,h) s.Hover=UI.HoverLerp(s,12); UI.ShadowedBox(12,0,-2*s.Hover,w,h,col,DarkRPUI.Color("border"),55); surface.SetDrawColor(DarkRPUI.WithAlpha(color_white,45)); surface.DrawRect(8,7,w-16,3) end; b.DoClick=function() DarkRPUI.Settings.accent={col.r,col.g,col.b}; save(true) end end
-end
+
 function DarkRPUI.SettingsPanel(parent)
     local p=vgui.Create("DPanel",parent); p:Dock(FILL); p:DockMargin(20,0,20,20); p.Paint=function() end
-    local left=vgui.Create("DPanel",p); left:Dock(LEFT); left:SetWide(238); left:DockMargin(0,0,18,0); left.Paint=function(_,w,h) UI.ShadowedBox(18,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),105); UI.Text("Settings","DarkRPUI.Title",20,18); UI.Text("Premium control center","DarkRPUI.Small",22,54,DarkRPUI.Color("subtext")) end
+    local left=UI.PremiumPanel(p); left:Dock(LEFT); left:SetWide(244); left:DockMargin(0,0,18,0); left.Paint=function(_,w,h) UI.ShadowedBox(18,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),105); UI.Text("Settings","DarkRPUI.Title",20,18); UI.Text("Premium control center","DarkRPUI.Small",22,54,DarkRPUI.Color("subtext")) end
     local right=vgui.Create("DScrollPanel",p); right:Dock(FILL); UI.StyleScrollbar(right)
-    local function rebuild()
-        right:Clear()
-        if selectedCategory=="interface" then toggle(right,"Premium HUD","Enable the custom sleek DarkRP HUD.","hud"); toggle(right,"Background blur","Use layered menu blur and glass shadows.","blur"); combo(right,"Notification position","Where confirmation toasts appear.","notification_position",{"top-right","top-left","bottom-right","bottom-left"}) end
-        if selectedCategory=="hud" then toggle(right,"Compact mode","Use tighter HUD cards for smaller screens.","compact"); slider(right,"HUD scale","Fine tune HUD card sizing.","hud_scale",0.75,1.35,2) end
-        if selectedCategory=="theme" then themeCards(right); accentCards(right) end
-        if selectedCategory=="alerts" then toggle(right,"Interface sounds","Play polished click and hover feedback.","sounds") end
-        local reset=vgui.Create("DButton",right); reset:Dock(TOP); reset:DockMargin(0,4,0,0); reset:SetTall(46); reset:SetText("Reset settings"); UI.StyleButton(reset,DarkRPUI.Color("error")); reset.DoClick=function() UI.Confirm("Reset settings","Restore the premium UI defaults?","Reset","Cancel",function(ok) if ok then DarkRPUI.Settings.hud=true; DarkRPUI.Settings.blur=true; DarkRPUI.Settings.sounds=true; DarkRPUI.Settings.compact=false; DarkRPUI.Settings.hud_scale=1; save(true); rebuild() end end) end
-    end
-    local y=92; for _,cat in ipairs(categories) do local b=vgui.Create("DButton",left); b:SetText(""); b:SetPos(14,y); b:SetSize(210,60); b.Hover=0; b.Paint=function(s,w,h) s.Hover=UI.HoverLerp(s,12); local active=selectedCategory==cat.id; local f=active and 1 or s.Hover; UI.RoundedBox(14,0,0,w,h,UI.LerpColor(f,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover"))); if active then surface.SetDrawColor(DarkRPUI.Color("accent")); surface.DrawRect(0,10,4,h-20) end; UI.Text(cat.icon,"DarkRPUI.Body",16,18,active and DarkRPUI.Color("accent") or DarkRPUI.Color("muted")); UI.Text(cat.name,"DarkRPUI.Body",48,11); UI.Text(cat.desc,"DarkRPUI.Tiny",48,34,DarkRPUI.Color("subtext")) end; b.DoClick=function() UI.PlayClick(); selectedCategory=cat.id; rebuild() end; y=y+70 end
-    rebuild()
+    local function rebuild() right:Clear(); if selectedCategory=="theme" then themes(right); previews(right) elseif selectedCategory=="hud" then combo(right,"HUD style","Choose the dashboard HUD layout.","hud_style",{"Dashboard","Compact","Minimal"}); combo(right,"HUD position","Anchor the main HUD.","hud_position",{"bottom-left","bottom-right","top-left","top-right"}); slider(right,"HUD scale","Fine tune HUD card sizing.","hud_scale",0.75,1.35,2); for _,v in ipairs({{"compact","Compact mode"},{"show_money","Show money"},{"show_salary","Show salary"},{"show_hunger","Show hunger"},{"show_level","Show level"},{"show_ammo","Show ammo"},{"show_laws","Show laws"},{"show_agenda","Show agenda"},{"blur","Blur on/off"}}) do toggle(right,v[2],"Client-side saved HUD preference.",v[1]) end; previews(right) elseif selectedCategory=="f4" then slider(right,"Animation speed","Controls F4 transitions and hover response.","animation_speed",0.5,1.75,2); toggle(right,"Favorite jobs","Save star selections locally.","favorites_enabled"); previews(right) elseif selectedCategory=="notifications" then combo(right,"Notification position","Where toast stacks appear.","notification_position",{"top-right","top-left","bottom-right","bottom-left"}); toggle(right,"Notification sounds","Play polished toast sounds.","sounds"); toggle(right,"Notifications enabled","Use safe DarkRP notification override.","notifications"); previews(right) elseif selectedCategory=="performance" then slider(right,"Blur strength","Visual glass intensity setting.","blur_strength",0,12,0); slider(right,"Animation speed","Global animation multiplier.","animation_speed",0.5,1.75,2); toggle(right,"Reduce motion","Shortens animations for performance/accessibility.","reduce_motion") elseif selectedCategory=="accessibility" then slider(right,"Font scale","Reserved scaling preference for servers with custom fonts.","font_scale",0.85,1.25,2); toggle(right,"Reduce motion","Minimize slide and fade duration.","reduce_motion") end; local reset=UI.PremiumButton(right,"Reset defaults",function() UI.Confirm("Reset settings","Restore the premium UI defaults?","Reset","Cancel",function(ok) if ok then DarkRPUI.Settings={theme="obsidian_blue",hud=true,hud_scale=1,hud_position="bottom-left",hud_style="Dashboard",blur=true,notifications=true,notification_position="top-right",sounds=true,compact=false,show_money=true,show_salary=true,show_hunger=true,show_level=true,show_ammo=true,show_laws=true,show_agenda=true,animation_speed=1,reduce_motion=false,font_scale=1,favorites={}}; DarkRPUI.SetTheme("obsidian_blue"); save(true); rebuild() end end) end,DarkRPUI.Color("error")); reset:Dock(TOP); reset:DockMargin(0,4,0,0); reset:SetTall(46) end
+    local y=92; for _,cat in ipairs(categories) do local b=UI.PremiumIconButton(left,cat.icon.."  "..cat.name,function() selectedCategory=cat.id; rebuild() end); b:SetPos(14,y); b:SetSize(216,58); b.ActiveFunc=function() return selectedCategory==cat.id end; y=y+68 end; rebuild()
 end
 concommand.Add("darkrpui_settings", function() if DarkRPUI.F4 and DarkRPUI.F4.Open then DarkRPUI.F4.Open() end end)

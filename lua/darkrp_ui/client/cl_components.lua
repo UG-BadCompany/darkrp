@@ -196,3 +196,20 @@ function UI.Confirm(title, body, yes, no, cb)
     local yb=vgui.Create("DButton",f); yb:SetText(yes or "Confirm"); yb:SetPos(24,142); yb:SetSize(178,42); UI.StyleButton(yb,DarkRPUI.Color("success")); yb.DoClick=function() UI.PlayClick(); if cb then cb(true) end; UI.SafeRemoveAnimated(f) end
     local nb=vgui.Create("DButton",f); nb:SetText(no or "Cancel"); nb:SetPos(218,142); nb:SetSize(178,42); UI.StyleButton(nb,DarkRPUI.Color("error")); nb.DoClick=function() UI.PlayClick(); if cb then cb(false) end; UI.SafeRemoveAnimated(f) end
 end
+
+-- Public premium component constructors. These aliases keep menus consistent and
+-- give downstream server owners a stable component system to reuse.
+function UI.PremiumPanel(parent) local p=vgui.Create("DPanel",parent); p.Paint=function(_,w,h) UI.ShadowedBox(DarkRPUI.ThemeRadius(),0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),DarkRPUI.Config.ShadowAlpha or 100) end; return p end
+function UI.PremiumCard(parent, title, body) return UI.MakeAnimatedCard(parent,title,body) end
+function UI.PremiumButton(parent, text, onClick, accent) local b=vgui.Create("DButton",parent); b:SetText(text or "Button"); UI.StyleButton(b, accent or DarkRPUI.Color("accent")); b.DoClick=function(s,...) UI.PlayClick(); if onClick then return onClick(s,...) end end; return b end
+function UI.PremiumIconButton(parent, text, onClick) return UI.MakeIconButton(parent,text,onClick) end
+function UI.PremiumSearchBox(parent, placeholder, onChange) return UI.PremiumSearch(parent,placeholder,onChange) end
+function UI.PremiumComboBox(parent) local c=vgui.Create("DComboBox",parent); UI.StyleCombo(c); return c end
+function UI.PremiumToggle(parent, initial, onChange) local b=vgui.Create("DButton",parent); b:SetText(""); b.Value=initial and true or false; b.Paint=function(s,w,h) s.Anim=UI.LerpValue(s.Anim or 0,s.Value and 1 or 0,14); UI.RoundedBox(h/2,0,0,w,h,UI.LerpColor(s.Anim,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.RoundedBox(h/2-4,4+(w-h)*s.Anim,4,h-8,h-8,DarkRPUI.Color("text")) end; b.DoClick=function(s) s.Value=not s.Value; UI.PlayClick(); if onChange then onChange(s.Value) end end; return b end
+function UI.PremiumSlider(parent) local s=vgui.Create("DNumSlider",parent); s:SetText(""); if IsValid(s.TextArea) then UI.StyleTextEntry(s.TextArea) end; return s end
+function UI.PremiumDropdown(parent) return UI.PremiumComboBox(parent) end
+function UI.PremiumModelPanel(parent, models, large) return UI.MakeModelPreview(parent,models,large) end
+function UI.PremiumCloseButton(parent, onClick) return UI.CloseButton(parent,onClick) end
+function UI.PremiumModal(title, body, yes, no, cb) return UI.Confirm(title, body, yes, no, cb) end
+function UI.PremiumEmptyState(parent, title, body) return UI.EmptyState(parent,title,body) end
+function UI.PremiumBadge(x,y,text,color) return UI.Badge(x,y,text,color) end
