@@ -118,10 +118,49 @@ function UI.PlayClick()
     if DarkRPUI.Config and DarkRPUI.Config.SoundEnabled == false then return end
     surface.PlaySound((DarkRPUI.Config and DarkRPUI.Config.ClickSound) or "ui/buttonclickrelease.wav")
 end
+function UI.PlayHover()
+    if DarkRPUI.Settings and DarkRPUI.Settings.sounds == false then return end
+    if DarkRPUI.Config and DarkRPUI.Config.SoundEnabled == false then return end
+    surface.PlaySound((DarkRPUI.Config and DarkRPUI.Config.HoverSound) or "ui/buttonrollover.wav")
+end
+function UI.AttachTooltip(panel, text)
+    if not IsValid(panel) or not text or text == "" then return panel end
+    if DarkRPUI.Config and DarkRPUI.Config.Tooltips == false then return panel end
+    panel:SetTooltip(text)
+    return panel
+end
+function UI.StyleLabel(label, col)
+    if not IsValid(label) then return end
+    label:SetFont(label.DarkRPUIFont or "DarkRPUI.Body")
+    label:SetTextColor(col or DarkRPUI.Color("subtext"))
+end
+function UI.StyleTextEntry(entry)
+    if not IsValid(entry) then return end
+    entry:SetFont("DarkRPUI.Body"); entry:SetTextColor(DarkRPUI.Color("text")); entry:SetCursorColor(DarkRPUI.Color("accent")); entry:SetHighlightColor(DarkRPUI.WithAlpha(DarkRPUI.Color("accent"),90))
+    entry:SetPaintBackground(false); entry.DarkRPUIHover=0
+    entry.Paint=function(s,w,h)
+        s.DarkRPUIHover=UI.HoverLerp(s,12)
+        UI.ShadowedBox(12,0,0,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),45)
+        s:DrawTextEntryText(DarkRPUI.Color("text"),DarkRPUI.Color("accent"),DarkRPUI.Color("text"))
+    end
+end
 function UI.StyleCombo(combo)
     combo:SetFont("DarkRPUI.Body"); combo:SetTextColor(DarkRPUI.Color("text")); combo.DarkRPUIHover=0
     combo.Paint=function(s,w,h) s.DarkRPUIHover=UI.HoverLerp(s,12); UI.ShadowedBox(12,0,0,w,h,DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.DarkRPUIHover,DarkRPUI.Color("border"),DarkRPUI.Color("accent")),45); UI.Text("⌄","DarkRPUI.Small",w-24,h/2-7,DarkRPUI.Color("muted")) end
-    combo.OnMenuOpened=function(s,m) if IsValid(m) then m.Paint=function(_,w,h) UI.ShadowedBox(10,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),80) end end end
+    combo.OnMenuOpened=function(s,m) UI.StyleDermaMenu(m) end
+end
+function UI.StyleDermaMenu(menu)
+    if not IsValid(menu) then return end
+    menu.Paint=function(_,w,h) UI.ShadowedBox(12,0,0,w,h,DarkRPUI.Color("panel"),DarkRPUI.Color("border"),95) end
+    timer.Simple(0, function()
+        if not IsValid(menu) then return end
+        for _,child in ipairs(menu:GetChildren()) do
+            if child:GetClassName() == "DMenuOption" then
+                child:SetFont("DarkRPUI.Body"); child:SetTextColor(DarkRPUI.Color("text")); child.DarkRPUIHover=0
+                child.Paint=function(s,w,h) s.DarkRPUIHover=UI.HoverLerp(s,14); UI.RoundedBox(8,4,2,w-8,h-4,DarkRPUI.WithAlpha(DarkRPUI.Color("cardHover"),120*s.DarkRPUIHover)) end
+            end
+        end
+    end)
 end
 function UI.StyleScrollbar(scroll)
     if not IsValid(scroll) or not IsValid(scroll:GetVBar()) then return end
@@ -134,6 +173,22 @@ function UI.PremiumSearch(parent, placeholder, onChange)
     holder.Paint=function(s,w,h) s.Hover=UI.HoverLerp(s,12); UI.OutlinedBox(13,0,0,w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"),DarkRPUI.Color("accent"))); UI.Text("⌕","DarkRPUI.Body",15,11,DarkRPUI.Color("muted")) end
     local e=vgui.Create("DTextEntry",holder); e:Dock(FILL); e:DockMargin(42,3,12,3); e:SetPaintBackground(false); e:SetFont("DarkRPUI.Body"); e:SetTextColor(DarkRPUI.Color("text")); e:SetPlaceholderText(placeholder or "Search..."); e.OnChange=function() if onChange then onChange(e:GetValue() or "") end end
     return holder,e
+end
+function UI.LoadingState(parent, title)
+    local p=vgui.Create("DPanel",parent); p:Dock(FILL); p.Spin=0
+    p.Paint=function(_,w,h)
+        p.Spin=(p.Spin+FrameTime()*220)%360
+        UI.ShadowedBox(16,w*.5-170,h*.5-58,340,116,DarkRPUI.Color("card"),DarkRPUI.Color("border"),70)
+        UI.Text(title or "Loading...","DarkRPUI.Subtitle",w*.5,h*.5-34,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER)
+        UI.Text("Preparing premium server data","DarkRPUI.Small",w*.5,h*.5-4,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER)
+        surface.SetDrawColor(DarkRPUI.Color("accent")); surface.DrawOutlinedRect(w*.5-18,h*.5+24,36,8,2)
+    end
+    return p
+end
+function UI.LockedState(parent, title, body)
+    local p=UI.EmptyState(parent,title or "Locked",body or "You do not meet the requirement for this content.")
+    p.Paint=function(_,w,h) UI.ShadowedBox(16,w*.5-200,h*.5-76,400,152,DarkRPUI.Color("card"),DarkRPUI.Color("error"),80); UI.Text("🔒","DarkRPUI.Title",w*.5,h*.5-56,DarkRPUI.Color("error"),TEXT_ALIGN_CENTER); UI.Text(title or "Locked","DarkRPUI.Subtitle",w*.5,h*.5-18,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER); UI.Text(body or "You do not meet the requirement for this content.","DarkRPUI.Small",w*.5,h*.5+16,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER) end
+    return p
 end
 function UI.Confirm(title, body, yes, no, cb)
     local f=vgui.Create("DFrame"); f:SetSize(420,210); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); UI.AnimateIn(f)

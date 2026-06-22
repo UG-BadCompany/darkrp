@@ -42,7 +42,7 @@ hook.Add("HUDPaint", "DarkRPUI.Notifications.Paint", function()
         local right = not string.find(pos, "left", 1, true); local bottom = string.find(pos, "bottom", 1, true)
         local targetX = n.leaving and (right and sw+20 or -w-20) or (right and (sw-w-pad) or pad); n.x=Lerp(FrameTime()*12,n.x,targetX); n.alpha=Lerp(FrameTime()*10,n.alpha,n.leaving and 0 or 255)
         if n.leaving and n.alpha < 5 then table.remove(active,i) else local y = bottom and (sh-pad-i*(h+pad)) or (pad+(i-1)*(h+pad)); local color=C(meta[n.kind] or "info")
-            DarkRPUI.UI.OutlinedBox(14,n.x,y,w,h,DarkRPUI.WithAlpha(C("panel"),n.alpha),DarkRPUI.WithAlpha(C("border"),n.alpha)); surface.SetDrawColor(color.r,color.g,color.b,n.alpha); surface.DrawRect(n.x,y,5,h)
+            DarkRPUI.UI.ShadowedBox(16,n.x,y,w,h,DarkRPUI.WithAlpha(C("panel"),n.alpha),DarkRPUI.WithAlpha(C("border"),n.alpha),95*n.alpha/255); surface.SetDrawColor(color.r,color.g,color.b,n.alpha); surface.DrawRect(n.x,y,5,h)
             DarkRPUI.UI.RoundedBox(12,n.x+16,y+16,34,34,DarkRPUI.WithAlpha(color,42*n.alpha/255)); DarkRPUI.UI.Text(icons[n.kind] or icons.generic,"DarkRPUI.Body",n.x+33,y+23,DarkRPUI.WithAlpha(color,n.alpha),TEXT_ALIGN_CENTER)
             DarkRPUI.UI.Text(n.title,"DarkRPUI.Subtitle",n.x+62,y+12,DarkRPUI.WithAlpha(C("text"),n.alpha)); DarkRPUI.UI.Text(n.msg,"DarkRPUI.Small",n.x+62,y+40,DarkRPUI.WithAlpha(C("subtext"),n.alpha)); surface.SetDrawColor(color.r,color.g,color.b,n.alpha); DarkRPUI.UI.RoundedBox(4,n.x+62,y+h-9,(w-78)*math.max(0,1-life/n.duration),4,DarkRPUI.WithAlpha(color,n.alpha))
         end

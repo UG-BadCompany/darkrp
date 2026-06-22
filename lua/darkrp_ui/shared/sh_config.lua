@@ -8,11 +8,18 @@ C.Features = { f4 = true, hud = true, scoreboard = true, notifications = true, a
 C.EnableF4Menu, C.EnableHUD, C.EnableScoreboard, C.EnableNotifications, C.EnableAdminTools = true, true, true, true, true
 C.HideDefaultDarkRPHUD, C.HideDefaultDarkRPAgenda, C.HideDefaultDarkRPLockdown, C.HideDefaultDarkRPArrested = true, false, false, true
 C.AnimationSpeed = 0.16
+C.Spacing = 14
+C.Radius = 16
+C.ShadowAlpha = 110
 C.BlurEnabled = true
 C.SoundEnabled = true
 C.NotificationSound = "buttons/button15.wav"
 C.ClickSound = "ui/buttonclickrelease.wav"
+C.HoverSound = "ui/buttonrollover.wav"
 C.NotificationPosition = "top-right"
+C.ConfirmPurchases = false
+C.Tooltips = true
+C.LowResolutionScale = true
 C.CurrencySymbol = "$"
 C.AdminRanks = { superadmin = true, admin = true, moderator = true, mod = true, trialmod = true, operator = true }
 C.VIPGroups = { vip = true, premium = true, donator = true, supporter = true, owner = true }
