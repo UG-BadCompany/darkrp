@@ -34,7 +34,9 @@ function vox.admin.Open()
     shell.Paint = function( _, w, h )
         if vox.DrawVoxPanel then vox.DrawVoxPanel( 0, 0, w, h, colors, 8 ) else draw.RoundedBox( 8, 0, 0, w, h, colors.primary ) end
         if vox.DrawVoxBlade then vox.DrawVoxBlade( 12, 14, 7, h - 28, colors.accent ) end
-        draw.SimpleText( 'VOX ADMIN CONTROL CENTER', 'DermaDefaultBold', 30, 18, colors.textPrimary or color_white )
+        vox.DrawVoxScanlines( 26, 10, w - 52, h - 20, ColorAlpha( colors.accent, 9 ), 9 )
+        vox.DrawVoxCornerTicks( 18, 12, w - 36, h - 24, ColorAlpha( colors.accent, 125 ), 20 )
+        draw.SimpleText( 'VOX ADMIN // OPS MODULE', 'DermaDefaultBold', 30, 18, colors.textPrimary or color_white )
         draw.SimpleText( 'validated actions • CAMI permissions • hierarchy protection • audit logs', 'DermaDefault', 30, 38, colors.textSecondary or color_white )
     end
 
@@ -50,6 +52,7 @@ function vox.admin.Open()
     content.Paint = function( _, w, h )
         draw.RoundedBox( 8, 0, 0, w, h, ColorAlpha( colors.secondary or color_black, 205 ) )
         vox.DrawVoxBlade( 10, 14, 6, h - 28, colors.accent )
+        vox.DrawVoxCornerTicks( 18, 14, w - 36, h - 28, ColorAlpha( colors.accent, 80 ), 16 )
         draw.SimpleText( 'Vox Admin Quick Dispatch', 'DermaDefaultBold', 28, 18, colors.textPrimary or color_white )
         draw.SimpleText( 'Server-validated actions with CAMI permissions, hierarchy checks, cooldowns, and staff notifications.', 'DermaDefault', 28, 42, colors.textSecondary or color_white )
     end
