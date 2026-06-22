@@ -122,12 +122,13 @@ local function drawNotifications( self, client, scrW, scrH )
 
         surface.SetAlphaMultiplier( data.fraction )
 
-            if vox.DrawVoxPanel then
+            if vox.DrawVoxCard then
+                vox.DrawVoxCard( x, y, notifW, notifH, colors, { accent = notifColor, radius = hudRoundness, bladeWidth = vox.hud.ScaleWide( 6 ) } )
+            elseif vox.DrawVoxPanel then
                 vox.DrawVoxPanel( x, y, notifW, notifH, colors, hudRoundness )
             else
                 vox.hud.DrawRoundedBox( x, y, notifW, notifH, colorPrimary )
             end
-            if vox.DrawVoxBlade then vox.DrawVoxBlade( x, y + vox.hud.ScaleTall( 7 ), vox.hud.ScaleWide( 6 ), notifH - vox.hud.ScaleTall( 14 ), notifColor ) end
 
             wimgObject:Draw( x + horPadding + vox.hud.ScaleWide( 6 ), y + notifH * .5 - iconSize * .5, iconSize, iconSize, notifColor )
 

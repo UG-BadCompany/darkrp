@@ -14,13 +14,13 @@ local function normalizeGroup(group)
 end
 
 local function rankWeight(ply)
-    if not IsValid(ply) then return 0 end
+    if not IsValid(ply) then return 1000 end
     local group = normalizeGroup(ply.GetUserGroup and ply:GetUserGroup() or 'user')
     return (vox.admin.Hierarchy and vox.admin.Hierarchy[group]) or (ply:IsSuperAdmin() and 100) or (ply:IsAdmin() and 50) or 0
 end
 
 local function notify(ply, ok, msg)
-    if not IsValid(ply) then return end
+    if not IsValid(ply) or not ply:IsPlayer() then return end
     net.Start('VoxUI.Admin.Notify')
         net.WriteBool(ok)
         net.WriteString(msg or '')
@@ -110,8 +110,13 @@ end
 
 vox.admin.Log = vox.admin.WriteAuditLog
 
+function vox.admin:GetCooldownKey( admin )
+    if not IsValid( admin ) then return 'Console' end
+    return admin:SteamID() or tostring( admin )
+end
+
 function vox.admin:EnforceCooldown(admin, action)
-    local cooldownEnd = self.Cooldowns[admin] or 0
+    local cooldownEnd = self.Cooldowns[ self:GetCooldownKey( admin ) ] or 0
     if cooldownEnd > CurTime() then
         return false, string.format('Action cooldown active (%.1fs).', cooldownEnd - CurTime())
     end
@@ -138,7 +143,7 @@ function vox.admin:CanRun(admin, id, target)
     local action = self.Actions[id]
     if not action then return false, 'Unknown Vox Admin action.' end
     if not isfunction(action.run) then return false, 'Vox Admin action has no server handler.' end
-    if not IsValid(admin) or not admin:IsPlayer() then return false, 'Invalid admin.' end
+    if IsValid(admin) and not admin:IsPlayer() then return false, 'Invalid admin.' end
 
     local cooldownOK, cooldownErr = self:EnforceCooldown(admin, action)
     if not cooldownOK then return false, cooldownErr end
@@ -146,7 +151,7 @@ function vox.admin:CanRun(admin, id, target)
     local targetOK, targetErr = self:ValidateTarget(action, target)
     if not targetOK then return false, targetErr end
 
-    if not checkPrivilege(admin, action, target) then return false, 'You do not have permission.' end
+    if IsValid( admin ) and not checkPrivilege(admin, action, target) then return false, 'You do not have permission.' end
 
     local hierarchyOK, hierarchyErr = self:CheckHierarchy(admin, action, target)
     if not hierarchyOK then return false, hierarchyErr end
@@ -159,7 +164,7 @@ function vox.admin:ExecuteServerAction(admin, id, target, reason, duration)
     if not ok then notify(admin, false, err) return false end
 
     local action = self.Actions[id]
-    self.Cooldowns[admin] = CurTime() + (action.cooldown or self.CooldownSeconds or 0.75)
+    self.Cooldowns[ self:GetCooldownKey( admin ) ] = CurTime() + (action.cooldown or self.CooldownSeconds or 0.75)
 
     reason = tostring(reason or 'No reason provided'):Trim():sub(1, MAX_REASON_LENGTH)
     if reason == '' then reason = 'No reason provided' end
@@ -185,6 +190,12 @@ function vox.admin:ExecuteServerAction(admin, id, target, reason, duration)
 end
 
 vox.admin.Run = vox.admin.ExecuteServerAction
+vox.admin.ExecuteAction = vox.admin.ExecuteServerAction
+vox.admin.EnforceActionCooldown = vox.admin.EnforceCooldown
+vox.admin.CheckRankHierarchy = vox.admin.CheckHierarchy
+vox.admin.ValidateActionTarget = vox.admin.ValidateTarget
+vox.admin.StoreAuditLog = vox.admin.WriteAuditLog
+vox.admin.SendStaffNotification = vox.admin.NotifyStaff
 
 local function reg(id, fn, target)
     local action = vox.admin.Actions[id] or { target = target ~= false }
@@ -249,7 +260,7 @@ concommand.Add('vox_admin_logs', function(ply)
 end)
 
 concommand.Add('vox_admin_action', function(ply, _, args)
-    if not IsValid(ply) then return end
+    if IsValid(ply) and not ply:IsPlayer() then return end
     local id, targetID = args[1], args[2]
     local action = vox.admin.Actions[id]
     local target = action and action.target and findPlayer(targetID) or nil

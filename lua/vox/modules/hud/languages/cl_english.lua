@@ -168,6 +168,8 @@ LANG[ 'hud.theme.name' ] = 'Theme'
 LANG[ 'hud.theme.desc' ] = 'Choose the HUD theme'
 
 LANG[ 'hud.scale.name' ] = 'Scale'
+LANG[ 'hud.hud_style.name' ] = 'HUD Preset'
+LANG[ 'hud.hud_style.desc' ] = 'Switch between Vox Tactical Card, Command Strip, Minimal Edge, and Roleplay Profile'
 LANG[ 'hud.scale.desc' ] = 'Adjust the scale of the HUD'
 
 LANG[ 'hud.roundness.name' ] = 'Roundness'

@@ -133,7 +133,7 @@ vox.hud:RegisterOption( 'hud_style', {
     default = 0,
     min = 0,
     max = 3,
-    combo = {
+    combo = vox.hud.GetHUDPresetComboOptions and vox.hud:GetHUDPresetComboOptions() or {
         { 'Vox Tactical Card', 0 },
         { 'Vox Command Strip', 1 },
         { 'Vox Minimal Edge', 2 },

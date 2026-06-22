@@ -475,12 +475,8 @@ local function drawCommandStripHUD( self, client, scrW, scrH )
 
     local econX = x + w - hud.ScaleWide( 310 )
     local moneyFormatted = DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( math.Round( lerpMoney ) ) or tostring( math.Round( lerpMoney ) )
-    vox.DrawAngledRect( econX, y + hud.ScaleTall( 10 ), hud.ScaleWide( 128 ), h - hud.ScaleTall( 20 ), hud.ScaleWide( 9 ), ColorAlpha( colors.secondary, 220 ) )
-    draw.SimpleText( 'BALANCE', hud.fonts.ExtraTinyBold, econX + hud.ScaleWide( 12 ), y + hud.ScaleTall( 19 ), colors.textSecondary, 0, 1 )
-    draw.SimpleText( moneyFormatted, hud.fonts.TinyBold, econX + hud.ScaleWide( 116 ), y + hud.ScaleTall( 35 ), colors.money or colors.positive, 2, 1 )
-    vox.DrawAngledRect( econX + hud.ScaleWide( 140 ), y + hud.ScaleTall( 10 ), hud.ScaleWide( 138 ), h - hud.ScaleTall( 20 ), hud.ScaleWide( 9 ), ColorAlpha( colors.secondary, 220 ) )
-    draw.SimpleText( 'SALARY', hud.fonts.ExtraTinyBold, econX + hud.ScaleWide( 152 ), y + hud.ScaleTall( 19 ), colors.textSecondary, 0, 1 )
-    draw.SimpleText( formatSalary( client:getDarkRPVar( 'salary' ) or 0 ), hud.fonts.TinyBold, econX + hud.ScaleWide( 266 ), y + hud.ScaleTall( 35 ), colors.money or colors.positive, 2, 1 )
+    vox.DrawVoxStatModule( econX, y + hud.ScaleTall( 8 ), hud.ScaleWide( 128 ), h - hud.ScaleTall( 16 ), 'BALANCE', moneyFormatted, colors, { accent = colors.money or colors.positive, labelFont = hud.fonts.ExtraTinyBold, valueFont = hud.fonts.TinyBold, radius = 4, bladeWidth = 4 } )
+    vox.DrawVoxStatModule( econX + hud.ScaleWide( 140 ), y + hud.ScaleTall( 8 ), hud.ScaleWide( 138 ), h - hud.ScaleTall( 16 ), 'SALARY', formatSalary( client:getDarkRPVar( 'salary' ) or 0 ), colors, { accent = colors.money or colors.positive, labelFont = hud.fonts.ExtraTinyBold, valueFont = hud.fonts.TinyBold, radius = 4, bladeWidth = 4 } )
 end
 
 
@@ -556,12 +552,12 @@ local function drawRoleplayProfileHUD( self, client, scrW, scrH )
     end
 end
 
-hud.Presets = {
-    tactical_card = { name = 'Vox Tactical Card', style = 0, drawFn = drawMainHUD },
-    command_strip = { name = 'Vox Command Strip', style = 1, drawFn = drawCommandStripHUD },
-    minimal_edge = { name = 'Vox Minimal Edge', style = 2, drawFn = drawMinimalEdgeHUD },
-    roleplay_profile = { name = 'Vox Roleplay Profile', style = 3, drawFn = drawRoleplayProfileHUD }
-}
+hud:RegisterHUDPreset( 'tactical_card', { name = 'Vox Tactical Card', style = 0, drawFn = drawMainHUD } )
+hud:RegisterHUDPreset( 'command_strip', { name = 'Vox Command Strip', style = 1, drawFn = drawCommandStripHUD } )
+hud:RegisterHUDPreset( 'minimal_edge', { name = 'Vox Minimal Edge', style = 2, drawFn = drawMinimalEdgeHUD } )
+hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Vox Roleplay Profile', style = 3, drawFn = drawRoleplayProfileHUD } )
+
+hud.Presets = hud.PresetRegistry
 
 hud.DrawVoxTacticalCard = drawMainHUD
 hud.DrawVoxCommandStrip = drawCommandStripHUD
@@ -569,15 +565,9 @@ hud.DrawVoxMinimalEdge = drawMinimalEdgeHUD
 hud.DrawVoxRoleplayProfile = drawRoleplayProfileHUD
 
 local function drawStyledMainHUD( self, client, scrW, scrH )
-    local style = hud:GetOptionValue( 'hud_style' )
-    if ( style == 1 ) then
-        drawCommandStripHUD( self, client, scrW, scrH )
-        return
-    elseif ( style == 2 ) then
-        drawMinimalEdgeHUD( self, client, scrW, scrH )
-        return
-    elseif ( style == 3 ) then
-        drawRoleplayProfileHUD( self, client, scrW, scrH )
+    local preset = hud:GetCurrentHUDPreset()
+    if preset and isfunction( preset.drawFn ) then
+        preset.drawFn( self, client, scrW, scrH )
         return
     end
 
