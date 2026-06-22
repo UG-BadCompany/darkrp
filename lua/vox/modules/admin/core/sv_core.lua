@@ -5,13 +5,10 @@ vox.admin.Actions = vox.admin.Actions or {}
 vox.admin.Logs = vox.admin.Logs or {}
 vox.admin.Cooldowns = vox.admin.Cooldowns or {}
 
-local HIERARCHY = { user = 0, vip = 5, moderator = 20, admin = 50, superadmin = 100 }
-local COOLDOWN = 0.75
-
 local function rankWeight(ply)
     if not IsValid(ply) then return 0 end
     local group = ply.GetUserGroup and ply:GetUserGroup() or 'user'
-    return HIERARCHY[group] or (ply:IsSuperAdmin() and 100) or (ply:IsAdmin() and 50) or 0
+    return (vox.admin.Hierarchy and vox.admin.Hierarchy[group]) or (ply:IsSuperAdmin() and 100) or (ply:IsAdmin() and 50) or 0
 end
 
 local function notify(ply, ok, msg)
@@ -37,17 +34,10 @@ function vox.admin:Log(admin, action, target, reason)
     file.Append('vox_admin/audit.log', util.TableToJSON(row) .. '\n')
 end
 
-function vox.admin:RegisterAction(id, data)
-    data.id = id
-    self.Actions[id] = data
-    if CAMI and CAMI.RegisterPrivilege then
-        CAMI.RegisterPrivilege({ Name = 'vox_admin_' .. id, MinAccess = data.minAccess or 'admin', Description = 'Vox Admin: ' .. id })
-    end
-end
-
 function vox.admin:CanRun(admin, id, target)
     local action = self.Actions[id]
     if not action then return false, 'Unknown Vox Admin action.' end
+    if not isfunction(action.run) then return false, 'Vox Admin action has no server handler.' end
     if not IsValid(admin) or not admin:IsPlayer() then return false, 'Invalid admin.' end
     if self.Cooldowns[admin] and self.Cooldowns[admin] > CurTime() then return false, 'Action cooldown active.' end
     if action.target and not IsValid(target) then return false, 'Invalid target.' end
@@ -65,7 +55,7 @@ end
 function vox.admin:Run(admin, id, target, reason, duration)
     local ok, err = self:CanRun(admin, id, target)
     if not ok then notify(admin, false, err) return false end
-    self.Cooldowns[admin] = CurTime() + COOLDOWN
+    self.Cooldowns[admin] = CurTime() + (self.Actions[id].cooldown or self.CooldownSeconds or 0.75)
     reason = tostring(reason or 'No reason provided'):sub(1, 160)
     duration = math.Clamp(tonumber(duration) or 0, 0, 525600)
     local success, result = pcall(self.Actions[id].run, admin, target, reason, duration)
@@ -77,7 +67,12 @@ function vox.admin:Run(admin, id, target, reason, duration)
     return true
 end
 
-local function reg(id, fn, target) vox.admin:RegisterAction(id, { target = target ~= false, run = fn }) end
+local function reg(id, fn, target)
+    local action = vox.admin.Actions[id] or { target = target ~= false }
+    action.target = target ~= false
+    action.run = fn
+    vox.admin:RegisterAction(id, action)
+end
 reg('bring', function(a,t) t.VoxAdminReturnPos=t:GetPos(); t:SetPos(a:GetPos()+a:GetForward()*80); return true end)
 reg('goto', function(a,t) a.VoxAdminReturnPos=a:GetPos(); a:SetPos(t:GetPos()+t:GetForward()*80); return true end)
 reg('returnply', function(a,t) if not t.VoxAdminReturnPos then return 'No return position.' end t:SetPos(t.VoxAdminReturnPos); return true end)

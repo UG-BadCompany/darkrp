@@ -11,9 +11,13 @@ local sections = {
     'Dashboard', 'Players', 'Inspector', 'Logs', 'Reports', 'Movement', 'Punishments', 'Server Tools', 'Economy', 'Settings'
 }
 
-local quickActions = {
-    'bring', 'goto', 'returnply', 'freeze', 'unfreeze', 'respawn', 'slay', 'stripweapons', 'warn', 'kick', 'ban', 'jail', 'unjail', 'setjob', 'setmoney', 'spectate', 'unspectate', 'noclip', 'god', 'cloak'
-}
+local function getQuickActions()
+    if vox.admin and vox.admin.GetSortedActions then
+        return vox.admin:GetSortedActions()
+    end
+
+    return {}
+end
 
 net.Receive( 'VoxUI.Admin.Logs', function()
     local rows = net.ReadUInt( 8 )
@@ -88,7 +92,8 @@ function vox.admin.Open()
     grid:SetSpaceX( 8 )
     grid:SetSpaceY( 8 )
 
-    for _, action in ipairs( quickActions ) do
+    for _, actionData in ipairs( getQuickActions() ) do
+        local action = actionData.id
         local btn = grid:Add( 'DButton' )
         btn:SetSize( 112, 34 )
         btn:SetText( '' )
@@ -96,7 +101,8 @@ function vox.admin.Open()
             local hover = panel:IsHovered()
             draw.RoundedBox( 6, 0, 0, w, h, ColorAlpha( hover and colors.tertiary or colors.primary, hover and 240 or 215 ) )
             vox.DrawVoxBlade( 0, 6, 5, h - 12, colors.accent )
-            draw.SimpleText( string.upper( action ), 'DermaDefaultBold', 16, h * .5, colors.textPrimary or color_white, 0, 1 )
+            draw.SimpleText( string.upper( actionData.name or action ), 'DermaDefaultBold', 16, h * .5, colors.textPrimary or color_white, 0, 1 )
+            draw.SimpleText( actionData.category or 'General', 'DermaDefault', w - 8, h * .5, colors.textSecondary or color_white, 2, 1 )
         end
         btn.DoClick = function()
             local _, steamid = targetBox:GetSelected()

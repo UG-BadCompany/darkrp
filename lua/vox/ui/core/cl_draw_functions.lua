@@ -109,3 +109,28 @@ function vox.DrawVoxScanlines( x, y, w, h, color, step )
         surface.DrawLine( x, lineY, x + w, lineY )
     end
 end
+
+function vox.DrawVoxCard( x, y, w, h, colors, state )
+    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    state = state or {}
+    local accent = state.accent or colors.accent or Color( 0, 174, 255 )
+    local lift = state.hovered and 3 or 0
+
+    vox.DrawVoxPanel( x, y - lift, w, h, colors, state.radius or 6 )
+    vox.DrawVoxBlade( x, y + 8 - lift, state.bladeWidth or 7, h - 16, accent, accent )
+
+    if state.hovered then
+        vox.DrawAngledRect( x + w - 74, y - lift, 74, h, 16, ColorAlpha( accent, 34 ) )
+        surface.SetDrawColor( ColorAlpha( accent, 120 ) )
+        surface.DrawOutlinedRect( x + 1, y + 1 - lift, w - 2, h - 2, 1 )
+    end
+end
+
+function vox.DrawVoxRowHover( x, y, w, h, accent, amount )
+    amount = amount or 1
+    if amount <= 0 then return end
+
+    accent = accent or Color( 0, 174, 255 )
+    vox.DrawAngledRect( x, y, w, h, 10, ColorAlpha( accent, 20 * amount ) )
+    vox.DrawVoxBlade( x, y + 5, 5, h - 10, ColorAlpha( accent, 220 * amount ), accent )
+end
