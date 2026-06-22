@@ -3,7 +3,7 @@ local PLAYER = FindMetaTable( 'Player' )
 util.AddNetworkString( 'vox.hud::SendAlert' )
 
 local function overridePrintMessage()
-    vox.hud.original_PrintMessage = vox.hud.original_PrintMessage or PLAYER.PrintMessage                                                                                                                                                                                                                              -- b7fe7d19-18c9-42a0-823d-06e7663479ef
+    vox.hud.original_PrintMessage = vox.hud.original_PrintMessage or PLAYER.PrintMessage
 
     PLAYER.PrintMessage = function( self, type, message )
         if ( type == HUD_PRINTCENTER ) then

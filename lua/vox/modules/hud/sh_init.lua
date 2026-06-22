@@ -1,7 +1,7 @@
 vox:Addon( 'hud', {
     color = Color( 99, 65, 211 ),
     author = 'Vox UI',
-    version = '1.0.10',
+    version = '2.2.0',
     licensee = 'vox-ui'
 } )
 

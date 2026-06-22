@@ -118,7 +118,8 @@ function PANEL:InitEditor(editor)
     header:Dock(TOP)
     header:CenterText()
     header.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, COLOR_SECONDARY)
+        vox.DrawVoxPanel(0, 0, w, h, { primary = COLOR_SECONDARY, secondary = COLOR_PRIMARY, accent = COLOR_ACCENT }, 8)
+        vox.DrawAngledRect(w - vox.ScaleWide(70), 0, vox.ScaleWide(70), h, vox.ScaleWide(14), ColorAlpha(COLOR_ACCENT, 45))
     end
     editor.header = header
 
@@ -180,8 +181,7 @@ function PANEL:InitEditor(editor)
                 local effectData = vox.scoreboard:FindNameEffect(effectID or '')
                 local color = self.fields.color.input.picker:GetColor()
 
-                draw.RoundedBox(8, 0, 0, w, h, COLOR_SECONDARY)
-                draw.RoundedBox(8, 1, 1, w - 2, h - 2, COLOR_PRIMARY)
+                vox.DrawVoxPanel(0, 0, w, h, { primary = COLOR_PRIMARY, secondary = COLOR_SECONDARY, accent = color }, 8)
 
                 if (effectData) then
                     local realX, realY = panel:LocalToScreen(0, 0)
@@ -232,14 +232,15 @@ function PANEL:CreateField(editor, key, title, buildFunc, size)
     field:Dock(TOP)
     field:SetTall(vox.ScaleTall(size or 70))
     field.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, COLOR_PRIMARY)
+        vox.DrawVoxPanel(0, 0, w, h, { primary = COLOR_PRIMARY, secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
     end
 
     local header = field:Add('Panel')
     header:SetTall(vox.ScaleTall(25))
     header:Dock(TOP)
     header.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, COLOR_SECONDARY, true, true)
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(COLOR_SECONDARY, 225), true, true)
+        vox.DrawVoxBlade(0, vox.ScaleTall(5), vox.ScaleWide(5), h - vox.ScaleTall(10), COLOR_ACCENT)
         draw.SimpleText(title, font, vox.ScaleTall(10), h * .5, color_white, 0, 1)
     end
 

@@ -147,7 +147,10 @@ function PANEL:Paint(w, h)
         draw.RoundedBoxEx(8, lineThickness, lineThickness, w - lineThickness * 2, h - lineThickness * 2, color, true, true, rounded, rounded)
     end
 
-    if vox.DrawVoxBlade then vox.DrawVoxBlade( 0, 6, 6, h - 12, teamColor ) end
+    if vox.DrawVoxBlade then
+        vox.DrawVoxBlade( 0, 6, 6, h - 12, teamColor )
+        vox.DrawAngledRect( w - vox.ScaleWide(70), 0, vox.ScaleWide(70), h, vox.ScaleWide(16), ColorAlpha(teamColor, 20) )
+    end
     if isHovered then
         surface.SetDrawColor( ColorAlpha( teamColor, 38 ) )
         surface.DrawRect( 8, 1, w - 16, h - 2 )
@@ -248,9 +251,7 @@ end
 
 vox.gui.Register('vox.Scoreboard.PlayerLine', PANEL)
 
---[[------------------------------
-// ANCHOR Debug
---------------------------------]]
+-- Vox local preview helper
 -- vox.gui.Test('vox.Scoreboard.Frame', .66, .66, function(self)
 --     self:Center()
 --     self:MakePopup()

@@ -36,11 +36,8 @@ local formatMoney do
 end
 
 local function drawShadowBG(panel, w, h, color)
-    -- local x, y = panel:LocalToScreen(0, 0)
-
-    -- vox.bshadows.BeginShadow()
-        draw.RoundedBox(8, 0, 0, w, h, color)
-    -- vox.bshadows.EndShadow(1, 1, 2, nil, nil, 2)
+    vox.DrawVoxPanel(0, 0, w, h, { primary = color, secondary = colorSecondary, accent = colorAccent }, 8)
+    vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(7), h - vox.ScaleTall(20), colorAccent)
 end
 
 function PANEL:Init()
@@ -78,7 +75,8 @@ function PANEL:Init()
     self.lblActions:CenterText()
     self.lblActions:SetTall(self.smallHeaderHeight)
     self.lblActions.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorSecondary, true, true)
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorSecondary, 220), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(colorAccent, 45))
     end
 
     self.listActions = self.divActions:Add('vox.ScrollPanel')
@@ -100,7 +98,8 @@ function PANEL:Init()
     self.lblAdmins:CenterText()
     self.lblAdmins:SetTall(self.smallHeaderHeight)
     self.lblAdmins.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorSecondary, true, true)
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorSecondary, 220), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(colorAccent, 45))
     end
 
     self.listAdmins = self.divAdmins:Add('vox.ScrollPanel')
@@ -255,6 +254,7 @@ function PANEL:AddStat(name, info, fraction, color, color2)
     local panel = self.divStats:Add('Panel')
     panel.Paint = function(this, w, h)
         drawShadowBG(this, w, h, colorPrimary)
+        draw.SimpleText('VOX', vox.Font('Comfortaa Bold@14'), vox.ScaleWide(16), h - vox.ScaleTall(16), ColorAlpha(colorAccent, 105), 0, 1)
     end
 
     local lblTitle = panel:Add('vox.Label')
@@ -266,7 +266,8 @@ function PANEL:AddStat(name, info, fraction, color, color2)
     lblTitle:DockMargin(0, 0, 0, padding)
     lblTitle:SizeToContentsY(10)
     lblTitle.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorSecondary, true, true)
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorSecondary, 225), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(54), 0, vox.ScaleWide(54), h, vox.ScaleWide(12), ColorAlpha(color, 55))
     end
 
     local content = panel:Add('Panel')
@@ -297,9 +298,7 @@ end
 
 vox.gui.Register('vox.f4.Dashboard', PANEL)
 
---[[------------------------------
-DEBUG
---------------------------------]]
+-- Vox local preview helper
 -- vox.gui.Test('vox.f4.Frame', .6, .65, function(panel)
 --     panel:MakePopup()
 --     panel:ChooseTab(1)

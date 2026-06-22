@@ -121,7 +121,10 @@ end
 function PANEL:Paint(w, h)
     if vox.DrawVoxPanel then
         vox.DrawVoxPanel( 0, 0, w, h, { primary = self.colorBG, secondary = colorSecondary, accent = self.itemColor }, 8 )
-        if vox.DrawVoxBlade then vox.DrawVoxBlade( 0, 8, 7, h - 16, self.itemColor ) end
+        if vox.DrawVoxBlade then
+            vox.DrawVoxBlade( 0, 8, 7, h - 16, self.itemColor )
+            vox.DrawAngledRect( w - vox.ScaleWide(58), 0, vox.ScaleWide(58), h, vox.ScaleWide(14), ColorAlpha(self.itemColor, 22) )
+        end
     else
         draw.RoundedBox(8, 0, 0, w, h, colorOutline)
         draw.RoundedBox(8, 1, 1, w - 2, h - 2, self.colorBG)

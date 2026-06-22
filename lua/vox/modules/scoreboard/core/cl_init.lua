@@ -87,7 +87,7 @@ function vox.scoreboard.ConvertTeamColor(color)
     return vox.ColorEditHSV(color, nil, s - .2, v + .2)
 end
 
-function vox.scoreboard.OpenAdminSettings(tab)                                                                                                                                                                                                                                         -- f57a421c-13b9-4a6d-beaf-215b44fe1613
+function vox.scoreboard.OpenAdminSettings(tab)
     local frame = vgui.Create('vox.Frame')
     frame:SetSize(ScrW() * .6, ScrH() * .6)
     frame:Center()

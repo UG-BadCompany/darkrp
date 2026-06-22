@@ -1,7 +1,7 @@
 vox:Addon('f4', {
     color = Color(0,17,71),
     author = 'Vox UI',
-    version = '1.1.6',
+    version = '2.1.0',
     licensee = 'vox-ui'
 })
 

@@ -382,7 +382,7 @@ end
 vox.gui.Register('vox.Scoreboard.PlayerList', PANEL)
 
 --[[------------------------------
---//ANCHOR vox.scoreboard.PlayerInspector
+-- Vox Scoreboard player inspector
 --------------------------------]]
 local COLOR_GOLD = Color(255, 224, 101)
 local COLOR_FRIEND = Color(134, 249, 124)
@@ -568,9 +568,7 @@ end
 
 vox.gui.Register('vox.scoreboard.PlayerInspector', PANEL)
 
---[[------------------------------
-// ANCHOR Debug
---------------------------------]]
+-- Vox local preview helper
 -- vox.gui.Test('vox.Scoreboard.Frame', .6, .6, function(self)
 --     vox.scoreboard.Frame = self
 --     self:Center()
