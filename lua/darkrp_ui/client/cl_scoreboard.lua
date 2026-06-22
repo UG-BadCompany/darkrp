@@ -16,7 +16,7 @@ end
 function DarkRPUI.Scoreboard.Open()
     if IsValid(DarkRPUI.Scoreboard.Frame) then return end
     setCursor(false)
-    local f=vgui.Create("DFrame"); DarkRPUI.Scoreboard.Frame=f; f:SetSize(math.min(ScrW()-32,1120),math.min(ScrH()-32,760)); f:Center(); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:SetMouseInputEnabled(true); f:SetKeyboardInputEnabled(false); DarkRPUI.UI.AnimatePanelIn(f)
+    local f=vgui.Create("DFrame"); DarkRPUI.Scoreboard.Frame=f; local fw,fh=DarkRPUI.Layout.SizeForScreen(1120,760); f:SetSize(fw,fh); f:Center(); DarkRPUI.Layout.ClampPanel(f,true); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:SetMouseInputEnabled(true); f:SetKeyboardInputEnabled(false); DarkRPUI.UI.AnimatePanelIn(f)
     f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,5); DarkRPUI.UI.ShadowedBox(22,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),240),DarkRPUI.Color("border"),125); DarkRPUI.UI.Text("Server Roster","DarkRPUI.Title",24,20); DarkRPUI.UI.Text("Hold TAB to view • Right-click to use cursor/actions", "DarkRPUI.Small",26,60,DarkRPUI.Color("subtext")); DarkRPUI.UI.Badge(w-130,28,#player.GetAll().." ONLINE",DarkRPUI.Color("accent")) end
     local searchHolder,search=DarkRPUI.UI.PremiumSearch(f,"Search by name, job, rank, SteamID..."); searchHolder:SetPos(24,92); searchHolder:SetSize(f:GetWide()-48,42)
     local list=vgui.Create("DScrollPanel",f); list:SetPos(24,142); list:SetSize(f:GetWide()-48,f:GetTall()-166); DarkRPUI.UI.StyleScrollbar(list)
