@@ -27,7 +27,7 @@ local function notify(ply, ok, msg)
     net.Send(ply)
 end
 
-local function staffNotify(admin, actionID, target)
+function vox.admin:NotifyStaff(admin, actionID, target)
     local adminName = IsValid(admin) and admin:Nick() or 'Console'
     local targetName = IsValid(target) and target:Nick() or 'server'
     local msg = adminName .. ' used ' .. actionID .. ' on ' .. targetName
@@ -91,7 +91,7 @@ local function findPlayer(identifier)
     end
 end
 
-function vox.admin:Log(admin, action, target, reason)
+function vox.admin:WriteAuditLog(admin, action, target, reason)
     local row = {
         time = os.time(),
         admin = IsValid(admin) and (admin:Nick() .. ' [' .. admin:SteamID() .. ']') or 'Console',
@@ -108,24 +108,25 @@ function vox.admin:Log(admin, action, target, reason)
     file.Append('vox_admin/audit.log', util.TableToJSON(row) .. '\n')
 end
 
-function vox.admin:CanRun(admin, id, target)
-    local action = self.Actions[id]
-    if not action then return false, 'Unknown Vox Admin action.' end
-    if not isfunction(action.run) then return false, 'Vox Admin action has no server handler.' end
-    if not IsValid(admin) or not admin:IsPlayer() then return false, 'Invalid admin.' end
+vox.admin.Log = vox.admin.WriteAuditLog
 
+function vox.admin:EnforceCooldown(admin, action)
     local cooldownEnd = self.Cooldowns[admin] or 0
     if cooldownEnd > CurTime() then
         return false, string.format('Action cooldown active (%.1fs).', cooldownEnd - CurTime())
     end
 
-    if action.target then
-        if not IsValid(target) or not target:IsPlayer() then return false, 'Invalid target.' end
-        if target:IsBot() and action.blockBots then return false, 'This action cannot target bots.' end
-    end
+    return true
+end
 
-    if not checkPrivilege(admin, action, target) then return false, 'You do not have permission.' end
+function vox.admin:ValidateTarget(action, target)
+    if not action.target then return true end
+    if not IsValid(target) or not target:IsPlayer() then return false, 'Invalid target.' end
+    if target:IsBot() and action.blockBots then return false, 'This action cannot target bots.' end
+    return true
+end
 
+function vox.admin:CheckHierarchy(admin, action, target)
     if action.target and target ~= admin and rankWeight(admin) <= rankWeight(target) then
         return false, 'Rank hierarchy blocks this action.'
     end
@@ -133,7 +134,27 @@ function vox.admin:CanRun(admin, id, target)
     return true
 end
 
-function vox.admin:Run(admin, id, target, reason, duration)
+function vox.admin:CanRun(admin, id, target)
+    local action = self.Actions[id]
+    if not action then return false, 'Unknown Vox Admin action.' end
+    if not isfunction(action.run) then return false, 'Vox Admin action has no server handler.' end
+    if not IsValid(admin) or not admin:IsPlayer() then return false, 'Invalid admin.' end
+
+    local cooldownOK, cooldownErr = self:EnforceCooldown(admin, action)
+    if not cooldownOK then return false, cooldownErr end
+
+    local targetOK, targetErr = self:ValidateTarget(action, target)
+    if not targetOK then return false, targetErr end
+
+    if not checkPrivilege(admin, action, target) then return false, 'You do not have permission.' end
+
+    local hierarchyOK, hierarchyErr = self:CheckHierarchy(admin, action, target)
+    if not hierarchyOK then return false, hierarchyErr end
+
+    return true
+end
+
+function vox.admin:ExecuteServerAction(admin, id, target, reason, duration)
     local ok, err = self:CanRun(admin, id, target)
     if not ok then notify(admin, false, err) return false end
 
@@ -146,7 +167,7 @@ function vox.admin:Run(admin, id, target, reason, duration)
 
     local success, result = pcall(action.run, admin, target, reason, duration)
     if not success then
-        self:Log(admin, id .. '_error', target, result)
+        self:WriteAuditLog(admin, id .. '_error', target, result)
         notify(admin, false, 'Action errored; see server console/audit log.')
         ErrorNoHalt('[Vox Admin] ' .. id .. ' failed: ' .. tostring(result) .. '\n')
         return false
@@ -157,11 +178,13 @@ function vox.admin:Run(admin, id, target, reason, duration)
         return false
     end
 
-    self:Log(admin, id, target, reason)
+    self:WriteAuditLog(admin, id, target, reason)
     notify(admin, true, 'Vox Admin action completed: ' .. id)
-    staffNotify(admin, id, target)
+    self:NotifyStaff(admin, id, target)
     return true
 end
+
+vox.admin.Run = vox.admin.ExecuteServerAction
 
 local function reg(id, fn, target)
     local action = vox.admin.Actions[id] or { target = target ~= false }
