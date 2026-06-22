@@ -3,8 +3,15 @@ DarkRPUI.Themes = DarkRPUI.Themes or {}
 
 local function C(r,g,b,a) return Color(r,g,b,a or 255) end
 local function theme(name, radius, colors)
+    colors.frame = colors.frame or colors.panel
+    colors.sidebar = colors.sidebar or colors.panel
+    colors.panelDark = colors.panelDark or colors.background
     colors.panelAlt = colors.panelAlt or colors.panel
-    colors.subtext = colors.subtext or colors.muted
+    colors.textSoft = colors.textSoft or colors.subtext or colors.muted
+    colors.subtext = colors.subtext or colors.textSoft or colors.muted
+    colors.accentSoft = colors.accentSoft or Color(colors.accent.r, colors.accent.g, colors.accent.b, 35)
+    colors.borderSoft = colors.borderSoft or C(255,255,255,12)
+    colors.purple = colors.purple or C(170,90,255)
     colors.info = colors.info or colors.accent
     colors.overlay = colors.overlay or colors.glass
     colors.disabled = colors.disabled or C(80,88,100,180)
@@ -53,14 +60,26 @@ DarkRPUI.RegisterTheme("clean_light", theme("Clean Light", 16, {
 DarkRPUI.RegisterTheme("custom_accent", theme("Custom Accent", 18, table.Copy(DarkRPUI.Themes.obsidian_blue.colors)))
 DarkRPUI.Themes.dark_professional = DarkRPUI.Themes.obsidian_blue
 
-function DarkRPUI.Theme(id)
+local function resolveTheme(id)
     local active = id or DarkRPUI.ActiveTheme or (DarkRPUI.Settings and DarkRPUI.Settings.theme) or DarkRPUI.Config.DefaultTheme
     local t = DarkRPUI.Themes[active] or DarkRPUI.Themes.obsidian_blue
     if active == "custom_accent" and DarkRPUI.Settings and istable(DarkRPUI.Settings.accent) then
         t.colors.accent = Color(DarkRPUI.Settings.accent[1] or 74, DarkRPUI.Settings.accent[2] or 142, DarkRPUI.Settings.accent[3] or 255)
+        t.colors.accentSoft = Color(t.colors.accent.r, t.colors.accent.g, t.colors.accent.b, 35)
     end
     return t
 end
+
+if not istable(DarkRPUI.Theme) then DarkRPUI.Theme = {} end
+DarkRPUI.Theme.Default = {
+    name = "Obsidian Blue", background = C(18,20,27,245), frame = C(24,27,36,248), sidebar = C(30,35,43,248),
+    panel = C(32,36,45,245), panelDark = C(20,22,29,245), card = C(37,42,51,245), cardHover = C(43,50,61,250),
+    border = C(48,56,68,180), borderSoft = C(255,255,255,12), text = C(245,247,250), textSoft = C(195,203,215),
+    muted = C(130,140,155), accent = C(45,157,255), accentSoft = C(45,157,255,35), success = C(68,220,120),
+    warning = C(255,190,70), error = C(245,75,85), purple = C(170,90,255), shadow = C(0,0,0,150),
+    glass = C(15,17,23,210), locked = C(130,130,145), disabled = C(70,75,85)
+}
+setmetatable(DarkRPUI.Theme, { __call = function(_, id) return resolveTheme(id) end })
 function DarkRPUI.Color(name, alpha)
     local c = (DarkRPUI.Theme().colors and DarkRPUI.Theme().colors[name]) or color_white
     if alpha then return Color(c.r,c.g,c.b,alpha) end

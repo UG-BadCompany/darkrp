@@ -71,3 +71,11 @@ net.Receive("DarkRPUI.Admin.RequestPlayerInfo", function(_, ply)
     local t=Entity(net.ReadUInt(16)); if not IsValid(t) or not t:IsPlayer() then return end
     net.Start("DarkRPUI.Admin.PlayerInfo"); net.WriteEntity(t); net.WriteTable({steamid=t:SteamID(), steamid64=t:SteamID64(), usergroup=group(t), job=team.GetName(t:Team()) or "Unknown", health=t:Health(), armor=t:Armor(), money=DarkRPUI.Util.DarkRPVar(t,"money",0), ping=t:Ping(), pos=t:GetPos(), wanted=DarkRPUI.Util.DarkRPVar(t,"wanted",false), frozen=t:IsFlagSet(FL_FROZEN), alive=t:Alive(), playtime="Integration placeholder", notes="Integration placeholder"}); net.Send(ply)
 end)
+
+
+net.Receive("DarkRPUI.Admin.RequestLogs", function(_, ply)
+    if not DarkRPUI.Util.IsAdmin(ply) then return end
+    net.Start("DarkRPUI.Admin.Logs")
+    net.WriteTable(DarkRPUI.Admin.Logs or {})
+    net.Send(ply)
+end)

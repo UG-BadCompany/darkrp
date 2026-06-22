@@ -156,7 +156,8 @@ end
 local function buildPlayerUpgrades(body)
     local scroll=DarkRPUI.UI.ScrollPanel(body); scroll:Dock(FILL); scroll:DockMargin(0,8,0,0)
     local grid=vgui.Create("DIconLayout",scroll); grid:Dock(FILL); grid:SetSpaceX(14); grid:SetSpaceY(14)
-    local upgrades={{"Stamina","Run longer and recover faster","◆"},{"Strength","Improve carrying power and melee presence","✦"},{"Business","Better shop margins and commerce tools","$"},{"Crafting","Blueprint and production bonuses","▣"},{"Driving","Vehicle handling and delivery perks","⌁"},{"Security","Lock, alarm, and defense integrations","◈"},{"Intelligence","XP, research, and scanner bonuses","●"}}
+    if hook.Run("DarkRPUI.BuildPlayerUpgrades", body) == true then return end
+    local upgrades={{"Stamina","Run longer and recover faster","◆"},{"Strength","Improve carrying power and melee presence","✦"},{"Business","Better shop margins and commerce tools","$"},{"Crafting","Blueprint and production bonuses","▣"},{"Driving","Vehicle handling and delivery perks","⌁"},{"Security","Lock, alarm, and defense integrations","◈"},{"Intelligence","XP, research, and scanner bonuses","●"},{"Luck","Improve rare outcomes and discovery chances","★"},{"Endurance","Survive longer under pressure","♥"},{"Charisma","Improve roleplay social and trading perks","☻"}}
     for i,u in ipairs(upgrades) do
         local c=DarkRPUI.UI.MakeAnimatedCard(grid,"",""); c:SetSize(260,164); addAnim(c,i)
         c.PaintOver=function(_,w,h)
@@ -186,7 +187,7 @@ end
 function DarkRPUI.F4.Open()
     if IsValid(DarkRPUI.F4.Frame) then DarkRPUI.F4.Close(); return end
     selectedItem=nil; currentTab="dashboard"
-    local f=vgui.Create("DFrame"); DarkRPUI.F4.Frame=f; local fw,fh=DarkRPUI.Layout.SizeForScreen(math.max(820,ScrW()*0.92),math.max(620,ScrH()*0.90)); f:SetSize(fw,fh); f:Center(); DarkRPUI.Layout.ClampPanel(f,true); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); f:SetKeyboardInputEnabled(true); DarkRPUI.UI.AnimateIn(f)
+    local f=vgui.Create("DFrame"); DarkRPUI.F4.Frame=f; local fw,fh=DarkRPUI.Layout.SizeForScreen(math.max(820,ScrW()*0.70),math.max(560,ScrH()*0.76)); f:SetSize(fw,fh); f:Center(); DarkRPUI.Layout.ClampPanel(f,true); f:SetTitle(""); f:ShowCloseButton(false); f:SetDraggable(false); f:MakePopup(); f:SetKeyboardInputEnabled(true); DarkRPUI.UI.AnimateIn(f)
     f.OnKeyCodePressed=function(_,key) if key==KEY_ESCAPE then DarkRPUI.F4.Close() end end
     f.Paint=function(s,w,h) DarkRPUI.UI.DrawBlur(s,8); DarkRPUI.UI.ShadowedBox(22,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),238),DarkRPUI.Color("border")); DarkRPUI.UI.Text(GetHostName() or "DarkRP Server","DarkRPUI.Title",30,22); local ply=LocalPlayer(); DarkRPUI.UI.Text(ply:Nick().."  •  "..DarkRPUI.Util.FormatMoney(DarkRPUI.Util.DarkRPVar(ply,"money",0)).."  •  "..(team.GetName(ply:Team()) or "Citizen"),"DarkRPUI.Small",32,62,DarkRPUI.Color("subtext")) end
     local close=DarkRPUI.UI.MakeCloseButton(f, DarkRPUI.F4.Close); close:SetPos(f:GetWide()-64,20)

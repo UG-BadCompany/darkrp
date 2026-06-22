@@ -12,7 +12,8 @@ local clientFiles = {
     "darkrp_ui/client/cl_materials.lua", "darkrp_ui/client/cl_theme.lua", "darkrp_ui/client/cl_fonts.lua",
     "darkrp_ui/client/cl_storage.lua", "darkrp_ui/client/cl_networking.lua", "darkrp_ui/client/cl_components.lua",
     "darkrp_ui/client/cl_notifications.lua", "darkrp_ui/client/cl_hud.lua", "darkrp_ui/client/cl_f4.lua",
-    "darkrp_ui/client/cl_scoreboard.lua", "darkrp_ui/client/cl_settings.lua", "darkrp_ui/client/cl_admin.lua"
+    "darkrp_ui/client/cl_scoreboard.lua", "darkrp_ui/client/cl_settings.lua", "darkrp_ui/client/cl_admin.lua",
+    "darkrp_ui/client/cl_premium_overlays.lua"
 }
 
 local function includeShared(path) if SERVER then AddCSLuaFile(path) end include(path) end
