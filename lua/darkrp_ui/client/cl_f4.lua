@@ -1,1 +1,0 @@
--- Compatibility shim: F4 is implemented in lua/darkrp_ui/client/f4/ modules.

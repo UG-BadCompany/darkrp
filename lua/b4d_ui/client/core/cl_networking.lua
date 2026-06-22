@@ -1,0 +1,2 @@
+B4DUI = B4DUI or {}; net.Receive("B4DUI.Notify",function() B4DUI.PushNotification(net.ReadString(),net.ReadString()) end); net.Receive("B4DUI.AdminLogs",function() B4DUI.AdminLogRows=net.ReadTable() or {} end)
+function B4DUI.RunAdminAction(id,target,reason,duration) net.Start("B4DUI.AdminAction"); net.WriteString(id); net.WriteEntity(target or NULL); net.WriteString(reason or ""); net.WriteUInt(math.max(tonumber(duration) or 0,0),32); net.SendToServer() end

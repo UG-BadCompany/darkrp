@@ -1,0 +1,2 @@
+B4DUI = B4DUI or {}; B4DUI.HUD=B4DUI.HUD or {Elements={}}
+B4DUI.HUD.Register("Ammo",function() local wep=LocalPlayer():GetActiveWeapon(); if not IsValid(wep) then return end; local clip=wep:Clip1(); if clip<0 then return end; local x,y=B4DUI.ClampToSafeArea(ScrW()-190,ScrH()-112,166,72); draw.RoundedBox(14,x,y,166,72,B4DUI.Color("panel")); draw.SimpleText(clip,"B4D.Title",x+18,y+16,B4DUI.Color("text")); draw.SimpleText(LocalPlayer():GetAmmoCount(wep:GetPrimaryAmmoType()),"B4D.Body",x+92,y+25,B4DUI.Color("muted")) end)
