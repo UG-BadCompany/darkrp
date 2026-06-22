@@ -1,0 +1,2 @@
+DarkRPUI=DarkRPUI or {}; DarkRPUI.F4=DarkRPUI.F4 or {}
+function DarkRPUI.F4.CreateItemCard(parent,it,onClick) local name=DarkRPUI.F4.ItemName(it); local price=DarkRPUI.F4.Price(it); local c=DarkRPUI.UI.HorizontalCard(parent,name,(it.description or it.desc or it.entity or "Available")..(price and ("\n"..DarkRPUI.Util.FormatMoney(price)) or ""),DarkRPUI.Color("accent"),function() if onClick then onClick(it) end end); c:SetSize(parent:GetWide()-8,76); return c end
