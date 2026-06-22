@@ -76,21 +76,25 @@ end
 
 function vox.DrawVoxPanel( x, y, w, h, colors, radius )
     colors = colors or ( vox.GetThemeColors and vox.GetThemeColors() ) or {}
-    radius = radius or 8
-    local primary = colors.primary or Color( 10, 13, 20 )
-    local secondary = colors.secondary or Color( 16, 22, 34 )
-    local tertiary = colors.tertiary or Color( 24, 32, 48 )
-    local accent = colors.accent or Color( 0, 174, 255 )
+    radius = radius or 16
+    local primary = colors.primary or Color( 7, 10, 18 )
+    local secondary = colors.secondary or Color( 18, 26, 43 )
+    local tertiary = colors.tertiary or Color( 24, 35, 56 )
+    local accent = colors.accent or Color( 0, 188, 255 )
+    local violet = colors.violet or Color( 139, 92, 246 )
 
     draw.RoundedBox( radius, x, y, w, h, ColorAlpha( primary, 238 ) )
-    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( accent, 20 ) )
-    vox.DrawMatGradient( x, y, w, h, BOTTOM, ColorAlpha( tertiary, 70 ) )
+    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( accent, 24 ) )
+    vox.DrawMatGradient( x, y, w, h, BOTTOM, ColorAlpha( violet, 16 ) )
+    vox.DrawMatGradient( x, y, w, h, TOP, ColorAlpha( tertiary, 74 ) )
 
-    surface.SetDrawColor( ColorAlpha( secondary, 210 ) )
+    surface.SetDrawColor( ColorAlpha( secondary, 230 ) )
     surface.DrawOutlinedRect( x + 1, y + 1, w - 2, h - 2, 1 )
-    surface.SetDrawColor( ColorAlpha( accent, 90 ) )
-    surface.DrawLine( x + 10, y + 1, x + math.min( w - 10, 82 ), y + 1 )
-    surface.DrawLine( x + w - math.min( w - 10, 82 ), y + h - 2, x + w - 10, y + h - 2 )
+    surface.SetDrawColor( ColorAlpha( color_white, 10 ) )
+    surface.DrawLine( x + radius, y + 2, x + w - radius, y + 2 )
+    surface.SetDrawColor( ColorAlpha( accent, 115 ) )
+    surface.DrawLine( x + radius, y + 1, x + math.min( w - radius, 150 ), y + 1 )
+    surface.DrawLine( x + w - math.min( w - radius, 150 ), y + h - 2, x + w - radius, y + h - 2 )
 end
 
 function vox.DrawVoxCornerTicks( x, y, w, h, color, size )
