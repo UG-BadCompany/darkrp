@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-11/08/2024
-
---]]
-
 local hud = vox.hud
 local nearest = {}
 local statuses = {}

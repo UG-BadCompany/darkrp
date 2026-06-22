@@ -1,12 +1,3 @@
---[[
-
-Editor: Benjaa635 | Rusherr
-GmodStore Profile: https://www.gmodstore.com/users/Rusherr635
-
-13/10/2024
-
---]]
-
 local LANG = {}
 
 --[[

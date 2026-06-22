@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/05/2023
-
---]]
-
 --[[------------------------------
 Requires `sh_net_extension.lua`, though doesn't need to be loaded before that
 --------------------------------]]

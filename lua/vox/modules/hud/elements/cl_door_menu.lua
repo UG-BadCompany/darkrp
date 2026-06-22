@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-16/08/2024
-
---]]
-
 local MAX_DISTANCE = 128 ^ 2 -- DarkRP default is 200
 local L = function( ... ) return vox.lang:Get( ... ) end
 local doorFrame

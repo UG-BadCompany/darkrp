@@ -1,12 +1,3 @@
---[[
-
-Author: Goran
-Steam Profile:
-
-03/07/2024
-
---]]
-
 local LANG = {}
 
 -- Phrases

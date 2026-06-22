@@ -1,11 +1,3 @@
---[[
-	mysql - 1.0.3
-	A simple MySQL wrapper for Garry's Mod.
-
-	Alexander Grist-Hucker
-	http://www.alexgrist.com
---]]
-
 vox.sql = {}
 
 local QueueTable = {}

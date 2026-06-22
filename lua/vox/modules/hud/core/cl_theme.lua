@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 vox.hud.themes = vox.hud.themes or {}
 
 local CONVAR_THEME = CreateClientConVar( 'cl_vox_hud_theme_id', 'default', true, false )

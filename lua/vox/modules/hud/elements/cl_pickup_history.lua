@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 local TYPE_AMMO = 0
 local TYPE_WEAPON = 1
 local TYPE_ITEM = 2

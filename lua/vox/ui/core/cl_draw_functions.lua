@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-18/11/2023
-
---]]
-
 do
     for thickness = 1, 6 do
         vox.spoly.Generate('vox_circle_outline_' .. thickness, function(w, h)
@@ -63,4 +54,37 @@ function vox.DrawCircle(x0, y0, r, color)
         surface.SetDrawColor(color)
     end
     vox.spoly.Draw('vox_circle', x, y, d, d)
+end
+
+function vox.DrawAngledRect( x, y, w, h, cut, color )
+    cut = math.min( cut or 10, w * .45, h * .45 )
+    surface.SetDrawColor( color )
+    draw.NoTexture()
+    surface.DrawPoly( {
+        { x = x + cut, y = y },
+        { x = x + w, y = y },
+        { x = x + w - cut, y = y + h },
+        { x = x, y = y + h }
+    } )
+end
+
+function vox.DrawVoxBlade( x, y, w, h, color, glowColor )
+    glowColor = glowColor or color
+    vox.DrawAngledRect( x - 2, y, w + 4, h, math.min( w * .5, 12 ), ColorAlpha( glowColor, 28 ) )
+    vox.DrawAngledRect( x, y, w, h, math.min( w * .45, 10 ), color )
+end
+
+function vox.DrawVoxPanel( x, y, w, h, colors, radius )
+    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    radius = radius or 8
+    local primary = colors.primary or Color( 10, 13, 20 )
+    local secondary = colors.secondary or Color( 16, 22, 34 )
+    local accent = colors.accent or Color( 0, 174, 255 )
+    draw.RoundedBox( radius, x, y, w, h, ColorAlpha( primary, 238 ) )
+    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( accent, 20 ) )
+    surface.SetDrawColor( ColorAlpha( secondary, 210 ) )
+    surface.DrawOutlinedRect( x + 1, y + 1, w - 2, h - 2, 1 )
+    surface.SetDrawColor( ColorAlpha( accent, 90 ) )
+    surface.DrawLine( x + 10, y + 1, x + math.min( w - 10, 82 ), y + 1 )
+    surface.DrawLine( x + w - math.min( w - 10, 82 ), y + h - 2, x + w - 10, y + h - 2 )
 end

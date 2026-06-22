@@ -1,13 +1,3 @@
---[[
-
-Yazar: tochnonement
-E-posta: tochnonement@gmail.com
-Çevirmen: shazzam0
-
-04/09/2024
-
---]]
-
 local LANG = {}
 
 --[[

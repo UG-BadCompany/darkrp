@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-17/08/2024
-
---]]
-
 vox.hud.fonts = vox.hud.fonts or {}
 
 local function font2D( name, size, postfix )

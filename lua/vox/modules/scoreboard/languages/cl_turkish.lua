@@ -1,12 +1,3 @@
---[[
-
-Author: maellwoe
-Email: maellwoe@hotmail.com
-
-14/03/2024
-
---]]
-
 local LANG = {}
 
 -- Phrases

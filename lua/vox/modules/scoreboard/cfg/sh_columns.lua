@@ -1,5 +1,3 @@
--- by p1ng :D
-
 --[[------------------------------
 **WARNING**
 This is an advanced config.

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/07/2024
-
---]]
-
 vox.hud:Print('Loaded SQL configuration.')
 
 local MySQL = {Credentials = {}}

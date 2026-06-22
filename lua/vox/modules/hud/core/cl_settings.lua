@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 local L = function( ... ) return vox.lang:Get( ... ) end
 
 local COLOR_PRIMARY = vox:Config( 'colors.primary' )

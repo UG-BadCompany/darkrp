@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-04/01/2024
-
---]]
-
 local CIRCLE_FULL_ANGLE = 360
 
 local PANEL = {}

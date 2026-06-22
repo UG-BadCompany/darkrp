@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/07/2024
-
---]]
-
 vox.hud.elements = vox.hud.elements or {}
 vox.hud.sortedElements = vox.hud.sortedElements or {}
 

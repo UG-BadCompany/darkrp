@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-05/06/2022
-
---]]
-
 do
     local Lerp = Lerp
     local Color = Color

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 local SHOW_DURATION = 1.5
 local MAX_SLOTS = 6
 

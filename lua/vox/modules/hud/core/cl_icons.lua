@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 vox.wimg.Register( 'hud_microphone', 'https://i.imgur.com/gcM94Fk.png' ) -- 128x128
 vox.wimg.Register( 'hud_chat', 'https://i.imgur.com/q5Lw2qs.png' ) -- 128x128
 vox.wimg.Register( 'hud_connection_lost', 'https://i.imgur.com/EoFpsnf.png' ) -- 128x128

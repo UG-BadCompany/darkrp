@@ -1,12 +1,3 @@
---[[
-
-Author: Goran
-GmodStore Profile: https://www.gmodstore.com/users/Goran
-
-05/01/2024
-
---]]
-
 local LANG = {}
 
 -- TABS

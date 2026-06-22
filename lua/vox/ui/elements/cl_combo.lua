@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-22/04/2023
-
---]]
-
 local PANEL = {}
 
 local colorPrimary = vox:Config('colors.primary')

@@ -1,5 +1,3 @@
--- by p1ng :D
-
 local COLOR_PRIMARY = vox:Config('colors.primary')
 local COLOR_SECONDARY = vox:Config('colors.secondary')
 local COLOR_TERTIARY = vox:Config('colors.tertiary')
@@ -137,12 +135,22 @@ function PANEL:Paint(w, h)
     local rounded = category.canvas:GetTall() < 1
     local isHovered = self:IsHovered()
     local color = isHovered and COLOR_HOVERED or COLOR_PRIMARY
+    local ply = self:GetPlayer()
+    local teamColor = IsValid( ply ) and team.GetColor( ply:Team() ) or ( vox.hud and vox.hud:GetColor( 'accent' ) ) or color_white
 
-    if (self.blur) then
+    if vox.DrawVoxPanel then
+        vox.DrawVoxPanel( 0, 0, w, h, { primary = color, secondary = COLOR_SECONDARY, accent = teamColor }, 8 )
+    elseif (self.blur) then
         draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(color, 230), true, true, rounded, rounded)
     else
         draw.RoundedBoxEx(8, 0, 0, w, h, self.colorOutline, true, true, rounded, rounded)
         draw.RoundedBoxEx(8, lineThickness, lineThickness, w - lineThickness * 2, h - lineThickness * 2, color, true, true, rounded, rounded)
+    end
+
+    if vox.DrawVoxBlade then vox.DrawVoxBlade( 0, 6, 6, h - 12, teamColor ) end
+    if isHovered then
+        surface.SetDrawColor( ColorAlpha( teamColor, 38 ) )
+        surface.DrawRect( 8, 1, w - 16, h - 2 )
     end
 
     local mask = rounded and self.maskAllRounded or self.maskExpanded

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/04/2023
-
---]]
-
 local PANEL = {}
 
 function PANEL:Init()

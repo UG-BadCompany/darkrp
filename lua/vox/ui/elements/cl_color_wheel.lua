@@ -1,11 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-13/06/2023
-
---]]
 local MAT_CIRCLE = Material('vox_framework/color_wheel.png', 'smooth mips')
 
 local PANEL = {}

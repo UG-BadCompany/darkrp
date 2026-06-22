@@ -1,5 +1,3 @@
--- by p1ng :D
-
 vox.scoreboard.nameEffects = {}
 
 function vox.scoreboard:RegisterNameEffect(id, func)

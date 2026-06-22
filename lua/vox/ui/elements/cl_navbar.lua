@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-31/12/2023
-
---]]
-
 local colorSecondary = vox:Config('colors.secondary')
 local colorAccent = vox:Config('colors.accent')
 local colorGray = Color(197, 197, 197)

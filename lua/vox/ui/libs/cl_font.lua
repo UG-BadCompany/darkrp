@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-15/04/2022
-
---]]
-
 vox.fonts = {}
 
 local string_Explode = string.Explode

@@ -1,12 +1,3 @@
---[[
-
-Author: VeaTime
-Steam Profile: https://steamcommunity.com/id/VeaTime/
-
-07/03/2024
-
---]]
-
 local LANG = {}
 
 -- Phrases

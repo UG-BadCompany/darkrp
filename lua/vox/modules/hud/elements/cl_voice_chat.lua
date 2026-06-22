@@ -1,13 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
-
 vox.hud.VoicePanels = vox.hud.VoicePanels or {}
 
 local hud = vox.hud

@@ -1,12 +1,3 @@
---[[
-
-Author: tochonement
-Email: tochonement@gmail.com
-
-28.09.2021
-
---]]
-
 vox.lang = vox.lang or {}
 vox.lang.phrases = vox.lang.phrases or {}
 vox.lang.id = vox.lang.id or 'default'

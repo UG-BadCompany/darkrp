@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-20/08/2024
-
---]]
-
 local COLOR_GREEN, COLOR_RED = Color( 96, 230, 39), Color( 252, 30, 30 )
 local COLOR_SHADOW = Color( 0, 0, 0, 100 )
 local COLOR_FUEL = Color( 196, 88, 0)

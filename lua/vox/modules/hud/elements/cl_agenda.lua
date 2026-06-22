@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-18/08/2024
-
---]]
-
 local hud = vox.hud
 local agendaWrapped = ''
 local lastTitle = ''

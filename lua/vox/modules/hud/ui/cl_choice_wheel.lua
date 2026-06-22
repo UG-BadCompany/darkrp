@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 local SPOLY_ID = 'vox_hud_wheel_background_3'
 
 do

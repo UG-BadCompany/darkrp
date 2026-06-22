@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-23/04/2023
-
---]]
-
 vox.net = {}
 
 function vox.net.WriteTable(tbl)

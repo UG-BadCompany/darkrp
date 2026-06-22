@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-12/03/2024
-
---]]
-
 local stored = {}
 
 util.AddNetworkString('vox.scoreboard(Bricks.Gangs):Replace')

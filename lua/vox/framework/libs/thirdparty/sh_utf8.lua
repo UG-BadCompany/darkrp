@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-02/03/2024
-
---]]
-
 vox.utf8 = {}
 
 local CASEMAP_LOWER = {} -- lower to upper

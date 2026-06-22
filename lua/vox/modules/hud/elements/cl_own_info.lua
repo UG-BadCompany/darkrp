@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-16/08/2024
-
---]]
-
 local L = function( ... ) return vox.lang:Get( ... ) end
 local MAX_RANGE = 128 ^ 2
 

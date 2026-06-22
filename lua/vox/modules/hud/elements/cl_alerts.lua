@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-17/08/2024
-
---]]
-
 local DURATION = 5
 
 local hud = vox.hud

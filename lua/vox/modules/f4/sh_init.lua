@@ -1,17 +1,8 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-25/12/2023
-
---]]
-
 vox:Addon('f4', {
     color = Color(0,17,71),
-    author = 'tochnonement',
+    author = 'Vox UI',
     version = '1.1.6',
-    licensee = '76561199575218969'
+    licensee = 'vox-ui'
 })
 
 ----------------------------------------------------------------

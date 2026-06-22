@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-05/03/2023
-
---]]
-
 local PANEL = {}
 
 AccessorFunc(PANEL, 'm_iColumnCount', 'ColumnCount')

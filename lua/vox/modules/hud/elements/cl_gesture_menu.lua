@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-16/08/2024
-
---]]
-
 local animationsTable = {}
 animationsTable[ ACT_GMOD_GESTURE_BOW ] = 'bow'
 animationsTable[ ACT_GMOD_TAUNT_MUSCLE ] = 'sexy_dance'

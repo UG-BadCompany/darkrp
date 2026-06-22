@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-07/03/2024
-
---]]
-
 local LANG = {}
 
 -- Phrases
