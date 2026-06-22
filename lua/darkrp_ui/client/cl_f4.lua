@@ -117,41 +117,53 @@ local function buildDashboard(body)
     for i,c in ipairs(cards) do local card=DarkRPUI.UI.MakeAnimatedCard(grid,c[1],c[2].."\n"..c[3]); card:SetSize(260,138); addAnim(card,i+1) end
 end
 
-local function buildJobs(body, info)
-    local top=vgui.Create("DPanel",body); top:Dock(TOP); top:SetTall(50); top.Paint=nil
-    local searchHolder, search = makeSearch(top, "Search jobs by name, category, weapons...", nil); searchHolder:Dock(LEFT); searchHolder:SetWide(360)
-    local category="All"; local sort="Name"
-    local cats={All=true}; for _,j in ipairs(RPExtraTeams or {}) do cats[j.category or j.Category or "General"]=true end
-    local combo=vgui.Create("DComboBox",top); combo:Dock(LEFT); combo:DockMargin(12,0,0,6); combo:SetWide(180); combo:SetValue("All categories"); for c in pairs(cats) do combo:AddChoice(c) end; DarkRPUI.UI.StyleCombo(combo)
-    local sortBox=vgui.Create("DComboBox",top); sortBox:Dock(LEFT); sortBox:DockMargin(12,0,0,6); sortBox:SetWide(150); sortBox:SetValue("Sort: Name"); sortBox:AddChoice("Name"); sortBox:AddChoice("Salary"); sortBox:AddChoice("Players"); DarkRPUI.UI.StyleCombo(sortBox)
-    local scroll=vgui.Create("DScrollPanel",body); scroll:Dock(FILL); scroll:DockMargin(0,8,0,0); DarkRPUI.UI.StyleScrollbar(scroll)
-    local grid=vgui.Create("DIconLayout",scroll); grid:Dock(FILL); grid:SetSpaceX(14); grid:SetSpaceY(14)
-    local function rebuild()
-        grid:Clear(); local q=string.lower(search:GetValue() or ""); local jobs={}
-        for id,j in ipairs(RPExtraTeams or {}) do if canShowJob(j) then local cat=j.category or j.Category or "General"; local hay=string.lower(table.concat({itemName(j),cat,itemDesc(j),weaponText(j)}," ")); if (category=="All" or cat==category) and (q=="" or string.find(hay,q,1,true)) then j.team=id; jobs[#jobs+1]=j end end end
-        table.sort(jobs,function(a,b) if sort=="Salary" then return jobSalary(a)>jobSalary(b) elseif sort=="Players" then return jobPlayers(a.team)>jobPlayers(b.team) end return itemName(a)<itemName(b) end)
-        if #jobs==0 then DarkRPUI.UI.EmptyState(grid,"No jobs found","Try another search or category filter."); return end
-        for i,j in ipairs(jobs) do
-            local col=safeTeamColor(j.team, DarkRPUI.Color("accent")); local card=DarkRPUI.UI.MakeAnimatedCard(grid,"",""); card:SetSize(300,246); card.Job=j; addAnim(card,i)
-            local mdl=DarkRPUI.UI.MakeModelPreview(card, modelList(j), false); mdl:SetPos(14,14); mdl:SetSize(92,110)
-            local favKey=jobCommand(j) or itemName(j); local fav=DarkRPUI.UI.MakeIconButton(card, favorites[favKey] and "★" or "☆", function(b) favorites[favKey] = not favorites[favKey] or nil; DarkRPUI.Settings = DarkRPUI.Settings or {}; DarkRPUI.Settings.favorites=favorites; if DarkRPUI.SaveSettings then DarkRPUI.SaveSettings() end; b:SetText(favorites[favKey] and "★" or "☆"); DarkRPUI.UI.PlayClick() end); fav:SetPos(252,14); fav:SetSize(34,34)
-            local become=vgui.Create("DButton",card); become:SetText("Become Job"); become:SetPos(14,196); become:SetSize(272,36); DarkRPUI.UI.StyleButton(become,col); become.DoClick=function() if isJobLocked(j) then DarkRPUI.Notify("warning","Job locked","You do not meet this job requirement."); return end; buyCommand(jobCommand(j)) end
-            card.PaintOver=function(s,w,h)
-                surface.SetDrawColor(col.r,col.g,col.b,210); surface.DrawRect(0,0,4,h)
-                DarkRPUI.UI.Text(itemName(j),"DarkRPUI.Subtitle",118,18)
-                DarkRPUI.UI.Text(j.category or j.Category or "General","DarkRPUI.Tiny",118,46,DarkRPUI.Color("subtext"))
-                DarkRPUI.UI.Badge(118,66,"$ "..DarkRPUI.Util.FormatMoney(jobSalary(j)),DarkRPUI.Color("success"))
-                DarkRPUI.UI.Badge(118,90,jobPlayers(j.team).." / "..(jobMax(j)==0 and "∞" or jobMax(j)).." slots",DarkRPUI.Color("accent"))
-                draw.DrawText(itemDesc(j),"DarkRPUI.Tiny",14,132,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT)
-                DarkRPUI.UI.Text("Loadout: "..weaponText(j),"DarkRPUI.Tiny",14,172,DarkRPUI.Color("muted"))
-                local bx=118; if favorites[jobCommand(j) or itemName(j)] then bx=bx+DarkRPUI.UI.Badge(bx,116,"FAV",DarkRPUI.Color("accent"))+6 end; if j.vote then bx=bx+DarkRPUI.UI.Badge(bx,116,"VOTE",DarkRPUI.Color("warning"))+6 end; if isJobLocked(j) then bx=bx+DarkRPUI.UI.Badge(bx,116,"LOCKED",DarkRPUI.Color("error"))+6 end; if j.admin or j.adminOnly then DarkRPUI.UI.Badge(bx,116,"STAFF",DarkRPUI.Color("warning")) elseif j.vip or j.vipOnly then DarkRPUI.UI.Badge(bx,116,"VIP",DarkRPUI.Color("accent")) end
-            end
-            card.DoClick=function() selectedItem=j; info.Refresh() end
-        end
+local function openJobDetail(job, parent, refresh)
+    if not IsValid(parent) or not job then return end
+    if IsValid(DarkRPUI.F4.JobDetail) then DarkRPUI.F4.JobDetail:Remove() end
+    local overlay=vgui.Create("DPanel", parent); DarkRPUI.F4.JobDetail=overlay; overlay:Dock(FILL); overlay:SetAlpha(0); overlay:AlphaTo(255, DarkRPUI.UI.AnimSpeed(1), 0)
+    overlay.Paint=function(_,w,h) DarkRPUI.UI.DrawBlur(parent,5); surface.SetDrawColor(0,0,0,165); surface.DrawRect(0,0,w,h) end
+    local panel=vgui.Create("DPanel", overlay); panel:SetSize(math.min(parent:GetWide()-40,760), parent:GetTall()-42); panel:SetPos(parent:GetWide()-panel:GetWide()-20,21)
+    local col=safeTeamColor(job.team, DarkRPUI.Color("accent")); local tab="description"
+    panel.Paint=function(_,w,h)
+        DarkRPUI.UI.ShadowedBox(22,0,0,w,h,DarkRPUI.WithAlpha(DarkRPUI.Color("background"),248),DarkRPUI.Color("border"),140)
+        surface.SetDrawColor(col.r,col.g,col.b,220); surface.DrawRect(0,0,6,h)
+        surface.SetDrawColor(col.r,col.g,col.b,34); surface.DrawRect(6,0,w-6,96)
+        DarkRPUI.UI.Text(itemName(job),"DarkRPUI.Title",28,22,DarkRPUI.Color("text"))
+        DarkRPUI.UI.Text((job.category or job.Category or "General").." • Salary "..DarkRPUI.Util.FormatMoney(jobSalary(job)),"DarkRPUI.Small",30,56,col)
+        local bx=30; if isJobLocked(job) then bx=bx+DarkRPUI.UI.Badge(bx,78,"LOCKED",DarkRPUI.Color("error"))+6 end; if job.vote then bx=bx+DarkRPUI.UI.Badge(bx,78,"VOTE",DarkRPUI.Color("warning"))+6 end; if job.vip or job.vipOnly then DarkRPUI.UI.Badge(bx,78,"VIP",DarkRPUI.Color("accent")) end
+        DarkRPUI.UI.Text(tab=="weapons" and "Loadout" or tab=="rules" and "Rules & requirements" or "Description","DarkRPUI.Subtitle",30,128,col)
+        local text = tab=="weapons" and weaponText(job) or tab=="rules" and "Follow staff direction, value roleplay, and respect job-specific limits.\n\nRequirements: "..(isJobLocked(job) and "Custom check / rank restriction" or "Available now") or itemDesc(job)
+        draw.DrawText(text,"DarkRPUI.Small",30,162,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT)
+        DarkRPUI.UI.Badge(30,h-118,jobPlayers(job.team).." / "..(jobMax(job)==0 and "∞" or jobMax(job)).." slots",DarkRPUI.Color("accent"))
     end
-    combo.OnSelect=function(_,_,v) category=v; rebuild() end; sortBox.OnSelect=function(_,_,v) sort=v; rebuild() end; search.OnChange=rebuild; rebuild()
+    local close=DarkRPUI.UI.MakeCloseButton(panel,function() if IsValid(overlay) then overlay:Remove() end end); close:SetPos(panel:GetWide()-58,16)
+    local tabs={{"description","Description"},{"weapons","Weapons"},{"rules","Rules"}}
+    for i,t in ipairs(tabs) do local b=vgui.Create("DButton",panel); b:SetText(t[2]); b:SetFont("DarkRPUI.Small"); b:SetTextColor(DarkRPUI.Color("text")); b:SetPos(30+(i-1)*112,102); b:SetSize(104,30); b.Paint=function(_,w,h) if tab==t[1] then surface.SetDrawColor(col); surface.DrawRect(10,h-3,w-20,3) end end; b.DoClick=function() tab=t[1] end end
+    local mdl=DarkRPUI.UI.MakeModelPreview(panel, modelList(job), true); mdl:SetPos(panel:GetWide()-300,108); mdl:SetSize(270,panel:GetTall()-210)
+    local favKey=jobCommand(job) or itemName(job); local fav=DarkRPUI.UI.MakeIconButton(panel, favorites[favKey] and "★ Favorite" or "☆ Favorite", function(b) favorites[favKey]=not favorites[favKey] or nil; DarkRPUI.Settings=DarkRPUI.Settings or {}; DarkRPUI.Settings.favorites=favorites; if DarkRPUI.SaveSettings then DarkRPUI.SaveSettings() end; b:SetText(favorites[favKey] and "★ Favorite" or "☆ Favorite"); if refresh then refresh() end end); fav:SetPos(30,panel:GetTall()-66); fav:SetSize(170,42)
+    local become=vgui.Create("DButton",panel); become:SetText(isJobLocked(job) and "Requirements Not Met" or "Become"); become:SetPos(214,panel:GetTall()-66); become:SetSize(220,42); DarkRPUI.UI.StyleButton(become,isJobLocked(job) and DarkRPUI.Color("error") or col); become.DoClick=function() if isJobLocked(job) then DarkRPUI.Notify("warning","Job locked","You do not meet this job requirement."); return end; buyCommand(jobCommand(job)) end
 end
 
+local function sectionHeader(parent, title)
+    local h=vgui.Create("DPanel",parent); h:Dock(TOP); h:DockMargin(0,8,0,6); h:SetTall(32)
+    h.Paint=function(_,w,hh) DarkRPUI.UI.RoundedBox(9,0,0,w,hh,DarkRPUI.Color("panelDark")); DarkRPUI.UI.Text(title,"DarkRPUI.Small",12,8,DarkRPUI.Color("text")); DarkRPUI.UI.Text("⌄","DarkRPUI.Small",w-22,8,DarkRPUI.Color("accent"),TEXT_ALIGN_CENTER) end
+    return h
+end
+
+local function buildJobs(body, info)
+    local top=vgui.Create("DPanel",body); top:Dock(TOP); top:SetTall(50); top.Paint=nil
+    local searchHolder, search = makeSearch(top, "Search jobs…", nil); searchHolder:Dock(LEFT); searchHolder:SetWide(360)
+    local favOnly=false; local favBtn=DarkRPUI.UI.MakeIconButton(top,"☆ Show Favorites",function(b) favOnly=not favOnly; b:SetText(favOnly and "★ Favorites" or "☆ Show Favorites"); if b.Rebuild then b.Rebuild() end end); favBtn:Dock(RIGHT); favBtn:SetWide(160)
+    local scroll=vgui.Create("DScrollPanel",body); scroll:Dock(FILL); scroll:DockMargin(0,8,0,0); DarkRPUI.UI.StyleScrollbar(scroll)
+    local function rebuild()
+        scroll:Clear(); local q=string.lower(search:GetValue() or ""); local grouped={}; local order={}
+        for id,j in ipairs(RPExtraTeams or {}) do if canShowJob(j) then j.team=id; local fav=favorites[jobCommand(j) or itemName(j)]; local hay=string.lower(table.concat({itemName(j),j.category or j.Category or "General",itemDesc(j),weaponText(j)}," ")); if (not favOnly or fav) and (q=="" or string.find(hay,q,1,true)) then local cat=fav and "Favorite" or (j.category or j.Category or "General"); if not grouped[cat] then grouped[cat]={}; order[#order+1]=cat end; grouped[cat][#grouped[cat]+1]=j end end end
+        table.sort(order,function(a,b) if a=="Favorite" then return true elseif b=="Favorite" then return false end return a<b end)
+        if #order==0 then DarkRPUI.UI.EmptyState(scroll,"No jobs found","Try another search or disable favorites."); return end
+        for _,cat in ipairs(order) do sectionHeader(scroll,cat); for _,j in ipairs(grouped[cat]) do local col=safeTeamColor(j.team,DarkRPUI.Color("accent")); local row=vgui.Create("DButton",scroll); row:Dock(TOP); row:DockMargin(0,0,0,7); row:SetTall(66); row:SetText(""); row.Paint=function(s,w,h) s.Hover=DarkRPUI.UI.HoverLerp(s,12); DarkRPUI.UI.ShadowedBox(14,0,-math.floor(2*s.Hover),w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"),col),60); surface.SetDrawColor(col.r,col.g,col.b,210); surface.DrawRect(0,10,4,h-20); DarkRPUI.UI.Text(itemName(j),"DarkRPUI.Body",72,12); DarkRPUI.UI.Text("Salary "..DarkRPUI.Util.FormatMoney(jobSalary(j)),"DarkRPUI.Small",72,36,DarkRPUI.Color("success")); DarkRPUI.UI.Text(jobPlayers(j.team).."/"..(jobMax(j)==0 and "∞" or jobMax(j)),"DarkRPUI.Subtitle",w-54,21,col,TEXT_ALIGN_CENTER); if isJobLocked(j) then DarkRPUI.UI.Badge(w-150,23,"LOCKED",DarkRPUI.Color("error")) end end; local av=DarkRPUI.UI.MakeModelPreview(row, modelList(j), false); av:SetPos(12,7); av:SetSize(46,52); row.DoClick=function() selectedItem=j; if IsValid(info) then info.Refresh() end; openJobDetail(j, body, rebuild) end end end
+    end
+    favBtn.Rebuild=rebuild; search.OnChange=rebuild; rebuild()
+end
 
 local function buildPlayerUpgrades(body)
     local scroll=DarkRPUI.UI.ScrollPanel(body); scroll:Dock(FILL); scroll:DockMargin(0,8,0,0)
@@ -170,15 +182,34 @@ local function buildPlayerUpgrades(body)
 end
 
 local function buildShop(body, tab, info)
-    local searchHolder, search = makeSearch(body, "Search "..tab.."...", nil); searchHolder:Dock(TOP); searchHolder:DockMargin(0,0,0,12)
-    local scroll=vgui.Create("DScrollPanel",body); scroll:Dock(FILL); DarkRPUI.UI.StyleScrollbar(scroll)
-    local grid=vgui.Create("DIconLayout",scroll); grid:Dock(FILL); grid:SetSpaceX(14); grid:SetSpaceY(14)
+    local top=vgui.Create("DPanel",body); top:Dock(TOP); top:SetTall(50); top.Paint=nil
+    local searchHolder, search = makeSearch(top, "Search "..tab.."…", nil); searchHolder:Dock(LEFT); searchHolder:SetWide(360)
+    local favOnly=false; local favBtn=DarkRPUI.UI.MakeIconButton(top,"☆ Show Favorites",function(b) favOnly=not favOnly; b:SetText(favOnly and "★ Favorites" or "☆ Show Favorites"); if b.Rebuild then b.Rebuild() end end); favBtn:Dock(RIGHT); favBtn:SetWide(160)
+    local scroll=vgui.Create("DScrollPanel",body); scroll:Dock(FILL); scroll:DockMargin(0,8,0,0); DarkRPUI.UI.StyleScrollbar(scroll)
+    local function favoriteKey(it) return tab..":"..(itemName(it) or tostring(it)) end
     local function rebuild()
-        grid:Clear(); local q=string.lower(search:GetValue() or ""); local items=(sources[tab] and sources[tab]()) or {}; local n=0
-        for _,it in ipairs(items) do local allowed=shipmentAllowed(it); if tab ~= "shipments" or allowed or DarkRPUI.Config.ShowLockedShipments ~= false then local hay=string.lower(itemName(it).." "..itemDesc(it)); if q=="" or string.find(hay,q,1,true) then n=n+1; local price=itemPrice(it); local card=DarkRPUI.UI.MakeAnimatedCard(grid,"",""); card:SetSize(280,178); addAnim(card,n); card.DoClick=function() selectedItem=it; info.Refresh() end; local mdl=DarkRPUI.UI.MakeModelPreview(card, modelList(it), false); mdl:SetPos(12,12); mdl:SetSize(82,100); card.PaintOver=function(_,w,h) DarkRPUI.UI.Text(itemName(it),"DarkRPUI.Subtitle",104,16); draw.DrawText(itemDesc(it),"DarkRPUI.Tiny",104,44,DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT); if price then DarkRPUI.UI.Badge(104,104,DarkRPUI.Util.FormatMoney(price),DarkRPUI.Color("success")) end; DarkRPUI.UI.Badge(12,124,#modelList(it)>1 and (#modelList(it).." models") or "preview",DarkRPUI.Color("accent")) end; local locked = tab=="shipments" and not allowed; card.PaintOver=function(_,w,h) DarkRPUI.UI.Text(itemName(it),"DarkRPUI.Subtitle",104,16); draw.DrawText(locked and "Restricted to specific jobs." or itemDesc(it),"DarkRPUI.Tiny",104,44,locked and DarkRPUI.Color("locked") or DarkRPUI.Color("subtext"),TEXT_ALIGN_LEFT); if price then DarkRPUI.UI.Badge(104,104,DarkRPUI.Util.FormatMoney(price),DarkRPUI.Color("success")) end; if locked then DarkRPUI.UI.Badge(12,124,"🔒 LOCKED",DarkRPUI.Color("locked")) else DarkRPUI.UI.Badge(12,124,#modelList(it)>1 and (#modelList(it).." models") or "preview",DarkRPUI.Color("accent")) end end; local b=vgui.Create("DButton",card); b:SetText(locked and "Locked" or "Buy"); b:SetEnabled(not locked); b:SetPos(190,132); b:SetSize(74,32); DarkRPUI.UI.StyleButton(b,locked and DarkRPUI.Color("disabled") or DarkRPUI.Color("success")); b.DoClick=function() DarkRPUI.UI.PlayClick(); if locked then return end; buyItem(it) end end end end
-        if n==0 then DarkRPUI.UI.EmptyState(grid,"Nothing available","No configured DarkRP data matched this filter.") end
+        scroll:Clear(); local q=string.lower(search:GetValue() or ""); local items=(sources[tab] and sources[tab]()) or {}; local grouped={}; local order={}
+        for _,it in ipairs(items) do
+            local allowed=shipmentAllowed(it); local locked=tab=="shipments" and not allowed
+            if tab ~= "shipments" or allowed or DarkRPUI.Config.ShowLockedShipments ~= false then
+                local fav=favorites[favoriteKey(it)]; local hay=string.lower(itemName(it).." "..itemDesc(it).." "..(it.category or it.Category or "General"))
+                if (not favOnly or fav) and (q=="" or string.find(hay,q,1,true)) then
+                    local cat=fav and "Favorite" or (it.category or it.Category or (tab=="shipments" and "Shipments" or tab=="weapons" and "Weapons" or "General"))
+                    if not grouped[cat] then grouped[cat]={}; order[#order+1]=cat end
+                    grouped[cat][#grouped[cat]+1]={data=it, locked=locked}
+                end
+            end
+        end
+        table.sort(order,function(a,b) if a=="Favorite" then return true elseif b=="Favorite" then return false end return a<b end)
+        if #order==0 then DarkRPUI.UI.EmptyState(scroll,"Nothing available","No configured DarkRP data matched this filter."); return end
+        for _,cat in ipairs(order) do sectionHeader(scroll,cat); for _,wrap in ipairs(grouped[cat]) do local it,locked=wrap.data,wrap.locked; local price=itemPrice(it); local row=vgui.Create("DButton",scroll); row:Dock(TOP); row:DockMargin(0,0,0,7); row:SetTall(64); row:SetText(""); row.Paint=function(s,w,h) s.Hover=DarkRPUI.UI.HoverLerp(s,12); DarkRPUI.UI.ShadowedBox(14,0,-math.floor(2*s.Hover),w,h,DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("card"),DarkRPUI.Color("cardHover")),DarkRPUI.LerpColor(s.Hover,DarkRPUI.Color("border"), locked and DarkRPUI.Color("error") or DarkRPUI.Color("accent")),60); DarkRPUI.UI.Text(itemName(it),"DarkRPUI.Body",74,11); DarkRPUI.UI.Text(locked and "Restricted to specific jobs" or itemDesc(it),"DarkRPUI.Tiny",74,36,locked and DarkRPUI.Color("locked") or DarkRPUI.Color("subtext")); if price then DarkRPUI.UI.Text(DarkRPUI.Util.FormatMoney(price),"DarkRPUI.Body",w-88,21,DarkRPUI.Color("success"),TEXT_ALIGN_RIGHT) end; if locked then DarkRPUI.UI.Badge(w-184,22,"LOCKED",DarkRPUI.Color("error")) end end
+            local mdl=DarkRPUI.UI.MakeModelPreview(row, modelList(it), false); mdl:SetPos(12,7); mdl:SetSize(46,50)
+            local fav=DarkRPUI.UI.MakeIconButton(row, favorites[favoriteKey(it)] and "★" or "☆", function(b) favorites[favoriteKey(it)]=not favorites[favoriteKey(it)] or nil; DarkRPUI.Settings=DarkRPUI.Settings or {}; DarkRPUI.Settings.favorites=favorites; if DarkRPUI.SaveSettings then DarkRPUI.SaveSettings() end; b:SetText(favorites[favoriteKey(it)] and "★" or "☆"); rebuild() end); fav:SetPos(row:GetWide()-42,12); fav:SetSize(32,32); row.PerformLayout=function(_,w) fav:SetPos(w-42,16) end
+            row.DoClick=function() selectedItem=it; if IsValid(info) then info.Refresh() end end
+            row.DoRightClick=function() if locked then DarkRPUI.Notify("warning","Shipment locked","Restricted to whitelisted jobs.") else buyItem(it) end end
+        end end
     end
-    search.OnChange=rebuild; rebuild()
+    favBtn.Rebuild=rebuild; search.OnChange=rebuild; rebuild()
 end
 
 
