@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-21/08/2024
-
---]]
-
 vox.hud.RegisterLevelSystem( 'vrodankis', {
     getLevel = function( ply )
         return ( ply:getDarkRPVar( 'level' ) or 1 )

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-03/01/2024
-
---]]
-
 util.AddNetworkString('vox.f4:RequestStats')
 
 local DAY_SECONDS = (24 * 60 * 60)

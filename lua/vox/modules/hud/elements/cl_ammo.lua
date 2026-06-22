@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/07/2024
-
---]]
-
 local COLOR_OUTLINE = vox:Config( 'colors.primary' )
 local COLOR_LOW = Color( 255, 98, 98)
 

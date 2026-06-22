@@ -1,15 +1,3 @@
---[[
-
-Ersteller: tochnonement
-E-Mail: tochnonement@gmail.com
-
-Übersetzer: thestarhd
-Profil: https://www.gmodstore.com/users/76561198801156110
-
-05/01/2024
-
---]]
-
 local LANG = {}
 
 -- REITER

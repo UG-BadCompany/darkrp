@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-04/01/2024
-
---]]
-
 vox.f4.actions = {}
 
 local CATEGORY = 'f4_general_u'

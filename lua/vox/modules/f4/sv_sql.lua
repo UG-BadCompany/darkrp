@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-25/12/2023
-
---]]
-
 vox.f4:Print('Loaded SQL configuration.')
 
 local MySQL = {Credentials = {}}

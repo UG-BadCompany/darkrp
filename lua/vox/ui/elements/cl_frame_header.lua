@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-05/06/2022
-
---]]
-
 local PANEL = {}
 local CLOSE_BUTTON = Material('vox_framework/close.png', 'smooth')
 

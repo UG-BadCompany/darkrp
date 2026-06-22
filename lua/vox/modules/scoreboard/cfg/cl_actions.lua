@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-02/03/2024
-
---]]
-
 --[[------------------------------
 **WARNING**
 This is an advanced config.

@@ -1,5 +1,3 @@
--- by p1ng :D
-
 vox.scoreboard.columns = vox.scoreboard.columns or {}
 vox.scoreboard.columnsCustomizable = vox.scoreboard.columnsCustomizable or {}
 vox.scoreboard.columnsMaxAmount = 5

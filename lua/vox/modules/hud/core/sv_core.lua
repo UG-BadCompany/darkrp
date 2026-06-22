@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-12/08/2024
-
---]]
-
 local PLAYER = FindMetaTable( 'Player' )
 
 util.AddNetworkString( 'vox.hud::SendAlert' )

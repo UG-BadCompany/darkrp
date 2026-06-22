@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/12/2023
-
---]]
-
 local colorPrimary = vox:Config('colors.primary')
 local colorSecondary = vox:Config('colors.secondary')
 local colorOutline = Color(255, 255, 255, 5)
@@ -128,8 +119,13 @@ function PANEL:PerformLayout(w, h)
 end
 
 function PANEL:Paint(w, h)
-    draw.RoundedBox(8, 0, 0, w, h, colorOutline)
-    draw.RoundedBox(8, 1, 1, w - 2, h - 2, self.colorBG)
+    if vox.DrawVoxPanel then
+        vox.DrawVoxPanel( 0, 0, w, h, { primary = self.colorBG, secondary = colorSecondary, accent = self.itemColor }, 8 )
+        if vox.DrawVoxBlade then vox.DrawVoxBlade( 0, 8, 7, h - 16, self.itemColor ) end
+    else
+        draw.RoundedBox(8, 0, 0, w, h, colorOutline)
+        draw.RoundedBox(8, 1, 1, w - 2, h - 2, self.colorBG)
+    end
 
     if (self.gradientEnabled) then
         vox.DrawWithPolyMask(self.mask, function()

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-19/08/2024
-
---]]
-
 local function createDisplayOption( id, default )
     if ( default == nil ) then default = true end
 
@@ -143,10 +134,10 @@ vox.hud:RegisterOption( 'hud_style', {
     min = 0,
     max = 3,
     combo = {
-        { 'Vox Compact Corner', 0 },
-        { 'Vox Tactical Bar', 1 },
-        { 'Vox Minimal', 2 },
-        { 'Vox Roleplay Card', 3 }
+        { 'Vox Tactical Card', 0 },
+        { 'Vox Command Strip', 1 },
+        { 'Vox Minimal Edge', 2 },
+        { 'Vox Roleplay Profile', 3 }
     }
 } )
 

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-16/08/2024
-
---]]
-
 local RANGE = 400
 local FONT_NAME = vox.hud.CreateFont3D2D( 'DoorName', 'Comfortaa SemiBold', 60 )
 local FONT_SMALL_NAME = vox.hud.CreateFont3D2D( 'DoorSmallName', 'Comfortaa SemiBold', 40 )

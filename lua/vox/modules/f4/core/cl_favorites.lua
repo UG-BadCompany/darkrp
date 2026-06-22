@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-12/01/2024
-
---]]
-
 vox.f4.favorites = vox.f4.favorites or {}
 
 file.CreateDir('vox_f4_favorites')

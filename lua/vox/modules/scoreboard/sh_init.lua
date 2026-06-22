@@ -1,10 +1,8 @@
--- by p1ng :D
-
 vox:Addon('scoreboard', {
     color = Color(65, 162, 211),
-    author = 'tochnonement',
+    author = 'Vox UI',
     version = '1.0.5',
-    licensee = '76561198425391088'
+    licensee = 'vox-ui'
 })
 
 ----------------------------------------------------------------

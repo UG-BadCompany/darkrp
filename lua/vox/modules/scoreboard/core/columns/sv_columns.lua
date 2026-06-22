@@ -1,5 +1,3 @@
--- by p1ng :D
-
 util.AddNetworkString('vox.scoreboard:SyncColumns')
 util.AddNetworkString('vox.scoreboard:SetColumn')
 util.AddNetworkString('vox.scoreboard:SetColumns')

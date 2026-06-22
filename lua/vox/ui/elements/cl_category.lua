@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-02/03/2023
-
---]]
-
 local MAT_ARROW = Material('vox_framework/wing.png', 'smooth mips')
 local colorPrimary = vox:Config('colors.primary')
 local colorSecondary = vox:Config('colors.secondary')

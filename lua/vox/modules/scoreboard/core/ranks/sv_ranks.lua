@@ -1,5 +1,3 @@
--- by p1ng :D
-
 util.AddNetworkString('vox.scoreboard:SyncRanks')
 util.AddNetworkString('vox.scoreboard:ReplaceRank')
 util.AddNetworkString('vox.scoreboard:DeleteRank')

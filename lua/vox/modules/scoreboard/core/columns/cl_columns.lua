@@ -1,5 +1,3 @@
--- by p1ng :D
-
 net.Receive('vox.scoreboard:SyncColumns', function()
     local amount = net.ReadUInt(8)
 

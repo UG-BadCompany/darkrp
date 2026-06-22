@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-05/06/2022
-
---]]
-
 local Run = hook.Run
 local IncludeFolder = vox.IncludeFolder
 

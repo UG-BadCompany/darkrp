@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-14/08/2024
-
---]]
-
 -- I made this to cache calculated values for UI scaling
 -- It is working cheaper than using raw functions ;P
 

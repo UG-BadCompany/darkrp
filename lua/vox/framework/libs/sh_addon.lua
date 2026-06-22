@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-03/05/2023
-
---]]
-
 local ADDON = {}
 ADDON.__index = ADDON
 

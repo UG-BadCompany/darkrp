@@ -1,12 +1,3 @@
---[[
-
-Editor: thestarhd
-Dutscher Übersetzer Profil: https://www.gmodstore.com/users/thestarhd
-
-05/09/2024
-
---]]
-
 local LANG = {}
 
 --[[

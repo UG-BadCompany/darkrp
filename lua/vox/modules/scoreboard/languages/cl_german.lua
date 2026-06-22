@@ -1,12 +1,3 @@
---[[
-
-Übersetzer: thestarhd
-G-Profile: https://www.gmodstore.com/users/76561198801156110
-
-12.03.2024 - German Translation
-
---]]
-
 local LANG = {}
 
 -- Phrasen

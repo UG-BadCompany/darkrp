@@ -1,5 +1,3 @@
--- by p1ng :D
-
 vox.scoreboard.Buttons = vox.scoreboard.Buttons or {}
 
 local function openFrame()

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/07/2024
-
---]]
-
 local hud = vox.hud
 local COLOR_BAR = Color( 200, 200, 200, 10 )
 local COLOR_GRAY = Color( 183, 183, 183)
@@ -233,14 +224,23 @@ local function drawMainHUD( self, client, scrW, scrH )
     local labelX = x + avatarSpaceWidth + padding
     local labelY = y + padding
 
-    -- Draw background
-    hud.DrawRoundedBox( x, y, w, h, ColorAlpha( colorPrimary, 238 ) )
-    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( colors.accent, 18 ) )
-    hud.DrawRoundedBoxEx( x, y, avatarSpaceWidth, h, ColorAlpha( colorSecondary, 245 ), true, false, true )
-    surface.SetDrawColor( colors.accent )
-    surface.DrawRect( x, y, hud.ScaleWide( 3 ), h )
-    surface.DrawLine( x + avatarSpaceWidth, y + 1, x + avatarSpaceWidth + hud.ScaleWide( 26 ), y + 1 )
-    surface.DrawLine( x + w - hud.ScaleWide( 34 ), y + h - 2, x + w - 2, y + h - 2 )
+    -- Vox Tactical Card: dark glass body, angled electric blade, and integrated economy cluster.
+    if vox.DrawVoxPanel then
+        vox.DrawVoxPanel( x, y, w, h, colors, hud.GetRoundness() )
+    else
+        hud.DrawRoundedBox( x, y, w, h, ColorAlpha( colorPrimary, 238 ) )
+    end
+    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( colors.secondaryAccent or Color( 142, 84, 255 ), 16 ) )
+    if vox.DrawVoxBlade then
+        vox.DrawVoxBlade( x - hud.ScaleWide( 6 ), y + hud.ScaleTall( 10 ), hud.ScaleWide( 12 ), h - hud.ScaleTall( 20 ), colors.accent )
+    else
+        surface.SetDrawColor( colors.accent )
+        surface.DrawRect( x, y, hud.ScaleWide( 3 ), h )
+    end
+    hud.DrawRoundedBoxEx( x + hud.ScaleWide( 10 ), y + hud.ScaleTall( 8 ), avatarSpaceWidth - hud.ScaleWide( 16 ), h - hud.ScaleTall( 16 ), ColorAlpha( colorSecondary, 205 ), true, false, true )
+    surface.SetDrawColor( ColorAlpha( colors.accent, 100 ) )
+    surface.DrawLine( x + avatarSpaceWidth, y + 1, x + avatarSpaceWidth + hud.ScaleWide( 36 ), y + 1 )
+    surface.DrawLine( x + w - hud.ScaleWide( 48 ), y + h - 2, x + w - 2, y + h - 2 )
 
     -- Draw labels
     local labelMaxW = w - avatarSpaceWidth - padding * 2
@@ -261,10 +261,11 @@ local function drawMainHUD( self, client, scrW, scrH )
 
     local moneyHeight = 0
     if ( hud:GetOptionValue( 'display_money' ) ) then
-        _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, labelX, labelY + nameHeight + teamHeight, colors.money or colors.positive, 0, 0 )
+        hud.DrawRoundedBox( x + w - padding - hud.ScaleWide( 112 ), y + padding, hud.ScaleWide( 112 ), hud.ScaleTall( 24 ), ColorAlpha( colorSecondary, 190 ) )
+        _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, x + w - padding - hud.ScaleWide( 8 ), y + padding + hud.ScaleTall( 12 ), colors.money or colors.positive, 2, 1 )
     end
     if ( hud:GetOptionValue( 'display_salary' ) ) then
-        draw.SimpleText( salaryFormatted, hud.fonts.Small, x + w - padding, labelY + nameHeight + teamHeight, colorTextSecondary, 2, 0 )
+        draw.SimpleText( salaryFormatted, hud.fonts.Small, x + w - padding, y + padding + hud.ScaleTall( 27 ), colorTextSecondary, 2, 0 )
     end
 
     render.SetScissorRect( 0, 0, 0, 0, false )

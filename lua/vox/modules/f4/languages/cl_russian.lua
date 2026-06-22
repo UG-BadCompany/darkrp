@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-01/01/2024
-
---]]
-
 local LANG = {}
 
 -- TABS

@@ -1,5 +1,3 @@
--- by p1ng :D
-
 vox.scoreboard.ranks = vox.scoreboard.ranks or {}
 
 function vox.scoreboard:GetRankData(rank)

@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-25/12/2023
-
---]]
-
 vox.f4.tabs = vox.f4.tabs or {}
 vox.f4.actions = vox.f4.actions or {}
 

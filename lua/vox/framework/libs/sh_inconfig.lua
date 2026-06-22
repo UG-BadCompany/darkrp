@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-03/05/2023
-
---]]
-
 if (netchunk == nil) then
     include('sh_netchunk.lua')
 end

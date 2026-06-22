@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/12/2023
-
---]]
-
 vox.f4.tabs = {}
 
 vox.f4:RegisterTab('dashboard', {

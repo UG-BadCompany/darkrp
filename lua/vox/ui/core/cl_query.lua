@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-04/01/2024
-
---]]
-
 function vox.SimpleQuery(title, desc, showTextEntry, acceptCallback, acceptText, cancelCallback, cancelText)
     local margin = vox.ScaleTall(25)
     local space = vox.ScaleTall(10)

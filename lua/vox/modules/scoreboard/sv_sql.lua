@@ -1,5 +1,3 @@
--- by p1ng :D
-
 vox.scoreboard:Print('Loaded SQL configuration.')
 
 local MySQL = {Credentials = {}}

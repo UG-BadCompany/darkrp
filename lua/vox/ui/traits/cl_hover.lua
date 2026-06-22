@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-18/04/2022
-
---]]
-
 local TRAIT = {}
 
 AccessorFunc(TRAIT, 'm_colIdle', 'ColorIdle')

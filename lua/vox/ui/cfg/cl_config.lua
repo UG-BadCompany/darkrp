@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-05/06/2022
-
---]]
-
 vox.cfg.fontFamily = 'Comfortaa' -- probably does nothing, but I keep it just in case I missed something
 
 local function hexcolor(hex)

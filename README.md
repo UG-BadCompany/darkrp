@@ -1,26 +1,12 @@
 # Vox UI
 
-Vox UI is a premium DarkRP interface suite for Garry's Mod. It keeps the existing feature foundation while presenting a distinct Vox identity: charcoal glass panels, sharper cards, angled electric accent bars, polished hover states, smooth value animation, and safer admin/backend fallbacks.
+Vox UI is a premium DarkRP interface suite for Garry's Mod. It ships as a complete HUD, F4 menu, scoreboard, settings center, notification stack, and admin control layer under the `vox` framework namespace.
 
-## Installation
+## Visual Identity
 
-1. Place this addon in your server `garrysmod/addons/` folder.
-2. Keep the folder structure intact (`lua/vox`, `materials/vox_*`, `resource/fonts`).
-3. Restart or change map so Garry's Mod loads `lua/autorun/vox_autorun.lua`.
-4. Configure in-game with `vox_hud`, `vox_admin`, the F4 settings page, and scoreboard admin settings.
+Vox uses a distinct gaming UI language: charcoal glass panels, deep blue-gray surfaces, electric blue accent blades, subtle purple secondary highlights, slim cards, sharper rounded corners, neon strokes, hover glow, and diagonal/angled details. All active UI should consume Vox theme tokens rather than one-off hardcoded colors.
 
-## Feature List
-
-- **Vox HUD**: compact player card, avatar/model circle, name, job, money, salary, health, armor, hunger, level/XP, ammo, voice, agenda, laws/alerts, pickup history, weapon selector, door info, and vehicle HUD.
-- **Vox Menu**: dashboard, jobs, shop, inventory, Player Upgrades, donate, Discord, forum, rules, settings, and staff-only admin entry points.
-- **Vox Scoreboard**: TAB behavior, grouped teams, search-ready player list, rank/column editors, staff action integration, Steam profile actions, and a built-in Vox Admin fallback.
-- **Vox Admin**: server-side action registry, CAMI privileges, rank hierarchy protection, cooldowns, logs, target validation, graceful placeholder integrations, and staff notifications.
-- **Vox Settings**: theme, HUD, F4, scoreboard, notification, performance, accessibility, and admin configuration options.
-- **Vox Notifications**: DarkRP-safe notification handling with Vox styling hooks and no `GAMEMODE` indexing at file load.
-
-## Theme Guide
-
-Vox UI uses theme tokens rather than random hardcoded colors. The included presets are:
+Included themes:
 
 - Vox Obsidian
 - Vox Midnight
@@ -31,35 +17,142 @@ Vox UI uses theme tokens rather than random hardcoded colors. The included prese
 - Vox Light
 - Custom Accent
 
-Core tokens include `primary`, `secondary`, `tertiary`, `quaternary`, `accent`, `textPrimary`, `textSecondary`, `textTertiary`, `positive/money`, `negative`, `armor`, `hunger`, and `xp`.
+## Installation
 
-## HUD Settings
+1. Place the addon folder in your server's `garrysmod/addons/` directory.
+2. Keep the `lua/vox/` and `lua/autorun/vox_autorun.lua` paths intact.
+3. Restart the server or run a clean map change.
+4. Configure settings in-game through Vox Settings, Vox HUD settings, Vox Scoreboard settings, or the relevant console commands.
 
-Open with `vox_hud`. Server owners can configure display modules and players can tune personal settings. Supported layout presets are Vox Compact Corner, Vox Tactical Bar, Vox Minimal, and Vox Roleplay Card. Toggles include money, salary, job, health, armor, hunger, level, XP, ammo, agenda, laws/alerts, pickup history, voice, vehicle HUD, compact mode, animation speed, and reduced motion.
+## Important Paths
 
-## F4 Tabs
+- `lua/autorun/vox_autorun.lua` - bootstrap loader.
+- `lua/vox/init.lua` - framework/module initializer.
+- `lua/vox/modules/hud/` - Vox HUD, notifications, overhead UI, doors, radial/gesture UI, weapon selector, vehicle HUD, and settings.
+- `lua/vox/modules/f4/` - Vox Menu tabs, jobs, shop, dashboard, upgrades, settings, and admin panels.
+- `lua/vox/modules/scoreboard/` - Vox Scoreboard, columns, ranks, player inspector, and actions.
+- `lua/vox/modules/admin/` - Vox Admin frontend/backend action registry.
+- `lua/vox/ui/` - shared Vox UI components, drawing helpers, fonts, and traits.
 
-The Vox Menu keeps the current feature set and uses these user-facing tabs: Dashboard, Jobs, Shop, Inventory, Player Upgrades, Donate, Discord, Forum, Rules, Settings, and Admin for staff. Vehicles are intentionally not added.
+## Console Commands
 
-## Scoreboard Columns And Ranks
+- `vox_reload` - requests a client-side Vox reload.
+- `vox_reset_settings` - resets common client Vox settings to defaults.
+- `vox_debug_safearea` - shows safe-area debugging for HUD alignment.
+- `vox_test_notification` - previews Vox notification styles.
+- `vox_open_admin` - opens Vox Admin.
+- `vox_open_hud_settings` - opens Vox HUD settings.
+- `vox_admin` - opens the admin control center.
+- `vox_admin_action <action> <steamid> [reason] [duration]` - trusted UI/backend action bridge.
 
-The scoreboard configuration supports grouping and user-facing column/rank editing. Recommended columns are job/team, rank, money, playtime, level, health, karma, kills, deaths, ping, voice, and custom hook columns. Rank effects should be configured as none, solid, gradient, rainbow, or pulse.
+## HUD Presets
 
-## Admin Permissions
+The HUD exposes four Vox-owned presets:
 
-Each built-in action registers a CAMI privilege named `vox_admin_<action>`. Supported actions include bring, goto, returnply, freeze, unfreeze, spectate, unspectate, stripweapons, respawn, slay, kick, warn, ban placeholder, jail placeholder, unjail placeholder, setjob placeholder, setmoney placeholder, noclip, god, and cloak placeholder.
+1. **Vox Tactical Card** - default compact card with angled accent blade, avatar/model frame, integrated money/salary, stacked health/armor/hunger bars, wanted/voice/license states, and animated values.
+2. **Vox Command Strip** - command-style data strip for players who prefer a wider tactical HUD.
+3. **Vox Minimal Edge** - reduced footprint edge layout.
+4. **Vox Roleplay Profile** - richer profile-focused layout for immersive DarkRP servers.
 
-Vox Admin validates permissions and targets server-side, applies rank hierarchy protection, logs successful actions, and uses ULX/SAM/FAdmin scoreboard handlers when present with a clean built-in fallback when not present.
+HUD modules include main status, ammo, weapon selector, agenda, laws/alerts, wanted/lockdown alerts, voice indicator, pickup history, door info/menu, vehicle/speedometer, overhead UI, radial/gesture UI, and notifications. Modules use safe-area padding and support reduced motion where applicable.
+
+## Vox Menu (F4)
+
+Vox Menu keeps the expected DarkRP tabs without adding a Vehicles tab:
+
+- Dashboard
+- Jobs
+- Shop
+- Inventory
+- Player Upgrades
+- Donate
+- Discord
+- Forum
+- Rules
+- Settings
+- Admin
+
+The dashboard focuses on a custom command layout with profile/economy/job/server cards, players/staff counts, distribution summaries, announcements, mayor/laws, wanted players, and quick actions. Jobs use Vox job cards with an angled color strip, model badge, salary, slot meter, lock/vote/VIP badges, favorites, and a detailed model-stage overlay. Shop pages retain entities, weapons, shipments, ammo, and food with compact Vox item cards, whitelist/lock states, confirmation, and favorites.
+
+## Vox Scoreboard
+
+Vox Scoreboard preserves TAB behavior:
+
+- Hold TAB to open.
+- Release TAB to close.
+- Right-click while holding TAB to enable cursor.
+- Cursor is disabled on close.
+
+Scoreboard features include grouped player sections, slim player rows, job-colored accent blades, rank badge pills, ping bars, voice/staff/VIP indicators, expandable player inspector, right-click context actions, column editor, rank editor, theme settings, preview rows, save, and reset controls.
+
+## Vox Admin
+
+Vox Admin provides a server-validated admin action registry with CAMI permission support, rank hierarchy protection, cooldowns, target validation, reason/duration sanitization, audit logs, staff notifications, and graceful fallback behavior.
+
+Admin sections:
+
+- Dashboard
+- Players
+- Player Inspector
+- Logs
+- Reports
+- Movement Tools
+- Punishments
+- Server Tools
+- Economy
+- Settings
+
+Registered actions:
+
+- bring, goto, returnply
+- freeze, unfreeze
+- spectate, unspectate
+- stripweapons, respawn, slay
+- kick, warn
+- ban, jail, unjail integration hooks
+- setjob and setmoney integration hooks
+- noclip, god, cloak
+
+Ban/jail integrations attempt common ULX/SAM command fallbacks where available and otherwise fail with a clear integration-ready message.
 
 ## Shipment Whitelist
 
-The shop keeps the existing DarkRP shipment whitelist behavior. Restricted shipments should remain visible as clean locked cards with disabled purchase buttons and a reason/detail panel when available.
+Vox Menu keeps DarkRP shipment/weapon/entity/ammo/food handling and displays whitelist or lock states directly on compact Vox shop cards. Keep DarkRP shipment definitions authoritative; Vox UI should present availability without bypassing server-side purchase validation.
+
+## Settings and Accessibility
+
+Vox Settings is organized as a control center:
+
+- General
+- Theme
+- HUD
+- F4
+- Scoreboard
+- Notifications
+- Performance
+- Accessibility
+- Admin
+
+Controls include toggles, sliders, dropdowns, number steppers, color pickers, reset buttons, and live previews for HUD cards, notifications, scoreboard rows, buttons/cards, and themes.
+
+## Troubleshooting
+
+- If the HUD does not appear, verify `lua/autorun/vox_autorun.lua` is present and the server performed a clean restart.
+- If admin actions fail, check CAMI permissions and rank hierarchy. Equal/higher-ranked targets are protected.
+- If notifications look default, ensure Vox HUD notifications are enabled and no other addon overwrote `notification.AddLegacy` after Vox loaded.
+- If DarkRP data is missing, Vox uses safe fallbacks until DarkRP variables become available.
+- Use `vox_debug_safearea` when elements are too close to screen edges.
 
 ## Testing Checklist
 
-- Join a DarkRP server without Lua errors.
-- Run `vox_hud` and verify Vox HUD settings save/load.
-- Open F4 and verify Vox Menu branding and Player Upgrades naming.
-- Hold TAB, release TAB, and right-click while TAB is held to verify scoreboard cursor behavior.
-- Run `vox_admin` as staff and test allowed actions against lower-ranked test players.
-- Verify no stuck cursor, duplicate frames, clipping, or console spam.
+- Join as user and admin.
+- Verify HUD values animate and stay inside safe-area.
+- Verify money and salary are inside the HUD card.
+- Open F4 and test each tab.
+- Browse jobs, favorites, and job detail overlays.
+- Browse shop categories and locked/whitelisted items.
+- Hold TAB, release TAB, and test right-click cursor behavior.
+- Expand a scoreboard row and test context actions.
+- Open Vox Admin and test permitted/denied actions.
+- Test notification types with `vox_test_notification`.
+- Switch every Vox theme and confirm all UI uses theme tokens.

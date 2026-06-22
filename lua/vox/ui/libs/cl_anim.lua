@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-16/04/2022
-
---]]
-
 vox.anim = {}
 vox.anim.list = {}
 

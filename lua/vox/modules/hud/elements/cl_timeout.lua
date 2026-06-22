@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-19/08/2024
-
---]]
-
 local hud = vox.hud
 
 local L = function( ... ) return vox.lang:Get( ... ) end

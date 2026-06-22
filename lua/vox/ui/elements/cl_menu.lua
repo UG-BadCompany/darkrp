@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-02/03/2023
-
---]]
-
 local PANEL = {}
 
 AccessorFunc(PANEL, 'm_bDeleteSelf', 'DeleteSelf')

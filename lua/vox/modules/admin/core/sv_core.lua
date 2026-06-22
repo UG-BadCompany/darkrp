@@ -37,7 +37,9 @@ end
 function vox.admin:RegisterAction(id, data)
     data.id = id
     self.Actions[id] = data
-    CAMI.RegisterPrivilege({ Name = 'vox_admin_' .. id, MinAccess = data.minAccess or 'admin', Description = 'Vox Admin: ' .. id })
+    if CAMI and CAMI.RegisterPrivilege then
+        CAMI.RegisterPrivilege({ Name = 'vox_admin_' .. id, MinAccess = data.minAccess or 'admin', Description = 'Vox Admin: ' .. id })
+    end
 end
 
 function vox.admin:CanRun(admin, id, target)
@@ -47,8 +49,10 @@ function vox.admin:CanRun(admin, id, target)
     if self.Cooldowns[admin] and self.Cooldowns[admin] > CurTime() then return false, 'Action cooldown active.' end
     if action.target and not IsValid(target) then return false, 'Invalid target.' end
     local ok = admin:IsSuperAdmin()
-    local success, camiOk = pcall(CAMI.PlayerHasAccess, admin, 'vox_admin_' .. id)
-    if success then ok = camiOk end
+    if CAMI and CAMI.PlayerHasAccess then
+        local success, camiOk = pcall(CAMI.PlayerHasAccess, admin, 'vox_admin_' .. id, nil, target, { Fallback = action.minAccess or 'admin' })
+        if success and camiOk ~= nil then ok = camiOk end
+    end
     if not ok then ok = admin:IsAdmin() and (action.minAccess or 'admin') == 'admin' end
     if not ok then return false, 'You do not have permission.' end
     if action.target and target ~= admin and rankWeight(admin) <= rankWeight(target) then return false, 'Rank hierarchy blocks this action.' end
@@ -85,12 +89,12 @@ reg('spectate', function(a,t) a:Spectate(OBS_MODE_IN_EYE); a:SpectateEntity(t); 
 reg('unspectate', function(a) a:UnSpectate(); a:Spawn(); return true end, false)
 reg('noclip', function(a,t) t:SetMoveType(t:GetMoveType()==MOVETYPE_NOCLIP and MOVETYPE_WALK or MOVETYPE_NOCLIP); return true end)
 reg('god', function(a,t) if t:HasGodMode() then t:GodDisable() else t:GodEnable() end return true end)
-reg('ban', function() return 'Ban is integration-ready; connect ULX/SAM/your ban system before enabling.' end)
-reg('jail', function() return 'Jail is integration-ready placeholder.' end)
-reg('unjail', function() return 'Unjail is integration-ready placeholder.' end)
+reg('ban', function(a,t,r,d) if ulx then RunConsoleCommand('ulx','ban',t:Nick(),tostring(d or 0),r); return true end if sam then RunConsoleCommand('sam','ban',t:SteamID(),tostring(d or 0),r); return true end return 'Ban is integration-ready; connect ULX/SAM/your ban system before enabling.' end)
+reg('jail', function(a,t,r,d) if ulx then RunConsoleCommand('ulx','jail',t:Nick(),tostring(d or 0)); return true end if sam then RunConsoleCommand('sam','jail',t:SteamID(),tostring(d or 0)); return true end return 'Jail is integration-ready placeholder.' end)
+reg('unjail', function(a,t) if ulx then RunConsoleCommand('ulx','unjail',t:Nick()); return true end if sam then RunConsoleCommand('sam','unjail',t:SteamID()); return true end return 'Unjail is integration-ready placeholder.' end)
 reg('setjob', function() return 'Set job is integration-ready placeholder.' end)
 reg('setmoney', function() return 'Set money is integration-ready placeholder.' end)
-reg('cloak', function() return 'Cloak is integration-ready placeholder.' end)
+reg('cloak', function(a,t) t:SetNoDraw(not t:GetNoDraw()); t:DrawShadow(not t:GetNoDraw()); return true end)
 
 concommand.Add('vox_admin_action', function(ply, _, args)
     if not IsValid(ply) then return end

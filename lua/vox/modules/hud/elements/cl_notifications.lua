@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-11/08/2024
-
---]]
-
 local hud = vox.hud
 local cache = {}
 
@@ -14,23 +5,23 @@ local COLOR_BAR = Color( 0, 0, 0, 200 ) -- Only for light themes
 local FONT_TEXT = 'vox.hud.Small'
 local NOTIFICATION_TYPES = {
     [ NOTIFY_GENERIC ] = {
-        color = Color( 255, 228, 52),
+        colorKey = 'hunger',
         wimg = vox.wimg.Simple( 'https://i.imgur.com/2muiD5k.png', 'smooth mips' )
     },
     [ NOTIFY_ERROR ] = {
-        color = Color( 235, 57, 57),
+        colorKey = 'negative',
         wimg = vox.wimg.Simple( 'https://i.imgur.com/vNzFBlK.png', 'smooth mips' )
     },
     [ NOTIFY_UNDO ] = {
-        color = Color( 69, 78, 255),
+        colorKey = 'positive',
         wimg = vox.wimg.Simple( 'https://i.imgur.com/sgLeDjb.png', 'smooth mips' )
     },
     [ NOTIFY_HINT ] = {
-        color = Color( 37, 222, 225),
+        colorKey = 'accent',
         wimg = vox.wimg.Simple( 'https://i.imgur.com/vAjbKzK.png', 'smooth mips' )
     },
     [ NOTIFY_CLEANUP ] = {
-        color = Color( 235, 81, 255),
+        colorKey = 'secondaryAccent',
         wimg = vox.wimg.Simple( 'https://i.imgur.com/V3TyKJ9.png', 'smooth mips' )
     },
 }
@@ -72,7 +63,7 @@ local function drawNotifications( self, client, scrW, scrH )
 
     local space = vox.hud.GetScreenPadding()
     local horPadding = vox.hud.ScaleTall( 10 )
-    local notifH = vox.hud.ScaleTall( 30 )
+    local notifH = vox.hud.ScaleTall( 46 )
     local hudRoundness = vox.hud.GetRoundness()
     local notifSpace = vox.hud.ScaleTall( 5 )
     local iconSpace = vox.hud.ScaleTall( 10 )
@@ -103,7 +94,7 @@ local function drawNotifications( self, client, scrW, scrH )
         local notifText = data.text
         local notifType = data.type or 0
         local notifTypeData = NOTIFICATION_TYPES[ notifType ] or NOTIFICATION_TYPES[ NOTIFY_GENERIC ]
-        local notifColor = notifTypeData.color
+        local notifColor = colors[ notifTypeData.colorKey or 'accent' ] or colors.accent
         local timeLeft = math.max( 0, data.endtime - CurTime() )
         local lifeFraction = timeLeft / data.duration
         local expired = lifeFraction == 0
@@ -113,7 +104,7 @@ local function drawNotifications( self, client, scrW, scrH )
         -- Get size
         surface.SetFont( FONT_TEXT )
         local textW, textH = surface.GetTextSize( notifText )
-        local notifW = textW + horPadding * 2 + iconSize + iconSpace
+        local notifW = math.Clamp( textW + horPadding * 2 + iconSize + iconSpace + vox.hud.ScaleWide( 18 ), vox.hud.ScaleWide( 260 ), vox.hud.ScaleWide( 420 ) )
 
         -- Calculate pos
         local posX = expired and scrW or ( scrW - notifW - space )
@@ -131,9 +122,14 @@ local function drawNotifications( self, client, scrW, scrH )
 
         surface.SetAlphaMultiplier( data.fraction )
 
-            vox.hud.DrawRoundedBox( x, y, notifW, notifH, colorPrimary )
+            if vox.DrawVoxPanel then
+                vox.DrawVoxPanel( x, y, notifW, notifH, colors, hudRoundness )
+            else
+                vox.hud.DrawRoundedBox( x, y, notifW, notifH, colorPrimary )
+            end
+            if vox.DrawVoxBlade then vox.DrawVoxBlade( x, y + vox.hud.ScaleTall( 7 ), vox.hud.ScaleWide( 6 ), notifH - vox.hud.ScaleTall( 14 ), notifColor ) end
 
-            wimgObject:Draw( x + horPadding, y + notifH * .5 - iconSize * .5, iconSize, iconSize, notifColor )
+            wimgObject:Draw( x + horPadding + vox.hud.ScaleWide( 6 ), y + notifH * .5 - iconSize * .5, iconSize, iconSize, notifColor )
 
             render.SetScissorRect( x, y + notifH - lineH, x + notifW, y + notifH, true )
                 vox.hud.DrawRoundedBox( x, y, notifW, notifH, lineColor )
@@ -141,7 +137,8 @@ local function drawNotifications( self, client, scrW, scrH )
                 vox.hud.DrawRoundedBox( x, y, notifW, notifH, notifColor )
             render.SetScissorRect( 0, 0, 0, 0, false )
 
-            vox.hud.DrawCheapText( notifText, FONT_TEXT, x + horPadding + iconSize + iconSpace, y + notifH * .5 - textH * .5, colorText )
+            vox.hud.DrawCheapText( 'VOX UI', FONT_TEXT, x + horPadding + iconSize + iconSpace + vox.hud.ScaleWide( 6 ), y + vox.hud.ScaleTall( 7 ), ColorAlpha( notifColor, 220 ) )
+            vox.hud.DrawCheapText( notifText, FONT_TEXT, x + horPadding + iconSize + iconSpace + vox.hud.ScaleWide( 6 ), y + notifH - vox.hud.ScaleTall( 8 ) - textH, colorText )
 
         surface.SetAlphaMultiplier( prevAlpha )
 

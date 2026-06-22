@@ -1,5 +1,3 @@
--- by p1ng :D
-
 CAMI.RegisterPrivilege({
     Name = 'vox_scoreboard_edit',
     MinAccess = 'superadmin',

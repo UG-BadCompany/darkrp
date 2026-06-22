@@ -1,17 +1,8 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-30/07/2024
-
---]]
-
 vox:Addon( 'hud', {
     color = Color( 99, 65, 211 ),
-    author = 'tochnonement',
+    author = 'Vox UI',
     version = '1.0.10',
-    licensee = '76561198157781160'
+    licensee = 'vox-ui'
 } )
 
 ----------------------------------------------------------------

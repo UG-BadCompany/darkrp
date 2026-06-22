@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-21/08/2024
-
---]]
-
 vox.hud.levelling = vox.hud.levelling or {}
 
 local function validateDataValue( data, key )

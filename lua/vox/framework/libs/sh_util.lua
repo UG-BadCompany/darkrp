@@ -1,12 +1,3 @@
---[[
-
-Author: tochnonement
-Email: tochnonement@gmail.com
-
-01/05/2023
-
---]]
-
 do
     local events = {}
     local processed = false
