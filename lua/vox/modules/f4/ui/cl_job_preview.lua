@@ -410,11 +410,17 @@ function PANEL:Paint(w, h)
 
     DisableClipping(true)
         render.SetScissorRect(realX, realY, realX + realW, realY + realH, true)
-            draw.RoundedBoxEx(8, 0, Y, W, H, colorSecondary, false, false, false, true)
+            vox.DrawVoxPanel(0, Y, W, H, { primary = colorSecondary, secondary = colorPrimary, accent = self.colorSlightGradient }, 8)
 
-            draw.RoundedBoxEx(8, divModel:GetPos(), Y, divModel:GetWide() + padding, H, colorBG, false, false, false, true)
+            local modelX = divModel:GetPos()
+            vox.DrawAngledRect(modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, vox.ScaleWide(28), colorBG)
+            vox.DrawVoxBlade(modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), self.colorSlightGradient)
+            vox.DrawAngledRect(0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), vox.ScaleWide(18), ColorAlpha(self.colorSlightGradient, 38))
+            vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorSlightGradient, 85))
 
-            vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, self.colorSlightGradient)
+            surface.SetDrawColor(ColorAlpha(self.colorSlightGradient, 105))
+            surface.DrawLine(vox.ScaleWide(18), Y + vox.ScaleTall(10), self.divInfo:GetWide() - vox.ScaleWide(30), Y + vox.ScaleTall(10))
+            surface.DrawLine(modelX + vox.ScaleWide(20), Y + H - vox.ScaleTall(12), W - vox.ScaleWide(18), Y + H - vox.ScaleTall(12))
         render.SetScissorRect(0, 0, 0, 0, false)
     DisableClipping(false)
 end

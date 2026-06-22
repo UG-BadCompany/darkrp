@@ -67,6 +67,11 @@ function PANEL:LoadRanks()
         btnRank:SetTall(vox.ScaleTall(40))
         btnRank:SetColorIdle(COLOR_SECONDARY)
         btnRank:SetColorHover(COLOR_TERTIARY)
+        btnRank.PaintOver = function(panel, w, h)
+            local rankColor = data.color or COLOR_ACCENT
+            vox.DrawVoxBlade(0, vox.ScaleTall(6), vox.ScaleWide(5), h - vox.ScaleTall(12), rankColor)
+            vox.DrawAngledRect(w - vox.ScaleWide(46), 0, vox.ScaleWide(46), h, vox.ScaleWide(10), ColorAlpha(rankColor, panel:IsHovered() and 55 or 28))
+        end
         btnRank.DoClick = function(panel)
             self:LoadEditorRank(data, uniqueID)
             self:ShowEditor()

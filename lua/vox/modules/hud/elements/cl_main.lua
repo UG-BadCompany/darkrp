@@ -34,6 +34,7 @@ end
 local function drawIndicator( x, y, w, h, material, color, fraction, label )
     local iconSize = h
     local iconSpace = hud.ScaleTall( UNSCALED_SPACE )
+    local cut = hud.ScaleWide( 5 )
 
     local theme = hud:GetCurrentTheme()
     local isDark = theme.isDark
@@ -44,14 +45,30 @@ local function drawIndicator( x, y, w, h, material, color, fraction, label )
     local rectX, rectW = x + ( iconSize + iconSpace ), w - ( iconSize + iconSpace )
     local rectH = math.min( h, hud.ScaleTall( UNSCALED_BAR_H ) )
     local rectY = math.floor( y + iconSize * .5 - rectH * .5 )
+    local segments = 12
+    local segmentGap = hud.ScaleWide( 2 )
+    local segmentW = ( rectW - segmentGap * ( segments - 1 ) ) / segments
 
     material:Draw( x, y, iconSize, iconSize, color )
 
-    hud.DrawRoundedBox( rectX, rectY, rectW, rectH, ColorAlpha( colorTextPrimary, isDark and 10 or 200 ) )
+    vox.DrawAngledRect( rectX - hud.ScaleWide( 3 ), rectY - hud.ScaleTall( 3 ), rectW + hud.ScaleWide( 6 ), rectH + hud.ScaleTall( 6 ), cut, ColorAlpha( colorTextPrimary, isDark and 12 or 110 ) )
 
-    render.SetScissorRect( rectX, rectY, rectX + rectW * fraction, rectY + rectH, true )
-        hud.DrawRoundedBox( rectX, rectY, rectW, rectH, color )
-    render.SetScissorRect( 0, 0, 0, 0, false )
+    for i = 1, segments do
+        local sx = rectX + ( i - 1 ) * ( segmentW + segmentGap )
+        local fill = math.Clamp( fraction * segments - ( i - 1 ), 0, 1 )
+        local idleColor = ColorAlpha( colorTextPrimary, isDark and 18 or 95 )
+
+        vox.DrawAngledRect( sx, rectY, segmentW, rectH, cut * .55, idleColor )
+
+        if ( fill > 0 ) then
+            render.SetScissorRect( sx, rectY, sx + segmentW * fill, rectY + rectH, true )
+                vox.DrawAngledRect( sx, rectY, segmentW, rectH, cut * .55, color )
+            render.SetScissorRect( 0, 0, 0, 0, false )
+        end
+    end
+
+    surface.SetDrawColor( ColorAlpha( color, 130 ) )
+    surface.DrawLine( rectX, rectY - 2, rectX + rectW * fraction, rectY - 2 )
 
     if ( label ) then
         draw.SimpleText( label, hud.fonts.ExtraTinyBold, rectX + rectW, rectY - hud.ScaleTall( 2 ), colorTextSecondary, 2, 4 )
