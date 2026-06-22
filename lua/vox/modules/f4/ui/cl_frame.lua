@@ -13,14 +13,19 @@ local PANEL = {}
 function PANEL:Init()
     vox.f4.frame = self
 
-    local padding = vox.ScaleTall(10)
+    local padding = vox.ScaleTall(14)
     self.containerPadding = padding
+    self:SetAlpha(0)
+    self:AlphaTo(255, .22, 0)
+    self:SetSize(ScrW() * .82, ScrH() * .82)
+    self:Center()
 
     self.container = self:Add('Panel')
     self.container:DockPadding(padding * 1.4, padding * 1.4, padding * 1.4, padding * 1.4)
     self.container.Paint = function(panel, w, h)
-        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colorPrimary, 232), secondary = colorTertiary, accent = colorAccent }, 12)
-        vox.DrawVoxCornerTicks(10, 10, w - 20, h - 20, ColorAlpha(colorAccent, 70), 22)
+        vox.DrawVoxGlass(0, 0, w, h, { radius = 22, alpha = 238, accent = colorAccent })
+        vox.DrawVoxCornerTicks(16, 16, w - 32, h - 32, ColorAlpha(colorAccent, 80), 28)
+        draw.SimpleText('COMMAND CENTER', vox.Font('Comfortaa Bold@18'), vox.ScaleWide(24), vox.ScaleTall(18), ColorAlpha(color_white, 230), 0, 1)
     end
 
     self.sidebar = self:Add('vox.Sidebar')
@@ -66,10 +71,8 @@ function PANEL:InitProfile()
     profile:DockMargin(0, 0, 0, vox.ScaleTall(5))
     profile:DockPadding(padding, padding, padding, padding)
     profile.Paint = function(panel, w, h)
-        vox.DrawVoxCard(0, 0, w, h, { primary = colorPrimary, secondary = colorTertiary, accent = labelColor }, { accent = labelColor, radius = 12, bladeWidth = 6 })
-        vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(6), h - vox.ScaleTall(16), labelColor)
-        surface.SetDrawColor(ColorAlpha(labelColor, 36))
-        surface.DrawRect(w - vox.ScaleWide(42), 0, vox.ScaleWide(42), h)
+        vox.DrawVoxPremiumCard(0, 0, w, h, { accent = labelColor, radius = 18, alpha = 230 })
+        vox.DrawMatGradient(w * .55, 0, w * .45, h, RIGHT, ColorAlpha(labelColor, 36))
     end
     profile.Think = function(panel)
         if ((panel.nextThink or 0) > CurTime()) then return end

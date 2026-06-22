@@ -11,6 +11,11 @@ function PANEL:Init()
 
     self.blur = vox.scoreboard.IsBlurActive()
 
+    self:SetAlpha(0)
+    self:AlphaTo(255, .16, 0)
+    self:SetSize(ScrW() * .74, ScrH() * .78)
+    self:Center()
+
     self.container = self:Add('vox.Panel')
 
     self.sidebar = self:Add('vox.MiniSidebar')
@@ -50,9 +55,8 @@ function PANEL:PerformLayout(w, h)
     self.container:Dock(FILL)
     self.container:DockMargin(margin, margin, margin, margin)
     self.container.Paint = function(_, cw, ch)
-        vox.DrawVoxPanel(0, 0, cw, ch, { primary = ColorAlpha(COLOR_PRIMARY, 235), secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 12)
-        vox.DrawVoxBlade(vox.ScaleWide(14), vox.ScaleTall(12), vox.ScaleWide(6), ch - vox.ScaleTall(24), COLOR_ACCENT)
-        vox.DrawVoxCornerTicks(vox.ScaleWide(10), vox.ScaleTall(10), cw - vox.ScaleWide(20), ch - vox.ScaleTall(20), ColorAlpha(COLOR_ACCENT, 65), vox.ScaleWide(24))
+        vox.DrawVoxGlass(0, 0, cw, ch, { radius = 22, alpha = 238, accent = COLOR_ACCENT })
+        vox.DrawVoxCornerTicks(vox.ScaleWide(16), vox.ScaleTall(16), cw - vox.ScaleWide(32), ch - vox.ScaleTall(32), ColorAlpha(COLOR_ACCENT, 70), vox.ScaleWide(30))
     end
 
     self.sidebar:Dock(LEFT)
@@ -61,9 +65,8 @@ end
 function PANEL:Paint(w, h)
     if (self.blur) then
         vox.DrawBlurExpensive(self, 9)
-        vox.DrawVoxPanel(0, 0, w, h, { primary = vox.ColorBetween(COLOR_PRIMARY, color_black), secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 8)
-        vox.DrawVoxBlade(vox.ScaleWide(12), vox.ScaleTall(12), vox.ScaleWide(8), h - vox.ScaleTall(24), COLOR_ACCENT)
-        vox.DrawVoxCornerTicks(vox.ScaleWide(14), vox.ScaleTall(14), w - vox.ScaleWide(28), h - vox.ScaleTall(28), ColorAlpha(COLOR_ACCENT, 80), vox.ScaleWide(28))
+        vox.DrawVoxGlass(0, 0, w, h, { radius = 22, alpha = 242, accent = COLOR_ACCENT })
+        vox.DrawVoxCornerTicks(vox.ScaleWide(18), vox.ScaleTall(18), w - vox.ScaleWide(36), h - vox.ScaleTall(36), ColorAlpha(COLOR_ACCENT, 85), vox.ScaleWide(32))
     else
         self.BaseClass.Paint(self, w, h)
     end
