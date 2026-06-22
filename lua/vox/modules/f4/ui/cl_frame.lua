@@ -1,5 +1,6 @@
 local colorPrimary = vox:Config('colors.primary')
 local colorTertiary = vox:Config('colors.tertiary')
+local colorAccent = vox:Config('colors.accent')
 local wimgLoading = vox.wimg.Simple('https://i.imgur.com/VVswRpx.png', 'smooth mips')
 local lastChosenTab = 1
 
@@ -16,7 +17,11 @@ function PANEL:Init()
     self.containerPadding = padding
 
     self.container = self:Add('Panel')
-    self.container:DockPadding(padding, padding, padding, padding)
+    self.container:DockPadding(padding * 1.4, padding * 1.4, padding * 1.4, padding * 1.4)
+    self.container.Paint = function(panel, w, h)
+        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colorPrimary, 232), secondary = colorTertiary, accent = colorAccent }, 12)
+        vox.DrawVoxCornerTicks(10, 10, w - 20, h - 20, ColorAlpha(colorAccent, 70), 22)
+    end
 
     self.sidebar = self:Add('vox.Sidebar')
     self.sidebar:SetDescriptionEnabled(true)
@@ -41,7 +46,7 @@ function PANEL:PerformLayout(w, h)
     BaseClass.PerformLayout(self, w, h)
 
     self.sidebar:Dock(LEFT)
-    self.sidebar:SetWide(math.max(vox.ScaleWide(185), w * .18))
+    self.sidebar:SetWide(math.max(vox.ScaleWide(230), w * .22))
 
     self.container:Dock(FILL)
 end
@@ -56,12 +61,12 @@ function PANEL:InitProfile()
     local labelFont = vox.Font('Comfortaa@14')
 
     local profile = sidebar:Add('Panel')
-    profile:SetTall(vox.ScaleTall(50))
+    profile:SetTall(vox.ScaleTall(82))
     profile:Dock(TOP)
     profile:DockMargin(0, 0, 0, vox.ScaleTall(5))
     profile:DockPadding(padding, padding, padding, padding)
     profile.Paint = function(panel, w, h)
-        vox.DrawVoxPanel(0, 0, w, h, { primary = colorPrimary, secondary = colorTertiary, accent = labelColor }, 8)
+        vox.DrawVoxCard(0, 0, w, h, { primary = colorPrimary, secondary = colorTertiary, accent = labelColor }, { accent = labelColor, radius = 12, bladeWidth = 6 })
         vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(6), h - vox.ScaleTall(16), labelColor)
         surface.SetDrawColor(ColorAlpha(labelColor, 36))
         surface.DrawRect(w - vox.ScaleWide(42), 0, vox.ScaleWide(42), h)

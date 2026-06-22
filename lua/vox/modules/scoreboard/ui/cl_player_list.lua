@@ -43,7 +43,7 @@ local PANEL = {}
 function PANEL:Init()
     local toolbarPadding = vox.ScaleTall(5)
     local elementSpace = vox.ScaleTall(10)
-    local playerLineHeight = vox.ScaleTall(30)
+    local playerLineHeight = vox.ScaleTall(vox.scoreboard:GetOptionValue('compact_mode') and 30 or 36)
     local playerLinePadding = vox.ScaleTall(5)
     local playerLineRealHeight = playerLineHeight - playerLinePadding * 2
 
@@ -53,7 +53,7 @@ function PANEL:Init()
 
     self.toolbar = self:Add('Panel')
     self.toolbar.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, COLOR_SECONDARY)
+        vox.DrawVoxCard(0, 0, w, h, { primary = COLOR_PRIMARY, secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, { accent = COLOR_ACCENT, radius = 10, bladeWidth = 5 })
     end
     self.toolbar.PerformLayout = function(panel, w, h)
         local contentMarginLeft = toolbarPadding * 3 + playerLineRealHeight * 2
@@ -110,7 +110,7 @@ end
 
 function PANEL:PerformLayout(w, h)
     self.toolbar:Dock(TOP)
-    self.toolbar:SetTall(vox.ScaleTall(35))
+    self.toolbar:SetTall(vox.ScaleTall(44))
 
     self.list:Dock(FILL)
 end

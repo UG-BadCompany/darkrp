@@ -19,5 +19,5 @@ local function drawTacticalCard( self, client, scrW, scrH )
     vox.DrawVoxBadge( x + hud.ScaleWide( 28 ), y + h - hud.ScaleTall( 20 ), hud.ScaleWide( 70 ), hud.ScaleTall( 16 ), client:getDarkRPVar( 'wanted' ) and 'WANTED' or 'CLEAR', colors, { accent = client:getDarkRPVar( 'wanted' ) and colors.negative or colors.positive } )
 end
 
-hud:RegisterHUDPreset( 'tactical_card', { name = 'Vox Tactical Card', style = 0, drawFn = drawTacticalCard } )
+hud:RegisterHUDPreset( 'tactical_card', { name = 'Compact Card', style = 0, drawFn = drawTacticalCard } )
 hud.DrawVoxTacticalCard = drawTacticalCard

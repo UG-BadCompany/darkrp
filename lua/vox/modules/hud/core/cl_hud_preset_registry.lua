@@ -49,8 +49,8 @@ function vox.hud:GetHUDPresetComboOptions()
 end
 
 -- README-named HUD preset registry entries. Preset implementation files attach draw functions.
-vox.hud:RegisterHUDPreset( 'tactical_card', { name = 'Vox Tactical Card', style = 0 } )
-vox.hud:RegisterHUDPreset( 'command_strip', { name = 'Vox Command Strip', style = 1 } )
-vox.hud:RegisterHUDPreset( 'minimal_edge', { name = 'Vox Minimal Edge', style = 2 } )
-vox.hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Vox Roleplay Profile', style = 3 } )
+vox.hud:RegisterHUDPreset( 'tactical_card', { name = 'Compact Card', style = 0 } )
+vox.hud:RegisterHUDPreset( 'command_strip', { name = 'Horizontal Bar', style = 1 } )
+vox.hud:RegisterHUDPreset( 'minimal_edge', { name = 'Minimal Corner', style = 2 } )
+vox.hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Roleplay Profile', style = 3 } )
 

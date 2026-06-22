@@ -24,6 +24,26 @@ vox.scoreboard:RegisterOption('scale', {
     max = 130
 })
 
+vox.scoreboard:RegisterOption('font_size', {
+    title = 'Font Size',
+    desc = 'Adjusts scoreboard row readability',
+    category = 'Appearance',
+    cami = 'vox_scoreboard_edit',
+    type = 'int',
+    default = 100,
+    min = 85,
+    max = 120
+})
+
+vox.scoreboard:RegisterOption('compact_mode', {
+    title = 'Compact Mode',
+    desc = 'Uses slimmer premium scoreboard rows',
+    category = 'Appearance',
+    cami = 'vox_scoreboard_edit',
+    type = 'bool',
+    default = false
+})
+
 vox.scoreboard:RegisterOption('group_teams', {
     title = 'scoreboard.group_teams.name',
     desc = 'scoreboard.group_teams.desc',

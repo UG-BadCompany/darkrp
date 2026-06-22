@@ -13,6 +13,35 @@ vox.f4:RegisterOption('title', {
     default = 'Vox Menu'
 })
 
+vox.f4:RegisterOption('scale', {
+    title = 'F4 Scale',
+    desc = 'Controls the premium dashboard frame scale',
+    category = 'Appearance',
+    cami = 'vox_f4_edit',
+    type = 'int',
+    default = 100,
+    min = 85,
+    max = 120
+})
+
+vox.f4:RegisterOption('animations', {
+    title = 'Animations',
+    desc = 'Enables smooth premium dashboard transitions',
+    category = 'Appearance',
+    cami = 'vox_f4_edit',
+    type = 'bool',
+    default = true
+})
+
+vox.f4:RegisterOption('compact_mode', {
+    title = 'Compact Mode',
+    desc = 'Uses tighter dashboard cards and rows',
+    category = 'Appearance',
+    cami = 'vox_f4_edit',
+    type = 'bool',
+    default = false
+})
+
 vox.f4:RegisterOption('colored_items', {
     title = 'f4.colored_items.name',
     desc = 'f4.colored_items.desc',
