@@ -55,11 +55,12 @@ vox.hud.OverrideGamemode( 'vox.hud.OverrideNotifications', overrideNotifications
 
 local function drawNotifications( self, client, scrW, scrH )
     local theme = hud:GetCurrentTheme()
-    local colorPrimary = theme.colors.primary
-    local colorSecondary = theme.colors.secondary
-    local colorTertiary = theme.colors.tertiary
-    local colorText = theme.colors.textPrimary
-    local isDark = theme.dark
+    local colors = ( theme and theme.colors ) or {}
+    local colorPrimary = colors.primary or Color( 20, 22, 28, 240 )
+    local colorSecondary = colors.secondary or Color( 30, 34, 44, 240 )
+    local colorTertiary = colors.tertiary or Color( 45, 50, 62, 240 )
+    local colorText = colors.textPrimary or color_white
+    local isDark = theme and theme.dark
 
     local space = vox.hud.GetScreenPadding()
     local horPadding = vox.hud.ScaleTall( 10 )
@@ -94,7 +95,8 @@ local function drawNotifications( self, client, scrW, scrH )
         local notifText = data.text
         local notifType = data.type or 0
         local notifTypeData = NOTIFICATION_TYPES[ notifType ] or NOTIFICATION_TYPES[ NOTIFY_GENERIC ]
-        local notifColor = colors[ notifTypeData.colorKey or 'accent' ] or colors.accent
+        local colorKey = notifTypeData.colorKey or 'accent'
+        local notifColor = colors[ colorKey ] or colors.accent or Color( 0, 174, 255 )
         local timeLeft = math.max( 0, data.endtime - CurTime() )
         local lifeFraction = timeLeft / data.duration
         local expired = lifeFraction == 0
@@ -130,7 +132,9 @@ local function drawNotifications( self, client, scrW, scrH )
                 vox.hud.DrawRoundedBox( x, y, notifW, notifH, colorPrimary )
             end
 
-            wimgObject:Draw( x + horPadding + vox.hud.ScaleWide( 6 ), y + notifH * .5 - iconSize * .5, iconSize, iconSize, notifColor )
+            if wimgObject and wimgObject.Draw then
+                wimgObject:Draw( x + horPadding + vox.hud.ScaleWide( 6 ), y + notifH * .5 - iconSize * .5, iconSize, iconSize, notifColor )
+            end
 
             render.SetScissorRect( x, y + notifH - lineH, x + notifW, y + notifH, true )
                 vox.hud.DrawRoundedBox( x, y, notifW, notifH, lineColor )

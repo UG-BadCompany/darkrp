@@ -8,7 +8,7 @@ function vox.DrawVoxAngledAccentBlade( x, y, w, h, color, glowColor )
 end
 
 function vox.DrawVoxRow( x, y, w, h, colors, state )
-    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    colors = colors or ( vox.GetThemeColors and vox.GetThemeColors() ) or {}
     state = state or {}
     local accent = state.accent or colors.accent or Color( 0, 174, 255 )
     local bg = state.background or colors.secondary or Color( 16, 22, 34 )
@@ -20,7 +20,7 @@ function vox.DrawVoxRow( x, y, w, h, colors, state )
 end
 
 function vox.DrawVoxBadge( x, y, w, h, label, colors, state )
-    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    colors = colors or ( vox.GetThemeColors and vox.GetThemeColors() ) or {}
     state = state or {}
     local accent = state.accent or colors.accent or Color( 0, 174, 255 )
     local textColor = state.textColor or colors.textPrimary or Color( 255, 255, 255 )
@@ -33,7 +33,7 @@ function vox.DrawVoxBadge( x, y, w, h, label, colors, state )
 end
 
 function vox.DrawVoxStatModule( x, y, w, h, label, value, colors, state )
-    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    colors = colors or ( vox.GetThemeColors and vox.GetThemeColors() ) or {}
     state = state or {}
     local accent = state.accent or colors.accent or Color( 0, 174, 255 )
     local labelFont = state.labelFont or ( vox.hud and vox.hud.fonts and vox.hud.fonts.ExtraTinyBold ) or 'DermaDefaultBold'

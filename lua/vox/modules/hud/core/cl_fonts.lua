@@ -1,14 +1,14 @@
 vox.hud.fonts = vox.hud.fonts or {}
 
 local function font2D( name, size, postfix )
-    local family = 'Comfortaa'
+    local family = vox.SafeFont( 'Comfortaa', 'Montserrat' )
     local finalFont = family
     local scaleInt = vox.hud.GetScale()
     local updatedSize = math.ceil( ( size * scaleInt ) / 900 * ScrH() )
     local fontName = 'vox.hud.' .. name
 
     if ( postfix ) then
-        finalFont = finalFont .. ' ' .. postfix
+        finalFont = vox.SafeFont( finalFont .. ' ' .. postfix, finalFont )
     end
 
     surface.CreateFont( fontName, {
@@ -24,13 +24,13 @@ local function font3D2D( name, family, size )
     local realName = 'vox.hud.' .. name
 
     surface.CreateFont( realName, {
-        font = family,
+        font = vox.SafeFont( family, 'Montserrat' ),
         size = size,
         extended = true
     } )
 
     surface.CreateFont( realName .. '.Blur', {
-        font = family,
+        font = vox.SafeFont( family, 'Montserrat' ),
         size = size,
         blursize = 2,
         extended = true

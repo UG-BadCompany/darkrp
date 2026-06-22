@@ -75,7 +75,7 @@ function vox.DrawVoxBlade( x, y, w, h, color, glowColor )
 end
 
 function vox.DrawVoxPanel( x, y, w, h, colors, radius )
-    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    colors = colors or ( vox.GetThemeColors and vox.GetThemeColors() ) or {}
     radius = radius or 8
     local primary = colors.primary or Color( 10, 13, 20 )
     local secondary = colors.secondary or Color( 16, 22, 34 )
@@ -111,7 +111,7 @@ function vox.DrawVoxScanlines( x, y, w, h, color, step )
 end
 
 function vox.DrawVoxCard( x, y, w, h, colors, state )
-    colors = colors or ( vox.hud and vox.hud:GetCurrentTheme().colors ) or {}
+    colors = colors or ( vox.GetThemeColors and vox.GetThemeColors() ) or {}
     state = state or {}
     local accent = state.accent or colors.accent or Color( 0, 174, 255 )
     local lift = state.hovered and 3 or 0

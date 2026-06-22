@@ -25,7 +25,7 @@ local PANEL = {}
 AccessorFunc( PANEL, 'm_bShowLabel', 'ShowLabel' )
 
 function PANEL:Init()
-    local colors = vox.hud:GetCurrentTheme().colors
+    local colors = vox.GetThemeColors()
 
     self.m_bShowLabel = false
     self.choices = {}

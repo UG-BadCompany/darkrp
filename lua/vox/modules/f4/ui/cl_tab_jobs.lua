@@ -2,7 +2,7 @@ local colorPrimary = vox:Config('colors.primary')
 local colorSecondary = vox:Config('colors.secondary')
 local colorTertiary = vox:Config('colors.tertiary')
 local colorGray = Color(159, 159, 159)
-local font0 = vox.Font('Overpass SemiBold@14')
+local font0 = vox.Font('Montserrat@14')
 local oldScrollValue = 0
 
 local L = function(...) return vox.lang:Get(...) end

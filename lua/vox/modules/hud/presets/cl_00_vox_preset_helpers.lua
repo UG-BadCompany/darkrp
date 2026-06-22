@@ -17,8 +17,8 @@ function helpers.GetPlayerJob( client )
 end
 
 function helpers.GetThemeData( client )
-    local theme = hud:GetCurrentTheme()
-    return theme, theme.colors, team.GetColor( client:Team() )
+    local colors, theme = vox.GetThemeColors()
+    return theme, colors, team.GetColor( client:Team() )
 end
 
 function helpers.DrawBar( x, y, w, h, fraction, color, colors, label )

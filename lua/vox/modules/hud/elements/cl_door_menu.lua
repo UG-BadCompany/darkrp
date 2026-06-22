@@ -17,7 +17,7 @@ local function safeClose( panel )
 end
 
 local function choosePlayer( ... )
-    local colors = vox.hud:GetCurrentTheme().colors
+    local colors = vox.GetThemeColors()
     local frame = vox.ChoosePlayer( ... )
 
     frame.colorBG = vox.OffsetColor( colors.primary, -5 )
@@ -48,7 +48,7 @@ local function openDoorMenu( client, setDoorOwnerAccess, canChangeSettings )
     local isAllowedToOwn = ent:isKeysAllowedToOwn( client )
     local entType = vox.utf8.lower( L( ent:IsVehicle() and 'vehicle' or 'door' ) )
     local hasTeams = table.Count( doorTeams or {} ) > 0
-    local colors = vox.hud:GetCurrentTheme().colors
+    local colors = vox.GetThemeColors()
 
     local options = {}
     local insert = function( name, callback, wimgID )
