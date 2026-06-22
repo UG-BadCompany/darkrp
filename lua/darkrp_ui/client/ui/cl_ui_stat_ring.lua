@@ -1,0 +1,3 @@
+DarkRPUI=DarkRPUI or {}; DarkRPUI.UI=DarkRPUI.UI or {}
+-- Component module intentionally extends the shared DarkRPUI.UI library with named, reusable primitives.
+function DarkRPUI.UI.StatRing(x,y,r,frac,col,label,value) surface.SetDrawColor(DarkRPUI.WithAlpha(col or DarkRPUI.Color("accent"),70)); draw.NoTexture(); surface.DrawCircle(x,y,r,col or DarkRPUI.Color("accent")); DarkRPUI.UI.Text(value or math.Round((frac or 0)*100).."%","DarkRPUI.Number",x,y-10,DarkRPUI.Color("text"),TEXT_ALIGN_CENTER); DarkRPUI.UI.Text(label or "STAT","DarkRPUI.Tiny",x,y+14,DarkRPUI.Color("subtext"),TEXT_ALIGN_CENTER) end

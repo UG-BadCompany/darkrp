@@ -1,0 +1,1 @@
+DarkRPUI=DarkRPUI or {}; DarkRPUI.Scoreboard=DarkRPUI.Scoreboard or {}; function DarkRPUI.Scoreboard.BuildSettings(parent) parent:Clear(); DarkRPUI.UI.EmptyState(parent,"Scoreboard settings","Avatar, grouping, sorting, blur, and rail preferences.") end
