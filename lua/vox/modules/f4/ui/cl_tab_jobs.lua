@@ -364,7 +364,7 @@ function PANEL:CreateMember(member, content, reason)
 
     if (not inf) then
         limit.Think = function(panel)
-            if ((panel.nextThink or 0) > CurTime()) then return end                                                                                                                                                                                                        -- 6bfe6255-51e1-4fc6-835c-6c548c62bff7
+            if ((panel.nextThink or 0) > CurTime()) then return end
             panel.nextThink = CurTime() + .1
 
             local amount = #team.GetPlayers(index)
@@ -382,9 +382,7 @@ end
 
 vox.gui.Register('vox.f4.Jobs', PANEL)
 
---[[------------------------------
-DEBUG
---------------------------------]]
+-- Vox local preview helper
 -- vox.gui.Test('vox.f4.Frame', .6, .65, function(panel)
 --     panel:MakePopup()
 --     panel:ChooseTab(2)

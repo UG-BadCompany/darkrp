@@ -31,7 +31,7 @@ local function formatSalary( salary )
     return '+ ' .. ( DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( salary ) or tostring( salary ) )
 end
 
-local function drawIndicator( x, y, w, h, material, color, fraction )
+local function drawIndicator( x, y, w, h, material, color, fraction, label )
     local iconSize = h
     local iconSpace = hud.ScaleTall( UNSCALED_SPACE )
 
@@ -52,6 +52,10 @@ local function drawIndicator( x, y, w, h, material, color, fraction )
     render.SetScissorRect( rectX, rectY, rectX + rectW * fraction, rectY + rectH, true )
         hud.DrawRoundedBox( rectX, rectY, rectW, rectH, color )
     render.SetScissorRect( 0, 0, 0, 0, false )
+
+    if ( label ) then
+        draw.SimpleText( label, hud.fonts.ExtraTinyBold, rectX + rectW, rectY - hud.ScaleTall( 2 ), colorTextSecondary, 2, 4 )
+    end
 end
 
 local function drawStatusIcon( x, y, w, h, material, color )
@@ -177,7 +181,7 @@ local function drawMainHUD( self, client, scrW, scrH )
     local showJob = not CONVAR_COMPACT:GetBool() and hud:GetOptionValue( 'display_job' )
     local space = hud.GetScreenPadding()
     local padding = hud.ScaleTall( 10 )
-    local w, h = hud.ScaleWide( 300 ), hud.ScaleTall( showJob and 120 or 100 )
+    local w, h = hud.ScaleWide( 340 ), hud.ScaleTall( showJob and 128 or 108 )
     local x, y = space, scrH - h - space
 
     -- Colors
@@ -220,7 +224,7 @@ local function drawMainHUD( self, client, scrW, scrH )
         y = y - extraHeight
     end
 
-    local avatarSpaceWidth = hud.ScaleWide( 80 )
+    local avatarSpaceWidth = hud.ScaleWide( 92 )
     local labelX = x + avatarSpaceWidth + padding
     local labelY = y + padding
 
@@ -237,7 +241,7 @@ local function drawMainHUD( self, client, scrW, scrH )
         surface.SetDrawColor( colors.accent )
         surface.DrawRect( x, y, hud.ScaleWide( 3 ), h )
     end
-    hud.DrawRoundedBoxEx( x + hud.ScaleWide( 10 ), y + hud.ScaleTall( 8 ), avatarSpaceWidth - hud.ScaleWide( 16 ), h - hud.ScaleTall( 16 ), ColorAlpha( colorSecondary, 205 ), true, false, true )
+    vox.DrawAngledRect( x + hud.ScaleWide( 10 ), y + hud.ScaleTall( 8 ), avatarSpaceWidth - hud.ScaleWide( 12 ), h - hud.ScaleTall( 16 ), hud.ScaleWide( 12 ), ColorAlpha( colorSecondary, 205 ) )
     surface.SetDrawColor( ColorAlpha( colors.accent, 100 ) )
     surface.DrawLine( x + avatarSpaceWidth, y + 1, x + avatarSpaceWidth + hud.ScaleWide( 36 ), y + 1 )
     surface.DrawLine( x + w - hud.ScaleWide( 48 ), y + h - 2, x + w - 2, y + h - 2 )
@@ -261,11 +265,13 @@ local function drawMainHUD( self, client, scrW, scrH )
 
     local moneyHeight = 0
     if ( hud:GetOptionValue( 'display_money' ) ) then
-        hud.DrawRoundedBox( x + w - padding - hud.ScaleWide( 112 ), y + padding, hud.ScaleWide( 112 ), hud.ScaleTall( 24 ), ColorAlpha( colorSecondary, 190 ) )
-        _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, x + w - padding - hud.ScaleWide( 8 ), y + padding + hud.ScaleTall( 12 ), colors.money or colors.positive, 2, 1 )
+        local econW = hud.ScaleWide( 124 )
+        vox.DrawAngledRect( x + w - padding - econW, y + padding, econW, hud.ScaleTall( 26 ), hud.ScaleWide( 8 ), ColorAlpha( colorSecondary, 205 ) )
+        draw.SimpleText( 'BALANCE', hud.fonts.ExtraTinyBold, x + w - padding - econW + hud.ScaleWide( 10 ), y + padding + hud.ScaleTall( 4 ), colorTextSecondary, 0, 0 )
+        _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, x + w - padding - hud.ScaleWide( 8 ), y + padding + hud.ScaleTall( 14 ), colors.money or colors.positive, 2, 1 )
     end
     if ( hud:GetOptionValue( 'display_salary' ) ) then
-        draw.SimpleText( salaryFormatted, hud.fonts.Small, x + w - padding, y + padding + hud.ScaleTall( 27 ), colorTextSecondary, 2, 0 )
+        draw.SimpleText( 'STIPEND ' .. salaryFormatted, hud.fonts.ExtraTinyBold, x + w - padding, y + padding + hud.ScaleTall( 34 ), colorTextSecondary, 2, 0 )
     end
 
     render.SetScissorRect( 0, 0, 0, 0, false )
@@ -317,6 +323,8 @@ local function drawMainHUD( self, client, scrW, scrH )
         end )
 
         vox.DrawOutlinedCircle( maskX0, maskY0, circleRadius + circleOutlineThickness * .5, circleOutlineThickness, teamColor )
+        vox.DrawAngledRect( maskX0 - circleRadius, maskY0 + circleRadius - hud.ScaleTall( 13 ), circleRadius * 2, hud.ScaleTall( 18 ), hud.ScaleWide( 6 ), ColorAlpha( colorPrimary, 230 ) )
+        draw.SimpleText( 'ID', hud.fonts.ExtraTinyBold, maskX0, maskY0 + circleRadius - hud.ScaleTall( 4 ), colorTextSecondary, 1, 1 )
     end
 
     -- Draw separator
@@ -345,7 +353,7 @@ local function drawMainHUD( self, client, scrW, scrH )
     local rectY = footerY0 - totalIndictatorsH * .5
 
     if ( hud:GetOptionValue( 'display_health' ) ) then
-        drawIndicator( labelX, rectY, lineW, rectH, WIMG_HEART, colors.negative, lerpHealth )
+        drawIndicator( labelX, rectY, lineW, rectH, WIMG_HEART, colors.negative, lerpHealth, math.Round( lerpHealth * 100 ) .. '%' )
     end
 
     rectY = rectY + rectH + rectSpace

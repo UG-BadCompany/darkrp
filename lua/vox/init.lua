@@ -1,3 +1,8 @@
+--[[
+    Vox UI Core Loader
+    Boots shared framework/UI layers first, then mounts each module through its Vox-owned manifest.
+]]
+
 local Run = hook.Run
 local IncludeFolder = vox.IncludeFolder
 
@@ -7,11 +12,11 @@ end
 
 Run('PreVoxLoad')
 
--- non recursive
+-- Shared Vox foundations.
 IncludeFolder('vox/framework/')
 IncludeFolder('vox/ui/')
 
--- init modules
+-- Active Vox modules.
 do
     local Find = file.Find
     local path = 'vox/modules/'

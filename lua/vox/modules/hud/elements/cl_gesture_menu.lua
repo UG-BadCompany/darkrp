@@ -33,7 +33,7 @@ local function openGestureMenu()
         choiceWheel:AddChoice( {
             name = DarkRP.getPhrase( animName ),
             callback = function()
-                RunConsoleCommand( '_DarkRP_DoAnimation', animID )                                                                                                                                                                                                                                                              -- b7fe7d19-18c9-42a0-823d-06e7663479ef
+                RunConsoleCommand( '_DarkRP_DoAnimation', animID )
             end
         } )
     end

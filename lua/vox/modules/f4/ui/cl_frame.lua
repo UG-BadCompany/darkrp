@@ -41,7 +41,7 @@ function PANEL:PerformLayout(w, h)
     BaseClass.PerformLayout(self, w, h)
 
     self.sidebar:Dock(LEFT)
-    self.sidebar:SetWide(w * .2)
+    self.sidebar:SetWide(math.max(vox.ScaleWide(185), w * .18))
 
     self.container:Dock(FILL)
 end
@@ -61,8 +61,10 @@ function PANEL:InitProfile()
     profile:DockMargin(0, 0, 0, vox.ScaleTall(5))
     profile:DockPadding(padding, padding, padding, padding)
     profile.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, colorTertiary)
-        draw.RoundedBox(8, 1, 1, w - 2, h - 2, colorPrimary)
+        vox.DrawVoxPanel(0, 0, w, h, { primary = colorPrimary, secondary = colorTertiary, accent = labelColor }, 8)
+        vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(6), h - vox.ScaleTall(16), labelColor)
+        surface.SetDrawColor(ColorAlpha(labelColor, 36))
+        surface.DrawRect(w - vox.ScaleWide(42), 0, vox.ScaleWide(42), h)
     end
     profile.Think = function(panel)
         if ((panel.nextThink or 0) > CurTime()) then return end
@@ -70,7 +72,7 @@ function PANEL:InitProfile()
 
         local lblJob = panel.lblJob
 
-        labelColor = vox.f4.ConvertJobColor(team.GetColor(client:Team()))                                                                                                                                                                            -- 6bfe6255-51e1-4fc6-835c-6c548c62bff7
+        labelColor = vox.f4.ConvertJobColor(team.GetColor(client:Team()))
         labelText = team.GetName(client:Team())
 
         if (IsValid(lblJob)) then
@@ -261,9 +263,7 @@ end
 
 vox.gui.Register('vox.f4.Frame', PANEL, 'vox.Frame')
 
---[[------------------------------
-DEBUG
---------------------------------]]
+-- Vox local preview helper
 -- vox.gui.Test('vox.f4.Frame', .65, .65, function(panel)
 --     panel:MakePopup()
 -- end)

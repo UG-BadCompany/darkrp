@@ -11,6 +11,10 @@ local sections = {
     'Dashboard', 'Players', 'Inspector', 'Logs', 'Reports', 'Movement', 'Punishments', 'Server Tools', 'Economy', 'Settings'
 }
 
+local quickActions = {
+    'bring', 'goto', 'returnply', 'freeze', 'unfreeze', 'respawn', 'slay', 'stripweapons', 'warn', 'spectate', 'unspectate', 'noclip', 'god', 'cloak'
+}
+
 function vox.admin.Open()
     if IsValid( vox.admin.Frame ) then vox.admin.Frame:Remove() end
 
@@ -45,8 +49,46 @@ function vox.admin.Open()
     content:DockMargin( 0, 56, 0, 0 )
     content.Paint = function( _, w, h )
         draw.RoundedBox( 8, 0, 0, w, h, ColorAlpha( colors.secondary or color_black, 205 ) )
-        draw.SimpleText( 'Select a player row in Vox Scoreboard or run vox_admin_action from trusted UI controls.', 'DermaDefaultBold', 18, 18, colors.textPrimary or color_white )
-        draw.SimpleText( 'Actions: bring, goto, return, freeze, unfreeze, spectate, strip, respawn, slay, kick, warn, noclip, god, cloak, plus integration-ready ban/jail/economy hooks.', 'DermaDefault', 18, 42, colors.textSecondary or color_white )
+        vox.DrawVoxBlade( 10, 14, 6, h - 28, colors.accent )
+        draw.SimpleText( 'Vox Admin Quick Dispatch', 'DermaDefaultBold', 28, 18, colors.textPrimary or color_white )
+        draw.SimpleText( 'Server-validated actions with CAMI permissions, hierarchy checks, cooldowns, and staff notifications.', 'DermaDefault', 28, 42, colors.textSecondary or color_white )
+    end
+
+    local targetBox = content:Add( 'DComboBox' )
+    targetBox:Dock( TOP )
+    targetBox:DockMargin( 24, 72, 24, 10 )
+    targetBox:SetTall( 30 )
+    targetBox:SetValue( 'Select target player' )
+    for _, ply in ipairs( player.GetAll() ) do
+        targetBox:AddChoice( ply:Nick() .. ' • ' .. ply:SteamID(), ply:SteamID() )
+    end
+
+    local reason = content:Add( 'DTextEntry' )
+    reason:Dock( TOP )
+    reason:DockMargin( 24, 0, 24, 12 )
+    reason:SetTall( 30 )
+    reason:SetPlaceholderText( 'Reason / note for audit log' )
+
+    local grid = content:Add( 'DIconLayout' )
+    grid:Dock( FILL )
+    grid:DockMargin( 24, 0, 24, 24 )
+    grid:SetSpaceX( 8 )
+    grid:SetSpaceY( 8 )
+
+    for _, action in ipairs( quickActions ) do
+        local btn = grid:Add( 'DButton' )
+        btn:SetSize( 112, 34 )
+        btn:SetText( '' )
+        btn.Paint = function( panel, w, h )
+            local hover = panel:IsHovered()
+            draw.RoundedBox( 6, 0, 0, w, h, ColorAlpha( hover and colors.tertiary or colors.primary, hover and 240 or 215 ) )
+            vox.DrawVoxBlade( 0, 6, 5, h - 12, colors.accent )
+            draw.SimpleText( string.upper( action ), 'DermaDefaultBold', 16, h * .5, colors.textPrimary or color_white, 0, 1 )
+        end
+        btn.DoClick = function()
+            local _, steamid = targetBox:GetSelected()
+            RunConsoleCommand( 'vox_admin_action', action, steamid or LocalPlayer():SteamID(), reason:GetValue() or '' )
+        end
     end
 
     for _, name in ipairs( sections ) do
