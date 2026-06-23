@@ -5,21 +5,21 @@ local function voxTheme(primary, secondary, tertiary, accent, extras)
             primary = primary,
             secondary = secondary,
             tertiary = tertiary,
-            quaternary = Color(4, 10, 20, 245),
+            quaternary = Color(8, 11, 16),
             accent = accent,
-            secondaryAccent = Color(125, 75, 255),
-            border = Color(55, 115, 180, 90),
+            secondaryAccent = Color(142, 84, 255),
+            border = Color(46, 62, 88),
             glow = ColorAlpha and ColorAlpha(accent, 70) or accent,
-            textPrimary = Color(245, 250, 255),
-            textSecondary = Color(185, 205, 230),
-            textTertiary = Color(115, 140, 170),
-            positive = Color(42, 220, 120),
-            money = Color(50, 230, 130),
-            negative = Color(255, 70, 90),
-            armor = Color(70, 135, 255),
-            hunger = Color(255, 190, 75),
-            xp = Color(255, 190, 75),
-            lockdown = Color(255, 70, 90)
+            textPrimary = Color(246, 248, 255),
+            textSecondary = Color(166, 178, 204),
+            textTertiary = Color(96, 110, 138),
+            positive = Color(52, 211, 153),
+            money = Color(52, 211, 153),
+            negative = Color(255, 80, 105),
+            armor = Color(88, 166, 255),
+            hunger = Color(245, 197, 66),
+            xp = Color(245, 197, 66),
+            lockdown = Color(255, 80, 105)
         }
     for key, value in pairs( extras ) do
         colors[ key ] = value
@@ -28,7 +28,7 @@ local function voxTheme(primary, secondary, tertiary, accent, extras)
 end
 
 vox.hud:CreateTheme( 'default', voxTheme(
-    Color(4, 10, 20, 245), Color(10, 25, 46, 235), Color(13, 32, 58, 235), Color(0, 174, 255)
+    Color(10, 13, 20), Color(16, 22, 34), Color(24, 32, 48), Color(0, 174, 255)
 ) )
 
 vox.hud:CreateTheme( 'vox_obsidian', voxTheme(

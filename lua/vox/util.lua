@@ -104,20 +104,7 @@ end
 
 function vox.GetThemeColors()
     local theme = vox.SafeTheme()
-    local colors = theme.colors or {}
-
-    if table.IsEmpty( colors ) and vox.theme and vox.theme.tokens then
-        local t = vox.theme.tokens
-        colors = {
-            primary = t.frame, secondary = t.panel, tertiary = t.panelAlt, quaternary = t.bg,
-            accent = t.accent, secondaryAccent = t.secondaryAccent, border = t.border,
-            textPrimary = t.text, textSecondary = t.textSoft, textTertiary = t.muted,
-            positive = t.success, money = t.money, negative = t.danger, armor = t.armor,
-            hunger = t.hunger, xp = t.warning, lockdown = t.danger
-        }
-    end
-
-    return colors, theme
+    return theme.colors or {}, theme
 end
 
 function vox.SafeFont( preferred, fallback )

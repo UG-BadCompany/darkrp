@@ -127,18 +127,9 @@ local function drawInfo( ent, client )
 
     cam.Start3D2D( renderPos, renderAng, .085 )
 
-        local t = vox.ThemeTokens and vox.ThemeTokens() or {}
-        local accent = isOwned and ( color == COLOR_RED and ( t.danger or COLOR_RED ) or ( t.success or COLOR_GREEN ) ) or ( t.accent or Color( 0, 174, 255 ) )
-        local cardW, cardH = 520, 170
-        local cardX, cardY = -cardW * .5, -26
-        vox.ui.DrawGlassPanel( cardX, cardY, cardW, cardH, { radius = 18, accent = accent, alpha = 232, glow = 36 } )
-        vox.ui.DrawAccentLine( cardX + 26, cardY + 22, 70, 4, accent )
-        vox.ui.DrawStatusDot( cardX + cardW - 34, cardY + 34, 10, accent, true )
-
-        draw.SimpleText( title, titleFont, 0, cardY + 48, color, 1, 1 )
-        draw.DrawText( subtitle, FONT_HELP .. '.Blur', 2, cardY + 84 + 2, color_black, 1 )
-        draw.DrawText( subtitle, FONT_HELP, 0, cardY + 84, t.textSoft or COLOR_GRAY, 1 )
-        draw.SimpleText( bindKey ~= '' and ( '[' .. string.upper( bindKey ) .. '] INTERACT' ) or 'INTERACT', FONT_HELP, 0, cardY + cardH - 30, accent, 1, 1 )
+        vox.hud.DrawShadowText( title, titleFont, 0, 0, color, 1, 0 )
+        draw.DrawText( subtitle, FONT_HELP .. '.Blur', 2, 60 + 2, color_black, 1 )
+        draw.DrawText( subtitle, FONT_HELP, 0, 60, COLOR_GRAY, 1 )
 
     cam.End3D2D()
 end

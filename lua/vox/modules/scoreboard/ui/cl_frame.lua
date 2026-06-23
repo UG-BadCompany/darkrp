@@ -13,7 +13,7 @@ function PANEL:Init()
 
     self:SetAlpha(0)
     self:AlphaTo(255, .16, 0)
-    self:SetSize(ScrW() * .86, ScrH() * .82)
+    self:SetSize(ScrW() * .80, ScrH() * .82)
     self:Center()
 
     self.container = self:Add('vox.Panel')
@@ -53,7 +53,7 @@ function PANEL:PerformLayout(w, h)
     self.BaseClass.PerformLayout(self, w, h)
 
     self.container:Dock(FILL)
-    self.container:DockMargin(margin, vox.ScaleTall(76), margin, margin)
+    self.container:DockMargin(margin, margin, margin, margin)
     self.container.Paint = function(_, cw, ch)
         vox.DrawVoxGlass(0, 0, cw, ch, { radius = 22, alpha = 238, accent = COLOR_ACCENT })
         vox.DrawVoxCornerTicks(vox.ScaleWide(16), vox.ScaleTall(16), cw - vox.ScaleWide(32), ch - vox.ScaleTall(32), ColorAlpha(COLOR_ACCENT, 70), vox.ScaleWide(30))
@@ -65,14 +65,11 @@ end
 function PANEL:Paint(w, h)
     if (self.blur) then
         vox.DrawBlurExpensive(self, 9)
+        vox.DrawVoxGlass(0, 0, w, h, { radius = 22, alpha = 242, accent = COLOR_ACCENT })
+        vox.DrawVoxCornerTicks(vox.ScaleWide(18), vox.ScaleTall(18), w - vox.ScaleWide(36), h - vox.ScaleTall(36), ColorAlpha(COLOR_ACCENT, 85), vox.ScaleWide(32))
+    else
+        self.BaseClass.Paint(self, w, h)
     end
-
-    local t = vox.ThemeTokens and vox.ThemeTokens() or {}
-    local accent = t.accent or COLOR_ACCENT
-    vox.ui.DrawGlassPanel(0, 0, w, h, { radius = 24, alpha = 244, accent = accent, glow = 34 })
-    vox.DrawVoxCornerTicks(vox.ScaleWide(18), vox.ScaleTall(18), w - vox.ScaleWide(36), h - vox.ScaleTall(36), ColorAlpha(accent, 85), vox.ScaleWide(32))
-    draw.SimpleText('VOX SCOREBOARD', vox.Font('Comfortaa Bold@20'), vox.ScaleWide(32), vox.ScaleTall(28), t.text or color_white, 0, 1)
-    draw.SimpleText('Search, sort, inspect and manage every player online', vox.Font('Comfortaa@13'), vox.ScaleWide(32), vox.ScaleTall(52), t.textSoft or COLOR_GRAY, 0, 1)
 end
 
 function PANEL:Think()

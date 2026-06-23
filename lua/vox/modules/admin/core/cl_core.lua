@@ -8,7 +8,7 @@ net.Receive( 'VoxUI.Admin.Notify', function()
 end )
 
 local sections = {
-    'Dashboard', 'Players', 'Bans', 'Logs', 'Reports', 'Commands', 'Settings'
+    'Dashboard', 'Players', 'Inspector', 'Logs', 'Reports', 'Movement', 'Punishments', 'Server Tools', 'Economy', 'Settings'
 }
 
 local function getQuickActions()
@@ -37,7 +37,7 @@ function vox.admin.Open()
     frame:SetSize( ScrW() * .82, ScrH() * .82 )
     frame:Center()
     frame:MakePopup()
-    frame:SetTitle( 'VOX ADMIN PANEL' )
+    frame:SetTitle( 'Vox Admin' )
 
     local p = vox.PremiumPalette and vox.PremiumPalette() or {}
     local accent = p.accent or Color( 0, 188, 255 )
@@ -48,7 +48,7 @@ function vox.admin.Open()
     shell:Dock( FILL )
     shell:DockPadding( 22, 76, 22, 22 )
     shell.Paint = function( _, w, h )
-        draw.SimpleText( 'VOX ADMIN PANEL', vox.Font and vox.Font( 'Comfortaa Bold@18' ) or 'DermaDefaultBold', 30, 48, ColorAlpha( accent, 235 ) )
+        draw.SimpleText( 'STAFF CONTROL PANEL', vox.Font and vox.Font( 'Comfortaa Bold@18' ) or 'DermaDefaultBold', 30, 48, ColorAlpha( accent, 235 ) )
         draw.SimpleText( 'players • reports • punishments • economy • logs • server tools', 'DermaDefault', 220, 50, muted )
     end
 
