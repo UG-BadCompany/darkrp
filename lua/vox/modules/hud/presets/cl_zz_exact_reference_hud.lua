@@ -52,7 +52,7 @@ end
 local function drawReferenceMain(self, client, sw, sh)
     if not IsValid(client) then return end
     local pad = 16
-    local x, y, w, h = pad, sh - 190, 270, 172
+    local x, y, w, h = pad, sh - 204, 292, 186
     local hp = math.Clamp(client:Health() / math.max(client:GetMaxHealth(),1), 0, 1)
     local ar = math.Clamp(client:Armor() / math.max(client:GetMaxArmor() or 100,1), 0, 1)
     local hunger = math.Clamp((client:getDarkRPVar('Energy') or 100) / 100, 0, 1)
@@ -62,26 +62,32 @@ local function drawReferenceMain(self, client, sw, sh)
     local money = client:getDarkRPVar('money') or 0
     local salary = client:getDarkRPVar('salary') or 0
     local job = client:getDarkRPVar('job') or team.GetName(client:Team()) or 'Citizen'
-    glass(x,y,w,h,12,C.accent)
+    glass(x,y,w,h,14,C.accent)
+    surface.SetDrawColor(ColorAlpha(C.accent, 22)); surface.DrawRect(x + 2, y + 2, w - 4, 34)
+    surface.SetDrawColor(ColorAlpha(C.accent, 60)); surface.DrawLine(x + 14, y + 82, x + w - 14, y + 82)
     draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13,C.text,1,1)
     -- avatar frame
-    local avSize = 62
-    rr(x+12,y+14,avSize,avSize,10,Color(5,15,25,255))
-    surface.SetDrawColor(C.accent); surface.DrawOutlinedRect(x+12,y+14,avSize,avSize,1)
-    draw.SimpleText(string.sub(client:Name(),1,1),'VoxRef.Big',x+12+avSize/2,y+14+avSize/2,C.text,1,1)
-    rr(x+w-29,y+18,8,8,4,C.green)
+    local avSize = 58
+    rr(x+14,y+16,avSize,avSize,29,Color(5,15,25,255))
+    surface.SetDrawColor(ColorAlpha(C.accent, 180)); surface.DrawOutlinedRect(x+14,y+16,avSize,avSize,1)
+    surface.SetDrawColor(ColorAlpha(C.accent, 55)); surface.DrawOutlinedRect(x+12,y+14,avSize+4,avSize+4,1)
+    draw.SimpleText(string.sub(client:Name(),1,1),'VoxRef.Big',x+14+avSize/2,y+16+avSize/2,C.text,1,1)
+    rr(x+w-32,y+20,10,10,5,C.green)
+    surface.SetDrawColor(ColorAlpha(C.green, 90)); surface.DrawOutlinedRect(x+w-34,y+18,14,14,1)
     draw.SimpleText(client:Name(),'VoxRef.Title',x+86,y+18,C.text,0,0)
-    draw.SimpleText(job,'VoxRef.Small',x+86,y+40,C.green,0,0)
+    draw.SimpleText(job,'VoxRef.Small',x+86,y+42,C.green,0,0)
     draw.SimpleText(formatMoney(money),'VoxRef.Big',x+86,y+66,C.text,0,0)
-    draw.SimpleText('Wallet','VoxRef.Tiny',x+86,y+92,C.soft,0,0)
+    draw.SimpleText('Wallet','VoxRef.Tiny',x+86,y+94,C.soft,0,0)
+    surface.SetDrawColor(ColorAlpha(C.border, 110)); surface.DrawLine(x+w-94,y+64,x+w-94,y+105)
     draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',x+w-16,y+67,C.green,2,0)
-    draw.SimpleText('Salary','VoxRef.Tiny',x+w-16,y+92,C.soft,2,0)
-    local bx, by = x+26, y+114
-    draw.SimpleText('♥','VoxRef.Small',x+14,by+2,C.red,0,1); bar(bx,by,160,9,smooth.hp,C.red,math.floor(hp*100)..'%')
-    draw.SimpleText('♦','VoxRef.Small',x+14,by+19,C.blue,0,1); bar(bx,by+17,160,9,smooth.ar,C.blue,math.floor(ar*100)..'%')
-    draw.SimpleText('★','VoxRef.Small',x+14,by+36,C.amber,0,1); bar(bx,by+34,160,9,smooth.hu,C.amber,math.floor(hunger*100)..'%')
-    draw.SimpleText('◎ Level 12','VoxRef.Small',x+18,y+h-19,C.accent,0,1)
-    bar(x+104,y+h-24,100,8,.65,C.blue,nil)
+    draw.SimpleText('Salary','VoxRef.Tiny',x+w-16,y+94,C.soft,2,0)
+    local bx, by = x+30, y+118
+    draw.SimpleText('♥','VoxRef.Small',x+14,by+2,C.red,0,1); bar(bx,by,168,9,smooth.hp,C.red,math.floor(hp*100)..'%')
+    draw.SimpleText('♦','VoxRef.Small',x+14,by+19,C.blue,0,1); bar(bx,by+18,168,9,smooth.ar,C.blue,math.floor(ar*100)..'%')
+    draw.SimpleText('★','VoxRef.Small',x+14,by+38,C.amber,0,1); bar(bx,by+36,168,9,smooth.hu,C.amber,math.floor(hunger*100)..'%')
+    draw.SimpleText('◎ Level 12','VoxRef.Small',x+18,y+h-17,C.accent,0,1)
+    bar(x+106,y+h-22,118,8,.65,C.blue,nil)
+    draw.SimpleText('3,250 / 5,000 XP','VoxRef.Tiny',x+w-18,y+h-17,C.soft,2,1)
 end
 
 local notifyCache = {}
@@ -128,6 +134,27 @@ local function drawRefWeaponSelector(self, client, sw, sh)
     end
 end
 
+
+local function drawRefDoorInfo(self, client, sw, sh)
+    local tr = client:GetEyeTrace()
+    local ent = tr and tr.Entity
+    if (not IsValid(ent) or client:GetPos():DistToSqr(ent:GetPos()) > 22500) then return end
+    local isDoor = ent:isDoor and ent:isDoor()
+    if (not isDoor) then return end
+    local owner = ent:getDoorOwner and ent:getDoorOwner()
+    local x, y, w, h = sw * .5 - 140, sh - 150, 280, 86
+    glass(x,y,w,h,10,C.green)
+    rr(x+14,y+15,50,56,8,Color(9,20,35,235))
+    draw.SimpleText('▥','VoxRef.Big',x+39,y+43,C.soft,1,1)
+    draw.SimpleText(ent:getKeysTitle() or 'Residential Door','VoxRef.Title',x+76,y+16,C.text,0,0)
+    draw.SimpleText(IsValid(owner) and ('Owned by: '..owner:Name()) or 'Available property','VoxRef.Small',x+76,y+39,C.soft,0,0)
+    rr(x+76,y+60,92,18,9,ColorAlpha(C.green,45))
+    draw.SimpleText('E  Interact','VoxRef.Tiny',x+122,y+69,C.green,1,1)
+    rr(x+w-46,y+18,28,28,14,ColorAlpha(C.green,35))
+    draw.SimpleText('⌂','VoxRef.Title',x+w-32,y+32,C.green,1,1)
+end
+
 hud:RegisterElement('main', { priority = 10, drawFn = drawReferenceMain, hideElements = {'DarkRP_HUD','DarkRP_LocalPlayerHUD','DarkRP_EntityDisplay'} })
 hud:RegisterElement('notifications', { priority = 90, drawFn = drawRefNotifications, hideElements = {} })
 hud:RegisterElement('weapon_selector', { priority = 80, drawFn = drawRefWeaponSelector, hideElements = {'CHudWeaponSelection'} })
+hud:RegisterElement('owner_info', { priority = 70, drawFn = drawRefDoorInfo, hideElements = {'DarkRP_EntityDisplay'} })
