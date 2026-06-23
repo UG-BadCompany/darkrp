@@ -10,6 +10,19 @@ local font3 = vox.Font('Comfortaa@14')
 
 local MAT_SAVE = Material('vox_framework/save.png', 'smooth mips')
 
+local function getSettingsColors()
+    local theme = vox.hud and vox.hud.GetCurrentTheme and vox.hud:GetCurrentTheme()
+    local colors = theme and theme.colors
+    if not colors then
+        return colorPrimary, colorSecondary, colorAccent, colorNegative
+    end
+
+    return colors.primary or colorPrimary,
+        colors.secondary or colorSecondary,
+        colors.accent or colorAccent,
+        colors.negative or colorNegative
+end
+
 function PANEL:Init()
     self.list = self:Add('vox.ScrollPanel')
     self.list:Dock(FILL)
@@ -23,13 +36,14 @@ function PANEL:Init()
     self.confirmPopup:Hide()
     self.confirmPopup.Paint = function(panel, w, h)
         local x, y = panel:LocalToScreen(0, 0)
+        local _, secondary = getSettingsColors()
 
         if (panel.anim == 0 or panel.anim == 1) then
             vox.bshadows.BeginShadow()
-                draw.RoundedBox(8, x, y, w, h, colorSecondary)
+                draw.RoundedBox(8, x, y, w, h, secondary)
             vox.bshadows.EndShadow(1, 2, 2)
         else
-            draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+            draw.RoundedBox(8, 0, 0, w, h, secondary)
         end
     end
     self.confirmPopup.PerformLayout = function(panel, w, h)
@@ -48,20 +62,22 @@ function PANEL:Init()
     self.confirmPopup.info.text2 = vox.lang:GetWFallback('confirmSave', 'Confirm to save the changes')
     self.confirmPopup.info.Paint = function(panel, w ,h)
         local size = math.ceil(h * .5)
+        local _, _, _, negative = getSettingsColors()
 
-        surface.SetDrawColor(colorNegative)
+        surface.SetDrawColor(negative)
         surface.SetMaterial(MAT_SAVE)
         surface.DrawTexturedRect(h * .5 - size * .5, h * .5 - size * .5, size, size)
 
-        draw.SimpleText(panel.text1, font0, h, h * .5, colorNegative, 0, 4)
+        draw.SimpleText(panel.text1, font0, h, h * .5, negative, 0, 4)
         draw.SimpleText(panel.text2, font3, h, h * .5, color_white, 0, 0)
     end
 
     self.confirmPopup.button = self.confirmPopup:Add('vox.Button')
     self.confirmPopup.button:SetText(vox.lang:GetWFallback('save_u', 'SAVE'))
     self.confirmPopup.button:SetFont(font0)
-    self.confirmPopup.button:SetColorIdle(colorNegative)
-    self.confirmPopup.button:SetColorHover(vox.OffsetColor(colorNegative, -20))
+    local _, _, _, negative = getSettingsColors()
+    self.confirmPopup.button:SetColorIdle(negative)
+    self.confirmPopup.button:SetColorHover(vox.OffsetColor(negative, -20))
     self.confirmPopup.button.DoClick = function()
         local changes = self:GetChanges()
         if (changes) then
@@ -220,7 +236,8 @@ function PANEL:AddOption(option)
         categoryPanel.grid:SetSpace(vox.ScaleTall(5))
 
         categoryPanel.canvas.Paint = function(p, w, h)
-            draw.RoundedBox(8, 0, 0, w, h, colorPrimary)
+            local primary = getSettingsColors()
+            draw.RoundedBox(8, 0, 0, w, h, primary)
         end
 
         self.categories[category] = categoryPanel
@@ -239,7 +256,8 @@ function PANEL:AddOption(option)
     field:SetTall(vox.ScaleTall(45))
     field:DockPadding(padding, padding, padding, padding)
     field.Paint = function(p, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+        local _, secondary = getSettingsColors()
+        draw.RoundedBox(8, 0, 0, w, h, secondary)
     end
 
     option.field = field
@@ -247,7 +265,8 @@ function PANEL:AddOption(option)
     local lblName = field:Add('vox.Label')
     lblName:Font('Comfortaa Bold@16')
     lblName:SetText(vox.lang:Get(option.title))
-    lblName:Color(colorAccent)
+    local _, _, accent = getSettingsColors()
+    lblName:Color(accent)
     lblName:SetContentAlignment(1)
     lblName:Dock(FILL)
 

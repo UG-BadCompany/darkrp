@@ -4,6 +4,19 @@ local COLOR_PRIMARY = vox:Config( 'colors.primary' )
 local COLOR_SECONDARY = vox:Config( 'colors.secondary' )
 local COLOR_BG = vox.LerpColor( .1, COLOR_PRIMARY, color_black )
 
+local function getHUDSettingsColors()
+    local theme = vox.hud and vox.hud.GetCurrentTheme and vox.hud:GetCurrentTheme()
+    local colors = theme and theme.colors
+    if not colors then
+        return COLOR_PRIMARY, COLOR_SECONDARY, COLOR_BG, vox:Config( 'colors.accent' )
+    end
+
+    return colors.primary or COLOR_PRIMARY,
+        colors.secondary or COLOR_SECONDARY,
+        vox.LerpColor( .1, colors.primary or COLOR_PRIMARY, color_black ),
+        colors.accent or vox:Config( 'colors.accent' )
+end
+
 function vox.hud.OpenSettings()
     local padding = vox.ScaleTall( 15 )
     local conPadding = vox.ScaleTall( 10 )
@@ -24,15 +37,17 @@ function vox.hud.OpenSettings()
     navbar:SetTall( vox.ScaleTall( 30 ) )
     navbar:Dock( TOP )
     navbar.Paint = function(panel, w, h)
-        draw.RoundedBoxEx( 8, 0, 0, w, h, COLOR_SECONDARY, true, true )
+        local _, secondary = getHUDSettingsColors()
+        draw.RoundedBoxEx( 8, 0, 0, w, h, secondary, true, true )
     end
 
     local container = content:Add( 'Panel' )
     container:Dock( FILL )
     container:DockPadding( conPadding, conPadding, conPadding, conPadding )
     container.Paint = function( panel, w, h )
-        draw.RoundedBoxEx( 8, 0, 0, w, h, COLOR_SECONDARY, false, false, true, true )
-        draw.RoundedBoxEx( 8, 1, 1, w - 2, h - 2, COLOR_BG, false, false, true, true )
+        local _, secondary, bg = getHUDSettingsColors()
+        draw.RoundedBoxEx( 8, 0, 0, w, h, secondary, false, false, true, true )
+        draw.RoundedBoxEx( 8, 1, 1, w - 2, h - 2, bg, false, false, true, true )
     end
 
     navbar:SetContainer( container )

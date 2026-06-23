@@ -10,6 +10,20 @@ local FONT_BUTTON = vox.Font( 'Comfortaa Bold@32' )
 
 local PANEL = {}
 
+local function getUIColors()
+    local theme = vox.hud and vox.hud.GetCurrentTheme and vox.hud:GetCurrentTheme()
+    local colors = theme and theme.colors
+    if not colors then
+        return COLOR_PRIMARY, COLOR_SECONDARY, COLOR_TERTIARY, COLOR_ACCENT, COLOR_BUTTON_HOVER
+    end
+
+    local primary = colors.primary or COLOR_PRIMARY
+    local secondary = colors.secondary or COLOR_SECONDARY
+    local tertiary = colors.tertiary or COLOR_TERTIARY
+    local accent = colors.accent or COLOR_ACCENT
+    return primary, secondary, tertiary, accent, vox.LerpColor( .5, tertiary, accent )
+end
+
 function PANEL:Init()
     self.list = self:Add( 'vox.ScrollPanel' )
     self.list:Dock( FILL )
@@ -80,7 +94,8 @@ function PANEL:AddOption( optionType, id, convarName, data )
         end
 
         field.toggler = field.togglerContainer:Add('vox.Toggler')
-        field.toggler:SetBackgroundColor( COLOR_TERTIARY )
+        local _, _, tertiary = getUIColors()
+        field.toggler:SetBackgroundColor( tertiary )
         field.toggler:SetChecked( convarObject:GetBool(), true )
         field.toggler.OnChange = function( panel, newBool )
             convarObject:SetBool( newBool )
@@ -123,7 +138,8 @@ function PANEL:AddOption( optionType, id, convarName, data )
         btnAdd:SetWide( height )
         btnAdd:Dock( RIGHT )
         btnAdd.Paint = function( panel, w, h )
-            draw.RoundedBoxEx( 8, 0, 0, w, h, panel:IsHovered() and COLOR_BUTTON_HOVER or COLOR_TERTIARY, false, true, false, true )
+            local _, _, tertiary, _, hover = getUIColors()
+            draw.RoundedBoxEx( 8, 0, 0, w, h, panel:IsHovered() and hover or tertiary, false, true, false, true )
             draw.SimpleText( '+', FONT_BUTTON, w * .5, h * .5, color_white, 1, 1 )
         end
         btnAdd.DoClick = function( panel )
@@ -142,7 +158,8 @@ function PANEL:AddOption( optionType, id, convarName, data )
         lblValue:Dock( RIGHT )
         lblValue:Font( 'Comfortaa SemiBold@20' )
         lblValue.Paint = function( panel, w, h )
-            draw.RoundedBox( 0, 0, 0, w, h, COLOR_PRIMARY )
+            local primary = getUIColors()
+            draw.RoundedBox( 0, 0, 0, w, h, primary )
         end
 
         local btnDecrease = field:Add( 'DButton' )
@@ -150,7 +167,8 @@ function PANEL:AddOption( optionType, id, convarName, data )
         btnDecrease:SetWide( height )
         btnDecrease:Dock( RIGHT )
         btnDecrease.Paint = function( panel, w, h )
-            draw.RoundedBoxEx( 8, 0, 0, w, h, panel:IsHovered() and COLOR_BUTTON_HOVER or COLOR_TERTIARY, true, false, true )
+            local _, _, tertiary, _, hover = getUIColors()
+            draw.RoundedBoxEx( 8, 0, 0, w, h, panel:IsHovered() and hover or tertiary, true, false, true )
             draw.SimpleText( '-', FONT_BUTTON, w * .5, h * .5, color_white, 1, 1 )
         end
         btnDecrease.DoClick = function( panel )
@@ -173,12 +191,13 @@ function PANEL:CreateField( text, desc )
     field.centerChild = true
     field.padding = padding
     field.Paint = function( p, w, h )
+        local _, secondary, _, accent = getUIColors()
         if vox.DrawVoxRow then
-            vox.DrawVoxRow( 0, 0, w, h, { secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, { hovered = p:IsHovered(), accent = COLOR_ACCENT, alpha = 225 } )
+            vox.DrawVoxRow( 0, 0, w, h, { secondary = secondary, accent = accent }, { hovered = p:IsHovered(), accent = accent, alpha = 225 } )
         else
-            draw.RoundedBox( 8, 0, 0, w, h, COLOR_SECONDARY )
+            draw.RoundedBox( 8, 0, 0, w, h, secondary )
         end
-        draw.SimpleText( text, FONT_NAME, padding, h * .5, COLOR_ACCENT, 0, 4 )
+        draw.SimpleText( text, FONT_NAME, padding, h * .5, accent, 0, 4 )
         draw.SimpleText( desc, FONT_DESC, padding, h * .5, COLOR_GRAY, 0, 0 )
     end
     field.PerformLayout = function( panel, w, h )
