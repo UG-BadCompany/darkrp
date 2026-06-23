@@ -46,6 +46,26 @@ do
         local h, s, v = ColorToHSV(color)
         return vox.ColorEditHSV(color, (h + 180) % 360)
     end
+
+    function vox.GetUIThemeColors()
+        local theme = vox.hud and vox.hud.GetCurrentTheme and vox.hud:GetCurrentTheme()
+        local colors = theme and theme.colors
+
+        if (not colors) then
+            return {
+                primary = vox:Config('colors.primary'),
+                secondary = vox:Config('colors.secondary'),
+                tertiary = vox:Config('colors.tertiary'),
+                quaternary = vox:Config('colors.quaternary'),
+                accent = vox:Config('colors.accent'),
+                negative = vox:Config('colors.negative'),
+                textPrimary = color_white,
+                textSecondary = Color(171, 171, 171)
+            }
+        end
+
+        return colors
+    end
 end
 
 do
@@ -57,6 +77,10 @@ do
     local SetDrawColor = surface.SetDrawColor
 
     function vox.DrawBlurExpensive(panel, amount)
+        if (vox.hud and vox.hud.GetOptionValue and vox.inconfig and vox.inconfig.options and vox.inconfig.options['hud_blur_enabled'] and not vox.hud:GetOptionValue('blur_enabled')) then
+            return
+        end
+
         local x, y = panel:LocalToScreen(0, 0)
         local scrW, scrH = ScrW(), ScrH()
 

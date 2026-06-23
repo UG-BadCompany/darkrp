@@ -1,6 +1,19 @@
 vox.hud.PresetRegistry = vox.hud.PresetRegistry or {}
 vox.hud.PresetOrder = vox.hud.PresetOrder or {}
 
+local CONVAR_HUD_STYLE = CreateClientConVar( 'cl_vox_hud_hud_style', '0', true, false, 'Client-side Vox HUD layout preset', 0, 10 )
+
+local function getAdminOverrideValue( id )
+    local optionID = 'hud_' .. id
+    local option = vox.inconfig and vox.inconfig.options and vox.inconfig.options[ optionID ]
+    if not option then return end
+
+    local value = vox.hud:GetOptionValue( id )
+    if value ~= nil and value ~= option.default then
+        return value
+    end
+end
+
 function vox.hud:RegisterHUDPreset( id, data )
     assert( isstring( id ) and id ~= '', 'Vox HUD preset id must be a non-empty string' )
     data = data or {}
@@ -36,7 +49,12 @@ function vox.hud:GetHUDPreset( idOrStyle )
 end
 
 function vox.hud:GetCurrentHUDPreset()
-    return self:GetHUDPreset( self:GetOptionValue( 'hud_style' ) or 0 ) or self:GetHUDPreset( 'tactical_card' )
+    local style = getAdminOverrideValue( 'hud_style' )
+    if style == nil then
+        style = CONVAR_HUD_STYLE:GetInt()
+    end
+
+    return self:GetHUDPreset( style or 0 ) or self:GetHUDPreset( 'tactical_card' )
 end
 
 function vox.hud:GetHUDPresetComboOptions()
@@ -53,4 +71,3 @@ vox.hud:RegisterHUDPreset( 'tactical_card', { name = 'Compact Card', style = 0 }
 vox.hud:RegisterHUDPreset( 'command_strip', { name = 'Horizontal Bar', style = 1 } )
 vox.hud:RegisterHUDPreset( 'minimal_edge', { name = 'Minimal Corner', style = 2 } )
 vox.hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Roleplay Profile', style = 3 } )
-

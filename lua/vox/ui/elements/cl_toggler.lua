@@ -84,11 +84,13 @@ do
     end
 
     function PANEL:SetBackgroundColor(color)
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        local accent = colors.accent or colorAccent
         self.backgroundColorCurrent = color
-        self.backgroundColorActive = vox.LerpColor(.66, colorAccent, self.backgroundColorCurrent)
+        self.backgroundColorActive = vox.LerpColor(.66, accent, self.backgroundColorCurrent)
 
         self.gripColorIdle = vox.OffsetColor(self.backgroundColorCurrent, 10)
-        self.gripColorActive = colorAccent
+        self.gripColorActive = accent
         self.gripColorCurrent = vox.CopyColor(self.gripColorIdle)
     end
 
