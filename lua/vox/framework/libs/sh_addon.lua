@@ -6,7 +6,7 @@ function ADDON:RegisterOption(id, data)
 
     if (SERVER) then
         data.onSet = function(value)
-            self.db:Queue([[REPLACE INTO `vox_]] .. self.id .. [[_settings` VALUES(']] .. self.db:Escape(id) .. [[', ']] .. self.db:Escape(vox.TypeToString(value)) .. [[');]])
+            self:SaveOptionValue(id, value)
         end
     end
 
@@ -18,6 +18,27 @@ function ADDON:GetOptionValue(id)
 end
 
 if (SERVER) then
+    function ADDON:SaveOptionValue(id, value)
+        self.pendingSettings = self.pendingSettings or {}
+        self.pendingSettings[id] = value
+
+        if (not self.db) then
+            self:PrintWarning('Database is not ready; queued setting #.', id)
+            return
+        end
+
+        self.db:Queue([[REPLACE INTO `vox_]] .. self.id .. [[_settings` VALUES(']] .. self.db:Escape(id) .. [[', ']] .. self.db:Escape(vox.TypeToString(value)) .. [[');]])
+        self.pendingSettings[id] = nil
+    end
+
+    function ADDON:FlushPendingSettings()
+        if (not self.db or not self.pendingSettings) then return end
+
+        for id, value in pairs(self.pendingSettings) do
+            self:SaveOptionValue(id, value)
+        end
+    end
+
     function ADDON:SetupDatabase(mysqlEnabled, credentials)
         local moduleName = 'sqlite'
         local data = {}
@@ -40,6 +61,7 @@ if (SERVER) then
         end
 
         self:CreateSettingsTable()
+        self:FlushPendingSettings()
         self:LoadSettings()
 
         hook.Run('vox.' .. self.id .. '.DatabaseInit')
