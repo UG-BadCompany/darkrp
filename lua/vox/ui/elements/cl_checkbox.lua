@@ -9,6 +9,10 @@ AccessorFunc(PANEL, 'm_bChecked', 'Checked', FORCE_BOOL)
 
 function PANEL:Init()
     local size = vox.ScaleTall(18)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    local primary = colors.primary or colorPrimary
+    local secondary = colors.secondary or colorSecondary
+    local accent = colors.accent or colorAccent
 
     self.m_bChecked = false
 
@@ -17,15 +21,21 @@ function PANEL:Init()
 
     self:Import('hovercolor')
     self:SetColorKey('outlineColor')
-    self:SetColorIdle(colorSecondary)
-    self:SetColorHover(colorAccent)
+    self:SetColorIdle(secondary)
+    self:SetColorHover(accent)
 
-    self.backgroundColor = vox.CopyColor(colorPrimary)
-    self.backgroundIdleColor = colorPrimary
-    self.backgroundActiveColor = colorAccent
+    self.backgroundColor = vox.CopyColor(primary)
+    self.backgroundIdleColor = primary
+    self.backgroundActiveColor = accent
 end
 
 function PANEL:Paint(w, h)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.backgroundIdleColor = colors.primary or self.backgroundIdleColor
+    self.backgroundActiveColor = colors.accent or self.backgroundActiveColor
+    self:SetColorIdle(colors.secondary or self:GetColorIdle())
+    self:SetColorHover(colors.accent or self:GetColorHover())
+
     local backgroundColor = self.backgroundColor
     local outlineColor = self.outlineColor
     local size = math.ceil(h * .66)

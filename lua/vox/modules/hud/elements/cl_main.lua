@@ -187,7 +187,8 @@ local updateSlowLabels do
 end
 
 local function drawMainHUD( self, client, scrW, scrH )
-    local showJob = not CONVAR_COMPACT:GetBool() and hud:GetOptionValue( 'display_job' )
+    local isCompact = CONVAR_COMPACT:GetBool() or hud:GetOptionValue( 'compact_mode' )
+    local showJob = not isCompact and hud:GetOptionValue( 'display_job' )
     local space = hud.GetScreenPadding()
     local padding = hud.ScaleTall( 12 )
 

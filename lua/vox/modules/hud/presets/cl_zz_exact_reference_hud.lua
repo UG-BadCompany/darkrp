@@ -32,12 +32,6 @@ local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
 local WIMG_LICENSE = vox.wimg.Create( 'hud_license', 'smooth mips' )
 local WIMG_WANTED = vox.wimg.Create( 'hud_wanted', 'smooth mips' )
 
-local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
-local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
-local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
-local WIMG_LICENSE = vox.wimg.Create( 'hud_license', 'smooth mips' )
-local WIMG_WANTED = vox.wimg.Create( 'hud_wanted', 'smooth mips' )
-
 local C = {
     bg = Color(3, 9, 26, 218),
     panel = Color(5, 14, 34, 198),
@@ -210,7 +204,8 @@ local function drawReferenceMain(self, client, sw, sh)
     local rowH = math.floor(22 * scale)
     local showMoney = hud:GetOptionValue('display_money')
     local showSalary = hud:GetOptionValue('display_salary')
-    local showJob = hud:GetOptionValue('display_job')
+    local compactMode = hud:GetOptionValue('compact_mode')
+    local showJob = hud:GetOptionValue('display_job') and not compactMode
     local showHealth = hud:GetOptionValue('display_health')
     local showArmor = hud:GetOptionValue('display_armor')
     local showHunger, hunger = hasHunger(client)

@@ -94,7 +94,8 @@ function PANEL:AddOption( optionType, id, convarName, data )
         end
 
         field.toggler = field.togglerContainer:Add('vox.Toggler')
-        field.toggler:SetBackgroundColor( COLOR_TERTIARY )
+        local _, _, tertiary = getUIColors()
+        field.toggler:SetBackgroundColor( tertiary )
         field.toggler:SetChecked( convarObject:GetBool(), true )
         field.toggler.OnChange = function( panel, newBool )
             convarObject:SetBool( newBool )

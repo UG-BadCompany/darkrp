@@ -27,8 +27,11 @@ do
     end
 
     function PANEL:Paint(w, h)
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        local accent = colors.accent or colorAccent
+        local textIdle = colors.textSecondary or colorGray
         local x0, y0 = w * .5, h * .5
-        local textColor = self:IsHovered() and color_white or colorGray
+        local textColor = self:IsHovered() and (colors.textPrimary or color_white) or textIdle
         local animActiveFraction = self.animActiveFraction
         local screenX, screenY = self:LocalToScreen(0, 0)
 
@@ -43,7 +46,7 @@ do
             local animHeightHalf = animHeight * .5
 
             render.SetScissorRect(screenX, screenY + h * .5 - animHeightHalf, screenX + w, screenY + h * .5 + animHeightHalf, true)
-                self:DrawContent(x0, y0, colorAccent)
+                self:DrawContent(x0, y0, accent)
             render.SetScissorRect(0, 0, 0, 0, false)
         end
     end
@@ -237,6 +240,10 @@ do
     end
 
     function PANEL:PaintOver(w, h)
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        local accent = colors.accent or colorAccent
+        local secondary = colors.secondary or colorSecondary
+        local gradient = vox.LerpColor(.5, accent, secondary)
         local current = self.animLineCurrent
         if (current <= 0) then return end
 
@@ -254,10 +261,10 @@ do
             wide = tab:GetWide()
         end
 
-        surface.SetDrawColor(colorAccent)
+        surface.SetDrawColor(accent)
         surface.DrawRect(x, h - 2, wide, 2)
 
-        vox.DrawMatGradient(x, h - gradientHeight, wide, gradientHeight, TOP, ColorAlpha(colorGradient, 25))
+        vox.DrawMatGradient(x, h - gradientHeight, wide, gradientHeight, TOP, ColorAlpha(gradient, 25))
     end
 
     vox.gui.Register('vox.Navbar', PANEL)
