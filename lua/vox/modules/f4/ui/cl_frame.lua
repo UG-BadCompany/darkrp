@@ -17,15 +17,15 @@ function PANEL:Init()
     self.containerPadding = padding
     self:SetAlpha(0)
     self:AlphaTo(255, .22, 0)
-    self:SetSize(ScrW() * .88, ScrH() * .86)
+    self:SetSize(ScrW() * .82, ScrH() * .88)
     self:Center()
 
     self.container = self:Add('Panel')
-    self.container:DockPadding(padding * 1.4, padding * 1.4, padding * 1.4, padding * 1.4)
+    self.container:DockPadding(padding * 1.4, padding * 4.6, padding * 1.4, padding * 1.4)
     self.container.Paint = function(panel, w, h)
         vox.DrawVoxGlass(0, 0, w, h, { radius = 22, alpha = 238, accent = colorAccent })
         vox.DrawVoxCornerTicks(16, 16, w - 32, h - 32, ColorAlpha(colorAccent, 80), 28)
-        draw.SimpleText('VOX MENU // COMMAND CENTER', vox.Font('Comfortaa Bold@18'), vox.ScaleWide(24), vox.ScaleTall(18), ColorAlpha(color_white, 230), 0, 1)
+        draw.SimpleText('F4 MENU (COMMAND CENTER)', vox.Font('Comfortaa Bold@22'), vox.ScaleWide(28), vox.ScaleTall(26), ColorAlpha(color_white, 230), 0, 1)
     end
 
     self.sidebar = self:Add('vox.Sidebar')
