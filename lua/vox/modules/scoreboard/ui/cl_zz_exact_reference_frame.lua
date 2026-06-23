@@ -3,9 +3,9 @@ surface.CreateFont('VoxRef.Title', {font='Tahoma', size=18, weight=800, extended
 surface.CreateFont('VoxRef.Text', {font='Tahoma', size=14, weight=500, extended=true})
 surface.CreateFont('VoxRef.Small', {font='Tahoma', size=12, weight=500, extended=true})
 surface.CreateFont('VoxRef.Tiny', {font='Tahoma', size=10, weight=600, extended=true})
-local C={bg=Color(5,14,28,245),panel=Color(8,25,48,238),card=Color(11,32,60,232),border=Color(0,174,255,80),accent=Color(0,174,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200),line=Color(38,77,118,120)}
+local C={bg=Color(5,14,28,245),panel=Color(8,25,48,238),card=Color(11,32,60,232),border=Color(0,174,255,80),accent=Color(0,174,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
 local function rr(x,y,w,h,r,col) draw.RoundedBox(r or 8,x,y,w,h,col) end
-local function glass(x,y,w,h,r,accent) rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,Color(8,25,48,225)); surface.SetDrawColor(ColorAlpha(accent or C.border,88)); surface.DrawOutlinedRect(x,y,w,h,1); surface.SetDrawColor(ColorAlpha(accent or C.accent,16)); surface.DrawRect(x+2,y+2,w-4,24) end
+local function glass(x,y,w,h,r,accent) rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,Color(8,25,48,225)); surface.SetDrawColor(accent or C.border); surface.DrawOutlinedRect(x,y,w,h,1) end
 local function money(v) if DarkRP and DarkRP.formatMoney then return DarkRP.formatMoney(v or 0) end return '$'..string.Comma(v or 0) end
 local PANEL={}
 function PANEL:Init()
@@ -23,13 +23,11 @@ end
 function PANEL:Paint(w,h)
     glass(0,0,w,h,12,C.accent)
     draw.SimpleText('SCOREBOARD','VoxRef.Title',16,18,C.text,0,1)
-    surface.SetDrawColor(C.line); surface.DrawLine(12,34,w-12,34)
     glass(210,24,w-235,h-48,10,C.border)
     draw.SimpleText('◉  VOX SCOREBOARD','VoxRef.Title',236,49,C.text,0,1)
-    surface.SetDrawColor(C.line); surface.DrawLine(226,72,w-36,72)
 end
 function PANEL:PaintOver(w,h)
-    draw.SimpleText('Player','VoxRef.Small',238,92,C.soft,0,1); surface.SetDrawColor(C.line); surface.DrawLine(226,110,w-36,110); draw.SimpleText('Job','VoxRef.Small',445,92,C.soft,0,1); draw.SimpleText('Rank','VoxRef.Small',595,92,C.soft,0,1); draw.SimpleText('Money','VoxRef.Small',735,92,C.soft,0,1); draw.SimpleText('Level','VoxRef.Small',850,92,C.soft,0,1); draw.SimpleText('Ping','VoxRef.Small',930,92,C.soft,0,1); draw.SimpleText('Voice','VoxRef.Small',1010,92,C.soft,0,1)
+    draw.SimpleText('Player','VoxRef.Small',238,92,C.soft,0,1); draw.SimpleText('Job','VoxRef.Small',445,92,C.soft,0,1); draw.SimpleText('Rank','VoxRef.Small',595,92,C.soft,0,1); draw.SimpleText('Money','VoxRef.Small',735,92,C.soft,0,1); draw.SimpleText('Level','VoxRef.Small',850,92,C.soft,0,1); draw.SimpleText('Ping','VoxRef.Small',930,92,C.soft,0,1); draw.SimpleText('Voice','VoxRef.Small',1010,92,C.soft,0,1)
 end
 function PANEL:BuildRows()
     self.sidebar.Paint=function(_,w,h)
@@ -47,11 +45,11 @@ function PANEL:BuildRows()
         local row=self.list:Add('DButton'); row:SetText(''); row:SetPos(0,y); row:SetSize(self:GetWide()-280,42); y=y+46
         row.Paint=function(p,w,h)
             local job=ply:getDarkRPVar('job') or team.GetName(ply:Team()) or 'Citizen'; local jc=team.GetColor(ply:Team()) or C.green
-            rr(0,0,w,h,8,p:IsHovered() and Color(18,52,88,238) or Color(10,30,52,218)); if p:IsHovered() then rr(1,1,w-2,h-2,8,ColorAlpha(C.accent,18)) end; surface.SetDrawColor(C.line); surface.DrawOutlinedRect(0,0,w,h,1); rr(0,0,3,h,2,jc)
-            rr(12,6,30,30,15,Color(20,40,70)); surface.SetDrawColor(ColorAlpha(jc,150)); surface.DrawOutlinedRect(12,6,30,30,1); draw.SimpleText(string.sub(ply:Name(),1,1),'VoxRef.Small',27,21,C.text,1,1)
-            draw.SimpleText(ply:Name(),'VoxRef.Small',50,21,C.text,0,1); draw.SimpleText(job,'VoxRef.Small',225,21,jc,0,1); rr(364,12,80,18,9,ColorAlpha(C.accent,32)); draw.SimpleText(ply:GetUserGroup() or 'user','VoxRef.Small',404,21,C.text,1,1); draw.SimpleText(money(ply:getDarkRPVar('money') or 0),'VoxRef.Small',510,21,C.text,0,1); draw.SimpleText('12','VoxRef.Small',630,21,C.text,0,1); draw.SimpleText('▂▃▅▇ '..ply:Ping(),'VoxRef.Small',710,21,C.green,0,1); draw.SimpleText('◉','VoxRef.Small',w-35,21,C.green,1,1)
+            rr(0,0,w,h,7,p:IsHovered() and Color(18,48,80,235) or Color(10,30,52,215)); rr(0,0,3,h,2,jc)
+            rr(12,7,28,28,14,Color(20,40,70)); draw.SimpleText(string.sub(ply:Name(),1,1),'VoxRef.Small',26,21,C.text,1,1)
+            draw.SimpleText(ply:Name(),'VoxRef.Small',50,21,C.text,0,1); draw.SimpleText(job,'VoxRef.Small',225,21,jc,0,1); draw.SimpleText(ply:GetUserGroup() or 'user','VoxRef.Small',370,21,C.text,0,1); draw.SimpleText(money(ply:getDarkRPVar('money') or 0),'VoxRef.Small',510,21,C.text,0,1); draw.SimpleText('12','VoxRef.Small',630,21,C.text,0,1); draw.SimpleText('▂▃▅▇ '..ply:Ping(),'VoxRef.Small',710,21,C.green,0,1); draw.SimpleText('◉','VoxRef.Small',w-35,21,C.green,1,1)
         end
-        row.DoRightClick=function() local m=DermaMenu(); for _,a in ipairs({'View Profile','Message','Add Friend','Report Player','Mute','Kick Player'}) do local opt=m:AddOption(a,function() if a=='Mute' and IsValid(ply) then ply:SetMuted(not ply:IsMuted()) end end); if a=='Report Player' or a=='Kick Player' then opt:SetTextColor(C.red) end end m:Open() end
+        row.DoRightClick=function() local m=DermaMenu(); for _,a in ipairs({'View Profile','Message','Add Friend','Report Player','Mute','Kick Player'}) do m:AddOption(a,function() end) end m:Open() end
     end end
 end
 function PANEL:Think()
