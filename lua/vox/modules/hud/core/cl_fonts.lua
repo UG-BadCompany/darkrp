@@ -4,7 +4,11 @@ local function font2D( name, size, postfix )
     local family = vox.SafeFont( 'Comfortaa', 'Montserrat' )
     local finalFont = family
     local scaleInt = vox.hud.GetScale()
-    local updatedSize = math.ceil( ( size * scaleInt ) / 900 * ScrH() )
+    local fontScale = 1
+    if ( vox.hud.GetOptionValue and vox.inconfig and vox.inconfig.options and vox.inconfig.options[ 'hud_font_size' ] ) then
+        fontScale = ( vox.hud:GetOptionValue( 'font_size' ) or 100 ) / 100
+    end
+    local updatedSize = math.ceil( ( size * scaleInt * fontScale ) / 900 * ScrH() )
     local fontName = 'vox.hud.' .. name
 
     if ( postfix ) then
