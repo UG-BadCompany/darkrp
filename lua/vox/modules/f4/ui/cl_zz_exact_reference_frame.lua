@@ -1,3 +1,7 @@
+-- Disabled compatibility shim: this exact-reference prototype used mock data and overrode the functional Vox UI panels.
+-- The maintained reference-style panels/elements now provide the visual direction while preserving real DarkRP logic.
+do return end
+
 -- Vox UI exact reference F4 remake
 surface.CreateFont('VoxRef.Title', {font='Tahoma', size=18, weight=800, extended=true})
 surface.CreateFont('VoxRef.Text', {font='Tahoma', size=14, weight=500, extended=true})
