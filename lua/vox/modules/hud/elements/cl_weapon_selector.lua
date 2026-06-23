@@ -86,10 +86,44 @@ local function drawWeaponSelector( client, scrW, scrH )
     local colorTertiaryText = colors.textTertiary
     local isDark = theme.dark
 
-    local y = screenPadding
+    local y = scrH - screenPadding - vox.hud.ScaleTall( 92 )
     local x = scrW * .5 - totalW * .5
 
     surface.SetAlphaMultiplier( toggleFraction )
+
+    -- Premium reference weapon selector: one centered glass slot bar instead of stacked legacy columns.
+    do
+        local t = vox.ThemeTokens and vox.ThemeTokens() or {}
+        local slotH = vox.hud.ScaleTall( 74 )
+        local slotW = vox.hud.ScaleWide( 118 )
+        local gap = vox.hud.ScaleWide( 8 )
+        local barW = MAX_SLOTS * slotW + ( MAX_SLOTS - 1 ) * gap
+        local barX = scrW * .5 - barW * .5
+        local barY = y
+
+        for slotIndex = 1, MAX_SLOTS do
+            local slotWeapons = slotsCache[ slotIndex ] or {}
+            local selectedWeapon = slotWeapons[ selectorData.selectedPos ] or slotWeapons[ 1 ]
+            local isSelected = selectorData.selectedSlot == slotIndex
+            local slotX = barX + ( slotIndex - 1 ) * ( slotW + gap )
+            local accent = isSelected and ( t.accent or colorAccent ) or ColorAlpha( colorAccent, 90 )
+            vox.ui.DrawCard( slotX, barY, slotW, slotH, { radius = 12, accent = accent, hovered = isSelected, selected = isSelected } )
+            draw.SimpleText( tostring( slotIndex ), vox.hud.fonts.TinyBold, slotX + vox.hud.ScaleWide( 12 ), barY + vox.hud.ScaleTall( 12 ), isSelected and ( t.accent or colorAccent ) or colorSecondaryText, 0, 1 )
+
+            if ( IsValid( selectedWeapon ) ) then
+                local weaponName = selectedWeapon:GetPrintName() or selectedWeapon:GetClass()
+                draw.SimpleText( weaponName, vox.hud.fonts.ExtraTinyBold, slotX + slotW * .5, barY + slotH * .5, isSelected and colorPrimaryText or colorSecondaryText, 1, 1 )
+                if ( selectedWeapon:Clip1() >= 0 ) then
+                    draw.SimpleText( selectedWeapon:Clip1() .. ' / ' .. client:GetAmmoCount( selectedWeapon:GetPrimaryAmmoType() ), vox.hud.fonts.ExtraTinyBold, slotX + slotW * .5, barY + slotH - vox.hud.ScaleTall( 15 ), t.muted or colorTertiaryText, 1, 1 )
+                end
+            else
+                draw.SimpleText( 'EMPTY', vox.hud.fonts.ExtraTinyBold, slotX + slotW * .5, barY + slotH * .5, colorTertiaryText, 1, 1 )
+            end
+        end
+
+        surface.SetAlphaMultiplier( prevAlpha )
+        return
+    end
 
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ]
