@@ -7,7 +7,7 @@ vox:Addon('scoreboard', {
 
 ----------------------------------------------------------------
 
-vox.Include('sv_sql.lua')
+vox.Include('vox/modules/scoreboard/sv_sql.lua')
 vox.IncludeFolder('vox/modules/scoreboard/languages/')
 vox.IncludeFolder('vox/modules/scoreboard/core/', true)
 vox.IncludeFolder('vox/modules/scoreboard/cfg/', true)

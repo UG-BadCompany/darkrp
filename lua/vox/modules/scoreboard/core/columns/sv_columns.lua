@@ -1,3 +1,7 @@
+vox.scoreboard = vox.scoreboard or {}
+vox.scoreboard.db = vox.scoreboard.db or {}
+assert(vox.scoreboard.db.Create, 'vox.scoreboard.db is not initialized before scoreboard columns load')
+
 util.AddNetworkString('vox.scoreboard:SyncColumns')
 util.AddNetworkString('vox.scoreboard:SetColumn')
 util.AddNetworkString('vox.scoreboard:SetColumns')
