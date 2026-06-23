@@ -35,12 +35,15 @@ local scale do
 end
 
 function vox.hud.GetScale()
-    local serverScale = 100
-    if ( vox.hud.GetOptionValue and vox.inconfig and vox.inconfig.options and vox.inconfig.options[ 'hud_hud_scale' ] ) then
-        serverScale = vox.hud:GetOptionValue( 'hud_scale' ) or 100
+    if ( vox.hud.GetOptionValue and vox.inconfig and vox.inconfig.options ) then
+        local option = vox.inconfig.options[ 'hud_hud_scale' ]
+        local serverScale = option and vox.hud:GetOptionValue( 'hud_scale' )
+        if ( serverScale ~= nil and serverScale ~= option.default ) then
+            return serverScale / 100
+        end
     end
 
-    return ( CONVAR:GetInt() / 100 ) * ( serverScale / 100 )
+    return CONVAR:GetInt() / 100
 end
 
 function vox.hud.StartScaling( contextID )

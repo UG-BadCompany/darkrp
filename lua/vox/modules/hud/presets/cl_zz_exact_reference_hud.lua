@@ -7,7 +7,11 @@ local function createReferenceFonts()
     local scale = (hud.GetScale and hud.GetScale() or 1)
     local fontScale = 1
     if vox.inconfig and vox.inconfig.options and vox.inconfig.options['hud_font_size'] then
-        fontScale = (hud:GetOptionValue('font_size') or 100) / 100
+        local option = vox.inconfig.options['hud_font_size']
+        local serverFontSize = hud:GetOptionValue('font_size')
+        if serverFontSize ~= nil and serverFontSize ~= option.default then
+            fontScale = serverFontSize / 100
+        end
     end
 
     local combined = math.Round(scale * fontScale * 1000)
