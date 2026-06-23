@@ -11,12 +11,14 @@ surface.CreateFont('VoxRef.Big', { font = 'Tahoma', size = 24, weight = 900, ext
 local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
 local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
 local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
+local WIMG_LICENSE = vox.wimg.Create( 'hud_license', 'smooth mips' )
+local WIMG_WANTED = vox.wimg.Create( 'hud_wanted', 'smooth mips' )
 
 local C = {
-    bg = Color(4, 10, 24, 205),
-    panel = Color(6, 16, 34, 188),
-    card = Color(7, 19, 39, 168),
-    border = Color(0, 174, 255, 95),
+    bg = Color(3, 9, 26, 218),
+    panel = Color(5, 14, 34, 198),
+    card = Color(7, 18, 43, 178),
+    border = Color(0, 130, 255, 135),
     accent = Color(0, 174, 255),
     green = Color(35, 225, 120),
     red = Color(255, 75, 95),
@@ -34,11 +36,14 @@ end
 local function glass(x,y,w,h,r,accent)
     r = r or 12
     accent = accent or C.accent
-    rr(x - 1,y - 1,w + 2,h + 2,r + 1,ColorAlpha(accent,34))
+    rr(x - 3,y - 3,w + 6,h + 6,r + 3,ColorAlpha(accent,18))
+    rr(x - 1,y - 1,w + 2,h + 2,r + 1,ColorAlpha(accent,54))
     rr(x,y,w,h,r,C.bg)
-    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(5,15,32,164))
-    surface.SetDrawColor(ColorAlpha(accent,6))
-    surface.DrawRect(x + 1,y + 1,w - 2,math.floor(h * .22))
+    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(5,15,38,150))
+    surface.SetDrawColor(ColorAlpha(accent,10))
+    surface.DrawRect(x + 1,y + 1,w - 2,math.floor(h * .26))
+    surface.SetDrawColor(ColorAlpha(accent,105))
+    surface.DrawOutlinedRect(x,y,w,h,1)
 end
 
 local function bar(x,y,w,h,frac,col)
@@ -89,9 +94,9 @@ local function ensureModelPanel(client, x, y, size)
     modelPanel:SetVisible(true)
     modelPanel:SetPos(x, y)
     modelPanel:SetSize(size, size)
-    modelPanel:SetFOV(32)
-    modelPanel:SetCamPos(Vector(30, 0, 63))
-    modelPanel:SetLookAt(Vector(0, 0, 61))
+    modelPanel:SetFOV(34)
+    modelPanel:SetCamPos(Vector(32, 0, 64))
+    modelPanel:SetLookAt(Vector(0, 0, 62))
 
     local current = hud.GetModelData and hud.GetModelData(client)
     if current and (not lastModelData or not hud.CompareModelData(current, lastModelData)) then
@@ -107,11 +112,12 @@ local function ensureModelPanel(client, x, y, size)
         if boneID then
             local bonePos = ent:GetBonePosition(boneID)
             if bonePos then
-                bonePos:Add(Vector(0, 0, 1))
-                local lookAt = bonePos - Vector(0, 0, 1.5)
-                local camPos = bonePos + Vector(30, 0, 2.5)
+                bonePos:Add(Vector(0, 0, 2.5))
+                local lookAt = bonePos - Vector(0, 0, 1)
+                local camPos = bonePos + Vector(34, 0, 3)
                 modelPanel:SetLookAt(lookAt)
                 modelPanel:SetCamPos(camPos)
+                modelPanel:SetFOV(35)
                 ent:SetEyeTarget(camPos)
             end
         end
@@ -130,15 +136,35 @@ local function drawStatRow(x, y, w, icon, label, frac, col, value, scale)
     draw.SimpleText(value, 'VoxRef.Small', x + w, y, C.text, 2, 0)
 end
 
+local function drawBottomIcons(x, y, w, scale, client)
+    local icons = {
+        { mat = WIMG_HEART, active = true },
+        { mat = WIMG_SHIELD, active = client:Armor() > 0 },
+        { mat = WIMG_WANTED, active = client:getDarkRPVar('wanted') },
+        { mat = WIMG_LICENSE, active = client:getDarkRPVar('HasGunlicense') }
+    }
+    local count = #icons
+    local cellW = w / count
+    local boxW, boxH = math.floor(42 * scale), math.floor(25 * scale)
+    local iconSize = math.floor(13 * scale)
+    for i, data in ipairs(icons) do
+        local cx = x + (i - .5) * cellW
+        local bx, by = cx - boxW * .5, y
+        local activeColor = data.active and C.text or ColorAlpha(C.soft, 120)
+        rr(bx, by, boxW, boxH, 10 * scale, Color(7, 20, 45, data.active and 142 or 86))
+        data.mat:Draw(cx - iconSize * .5, by + boxH * .5 - iconSize * .5, iconSize, iconSize, activeColor)
+    end
+end
+
 local function drawReferenceMain(self, client, sw, sh)
     if not IsValid(client) then return end
     local scale = math.Clamp(sh / 1080, .82, 1)
     local pad = math.floor(16 * scale)
-    local x, y, w = pad, sh - math.floor(238 * scale), math.floor(282 * scale)
-    local rowH = math.floor(21 * scale)
+    local x, y, w = pad, sh - math.floor(312 * scale), math.floor(286 * scale)
+    local rowH = math.floor(22 * scale)
     local showHunger, hunger = hasHunger(client)
     local level, xp, maxXP, xpFrac = getLevelData(client)
-    local h = math.floor((level and 246 or 222) * scale)
+    local h = math.floor(294 * scale)
 
     local hp = math.Clamp(client:Health() / math.max(client:GetMaxHealth(),1), 0, 1)
     local ar = math.Clamp(client:Armor() / math.max(client:GetMaxArmor() or 100,1), 0, 1)
@@ -154,8 +180,8 @@ local function drawReferenceMain(self, client, sw, sh)
     glass(x,y,w,h,14 * scale,C.accent)
     draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13 * scale,C.text,1,1)
 
-    local avSize = math.floor(68 * scale)
-    local avX, avY = x + math.floor(10 * scale), y + math.floor(13 * scale)
+    local avSize = math.floor(70 * scale)
+    local avX, avY = x + math.floor(10 * scale), y + math.floor(17 * scale)
     local avR = avSize * .5
     local avCX, avCY = avX + avR, avY + avR
     rr(avX - 4,avY - 4,avSize + 8,avSize + 8,avR + 4,ColorAlpha(C.accent,28))
@@ -168,27 +194,28 @@ local function drawReferenceMain(self, client, sw, sh)
     end)
     vox.DrawOutlinedCircle(avCX, avCY, avR + 1, math.max(2 * scale, 1), C.accent)
 
-    rr(x+w-28 * scale,y+18 * scale,8 * scale,8 * scale,4 * scale,C.green)
-    draw.SimpleText(client:Name(),'VoxRef.Title',x+88 * scale,y+19 * scale,C.text,0,0)
-    draw.SimpleText(job,'VoxRef.Small',x+88 * scale,y+40 * scale,C.green,0,0)
+    rr(x+w-31 * scale,y+19 * scale,18 * scale,18 * scale,9 * scale,Color(7, 25, 50, 175))
+    rr(x+w-25 * scale,y+25 * scale,6 * scale,6 * scale,3 * scale,C.green)
+    draw.SimpleText(client:Name(),'VoxRef.Title',x+91 * scale,y+20 * scale,C.text,0,0)
+    draw.SimpleText(job,'VoxRef.Small',x+91 * scale,y+42 * scale,C.green,0,0)
 
-    local moneyX, moneyY = x + 88 * scale, y + 70 * scale
-    local moneyW, moneyH = w - 104 * scale, 42 * scale
-    local salaryX = x + w - 24 * scale
-    local dividerX = x + w - 102 * scale
-    rr(moneyX - 8 * scale,moneyY - 4 * scale,moneyW,moneyH,9 * scale,ColorAlpha(C.card,145))
+    local moneyX, moneyY = x + 94 * scale, y + 73 * scale
+    local moneyW, moneyH = w - 111 * scale, 52 * scale
+    local salaryX = moneyX + moneyW - 10 * scale
+    local dividerX = moneyX + moneyW * .58
+    rr(moneyX - 8 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,190))
     rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 17 * scale,2 * scale,Color(16, 115, 76, 220))
-    surface.SetDrawColor(Color(62, 96, 130, 105)); surface.DrawLine(dividerX, moneyY + 5 * scale, dividerX, moneyY + 33 * scale)
+    surface.SetDrawColor(Color(62, 96, 130, 105)); surface.DrawLine(dividerX, moneyY + 8 * scale, dividerX, moneyY + 39 * scale)
     render.SetScissorRect(moneyX, moneyY, dividerX - 8 * scale, moneyY + 27 * scale, true)
         draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX + 4 * scale,moneyY + 1 * scale,C.text,0,0)
     render.SetScissorRect(0,0,0,0,false)
-    draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 27 * scale,C.soft,0,0)
+    draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 29 * scale,C.soft,0,0)
     render.SetScissorRect(dividerX + 7 * scale, moneyY, salaryX, moneyY + 27 * scale, true)
         draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 3 * scale,C.green,2,0)
     render.SetScissorRect(0,0,0,0,false)
-    draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 28 * scale,C.soft,2,0)
+    draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 29 * scale,C.soft,2,0)
 
-    local rowX, rowY, rowW = x + 20 * scale, y + 128 * scale, w - 42 * scale
+    local rowX, rowY, rowW = x + 20 * scale, y + 147 * scale, w - 42 * scale
     drawStatRow(rowX, rowY, rowW, WIMG_HEART, 'Health', smooth.hp, C.red, math.floor(hp*100)..'%', scale)
     rowY = rowY + rowH
     drawStatRow(rowX, rowY, rowW, WIMG_SHIELD, 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%', scale)
@@ -199,11 +226,13 @@ local function drawReferenceMain(self, client, sw, sh)
     end
 
     if level then
-        rowY = rowY + math.floor(8 * scale)
+        rowY = math.max(rowY + math.floor(8 * scale), y + math.floor(218 * scale))
         draw.SimpleText('◎  Level ' .. level, 'VoxRef.Small', rowX, rowY, C.text, 0, 0)
         draw.SimpleText(string.Comma(xp) .. '/' .. string.Comma(maxXP) .. ' XP', 'VoxRef.Tiny', rowX + rowW, rowY + 1 * scale, C.soft, 2, 0)
         bar(rowX + 96 * scale, rowY + 20 * scale, rowW - 116 * scale, 8 * scale, smooth.xp, C.blue)
     end
+
+    drawBottomIcons(rowX, y + math.floor(256 * scale), rowW, scale, client)
 end
 
 local notifyCache = {}
