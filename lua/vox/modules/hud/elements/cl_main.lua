@@ -31,50 +31,42 @@ local function formatSalary( salary )
     return '+ ' .. ( DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( salary ) or tostring( salary ) )
 end
 
-local function drawIndicator( x, y, w, h, material, color, fraction, label )
-    local iconSize = h
-    local iconSpace = hud.ScaleTall( UNSCALED_SPACE )
-    local cut = hud.ScaleWide( 5 )
+local function drawIndicator( x, y, w, h, material, color, fraction, label, valueText )
+    if ( valueText == nil and isstring( label ) and label:find( '%%' ) ) then
+        valueText = label
+        label = nil
+    end
+
+    fraction = math.Clamp( fraction or 0, 0, 1 )
 
     local theme = hud:GetCurrentTheme()
-    local isDark = theme.isDark
     local colors = theme.colors
     local colorTextPrimary = colors.textPrimary
     local colorTextSecondary = colors.textSecondary
+    local iconSize = hud.ScaleTall( 14 )
+    local iconSpace = hud.ScaleWide( 8 )
+    local valueW = hud.ScaleWide( 36 )
+    local labelW = hud.ScaleWide( 52 )
+    local trackH = hud.ScaleTall( 7 )
+    local trackX = x + iconSize + iconSpace + labelW
+    local trackW = w - ( trackX - x ) - valueW - hud.ScaleWide( 8 )
+    local trackY = math.floor( y + h * .5 - trackH * .5 )
+    local radius = trackH * .5
 
-    local rectX, rectW = x + ( iconSize + iconSpace ), w - ( iconSize + iconSpace )
-    local rectH = math.min( h, hud.ScaleTall( UNSCALED_BAR_H ) )
-    local rectY = math.floor( y + iconSize * .5 - rectH * .5 )
-    local segments = 12
-    local segmentGap = hud.ScaleWide( 2 )
-    local segmentW = ( rectW - segmentGap * ( segments - 1 ) ) / segments
+    material:Draw( x, y + h * .5 - iconSize * .5, iconSize, iconSize, color )
+    draw.SimpleText( label or '', hud.fonts.ExtraTinyBold, x + iconSize + iconSpace, y + h * .5, colorTextSecondary, 0, 1 )
 
-    material:Draw( x, y, iconSize, iconSize, color )
+    draw.RoundedBox( radius, trackX, trackY, trackW, trackH, ColorAlpha( colorTextPrimary, theme.isDark and 20 or 85 ) )
+    draw.RoundedBox( radius + hud.ScaleTall( 2 ), trackX - hud.ScaleWide( 2 ), trackY - hud.ScaleTall( 2 ), trackW + hud.ScaleWide( 4 ), trackH + hud.ScaleTall( 4 ), ColorAlpha( color, 18 ) )
 
-    vox.DrawAngledRect( rectX - hud.ScaleWide( 3 ), rectY - hud.ScaleTall( 3 ), rectW + hud.ScaleWide( 6 ), rectH + hud.ScaleTall( 6 ), cut, ColorAlpha( colorTextPrimary, isDark and 12 or 110 ) )
-
-    for i = 1, segments do
-        local sx = rectX + ( i - 1 ) * ( segmentW + segmentGap )
-        local fill = math.Clamp( fraction * segments - ( i - 1 ), 0, 1 )
-        local idleColor = ColorAlpha( colorTextPrimary, isDark and 18 or 95 )
-
-        vox.DrawAngledRect( sx, rectY, segmentW, rectH, cut * .55, idleColor )
-
-        if ( fill > 0 ) then
-            render.SetScissorRect( sx, rectY, sx + segmentW * fill, rectY + rectH, true )
-                vox.DrawAngledRect( sx, rectY, segmentW, rectH, cut * .55, color )
-            render.SetScissorRect( 0, 0, 0, 0, false )
-        end
+    if ( fraction > 0 ) then
+        render.SetScissorRect( trackX, trackY, trackX + trackW * fraction, trackY + trackH, true )
+            draw.RoundedBox( radius, trackX, trackY, trackW, trackH, color )
+        render.SetScissorRect( 0, 0, 0, 0, false )
     end
 
-    surface.SetDrawColor( ColorAlpha( color, 130 ) )
-    surface.DrawLine( rectX, rectY - 2, rectX + rectW * fraction, rectY - 2 )
-
-    if ( label ) then
-        draw.SimpleText( label, hud.fonts.ExtraTinyBold, rectX + rectW, rectY - hud.ScaleTall( 2 ), colorTextSecondary, 2, 4 )
-    end
+    draw.SimpleText( valueText or ( math.Round( fraction * 100 ) .. '%' ), hud.fonts.ExtraTinyBold, x + w, y + h * .5, colorTextPrimary, 2, 1 )
 end
-
 local function drawStatusIcon( x, y, w, h, material, color )
     material:Draw( x, y, w, h, color or hud:GetColor( 'textTertiary' ) )
 end
@@ -102,11 +94,11 @@ local function recreateAvatar( self )
                         if ( bonePos ) then
                             bonePos:Add( Vector( 0, 0, 2 ) )
 
-                            panel:SetLookAt (bonePos)
-                            panel:SetCamPos( bonePos - Vector(-20, 0, 0) )
-                            panel:SetFOV( 45 )
+                            panel:SetLookAt( bonePos )
+                            panel:SetCamPos( bonePos + Vector( 24, 0, 3 ) )
+                            panel:SetFOV( 32 )
 
-                            ent:SetEyeTarget( bonePos - Vector(-20, 0, 0) )
+                            ent:SetEyeTarget( bonePos + Vector( 24, 0, 3 ) )
                         end
                     end
                 end
@@ -197,24 +189,21 @@ end
 local function drawMainHUD( self, client, scrW, scrH )
     local showJob = not CONVAR_COMPACT:GetBool() and hud:GetOptionValue( 'display_job' )
     local space = hud.GetScreenPadding()
-    local padding = hud.ScaleTall( 10 )
-    local w, h = hud.ScaleWide( 340 ), hud.ScaleTall( showJob and 128 or 108 )
-    local x, y = space, scrH - h - space
+    local padding = hud.ScaleTall( 12 )
 
-    -- Colors
     local theme = hud:GetCurrentTheme()
     local colors = theme.colors
-
     local colorPrimary = colors.primary
     local colorSecondary = colors.secondary
-    local colorTertiary = colors.tertiary
     local colorTextPrimary = colors.textPrimary
     local colorTextSecondary = colors.textSecondary
     local isDark = theme.isDark
+    local accent = colors.accent
+    local moneyColor = colors.money or colors.positive or accent
+    local teamColor = team.GetColor( client:Team() )
 
-    -- Player variables
     local animSpeed = FrameTime() * ( hud:GetOptionValue( 'reduce_motion' ) and 64 or hud:GetOptionValue( 'animation_speed' ) or 16 )
-    local healthFraction = math.Clamp( client:Health() / client:GetMaxHealth(), 0, 1 )
+    local healthFraction = math.Clamp( client:Health() / math.max( client:GetMaxHealth(), 1 ), 0, 1 )
     local maxArmor = math.max( client:GetMaxArmor() or 100, 1 )
     local armorFraction = math.Clamp( client:Armor() / maxArmor, 0, 1 )
     local money = client:getDarkRPVar( 'money' ) or 0
@@ -223,219 +212,111 @@ local function drawMainHUD( self, client, scrW, scrH )
     lerpArmor = Lerp( animSpeed, lerpArmor or armorFraction, armorFraction )
     lerpMoney = Lerp( animSpeed, lerpMoney or money, money )
 
-    local name = client:Name()
-    local teamColor = team.GetColor( client:Team() )
-    local moneyFormatted = ( DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( math.Round( lerpMoney ) ) or tostring( math.Round( lerpMoney ) ) )
     local salary = client:getDarkRPVar( 'salary' ) or 0
+    local moneyFormatted = ( DarkRP and DarkRP.formatMoney and DarkRP.formatMoney( math.Round( lerpMoney ) ) or tostring( math.Round( lerpMoney ) ) )
     local salaryFormatted = formatSalary( salary )
     local darkRPDefaults = DarkRP and DarkRP.disabledDefaults and DarkRP.disabledDefaults[ 'modules' ]
     local hasHunger = hud:GetOptionValue( 'display_hunger' ) and not ( darkRPDefaults and darkRPDefaults[ 'hungermod' ] )
-    local hasArmor = hud:GetOptionValue( 'display_armor' ) and math.Round( lerpArmor, 2 ) > 0
-    local rectAmount = ( hasHunger or hasArmor ) and 2 or 1
-    local rectH = hud.ScaleTall( UNSCALED_BAR_ICON_SIZE )
+    local hasArmor = hud:GetOptionValue( 'display_armor' )
+    local showLevel = ( not CONVAR_HELP:GetBool() ) and vox.hud:GetOptionValue( 'display_level' ) and vox.hud.IsLevellingEnabled()
 
-    -- Increase HUD height if there is multiple bars
-    if ( rectAmount > 1 ) then
-        local extraHeight = hud.ScaleTall( 10 )
-        h = h + extraHeight
-        y = y - extraHeight
-    end
+    local rowH = hud.ScaleTall( 18 )
+    local rowGap = hud.ScaleTall( 5 )
+    local rowCount = ( hud:GetOptionValue( 'display_health' ) and 1 or 0 ) + ( hasArmor and 1 or 0 ) + ( hasHunger and 1 or 0 )
+    local levelH = showLevel and hud.ScaleTall( 30 ) or 0
+    local w = hud.ScaleWide( 304 )
+    local h = padding * 2 + hud.ScaleTall( 45 ) + hud.ScaleTall( 44 ) + rowCount * rowH + math.max( rowCount - 1, 0 ) * rowGap + levelH + hud.ScaleTall( 8 )
+    local x, y = space, scrH - h - space
 
-    local avatarSpaceWidth = hud.ScaleWide( 92 )
-    local labelX = x + avatarSpaceWidth + padding
-    local labelY = y + padding
+    local avatarSize = hud.ScaleTall( 72 )
+    local avatarX = x + padding
+    local avatarY = y + hud.ScaleTall( 17 )
+    local contentX = avatarX + avatarSize + hud.ScaleWide( 14 )
+    local contentW = w - ( contentX - x ) - padding
+    local nameY = y + padding + hud.ScaleTall( 4 )
 
-    -- Vox Tactical Card: dark glass body, angled electric blade, and integrated economy cluster.
     if vox.DrawVoxPanel then
-        vox.DrawVoxPanel( x, y, w, h, colors, hud.GetRoundness() )
+        vox.DrawVoxPanel( x, y, w, h, colors, math.max( hud.GetRoundness(), hud.ScaleTall( 12 ) ) )
     else
         hud.DrawRoundedBox( x, y, w, h, ColorAlpha( colorPrimary, 238 ) )
     end
-    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( colors.secondaryAccent or Color( 142, 84, 255 ), 16 ) )
-    if vox.DrawVoxBlade then
-        vox.DrawVoxBlade( x - hud.ScaleWide( 6 ), y + hud.ScaleTall( 10 ), hud.ScaleWide( 12 ), h - hud.ScaleTall( 20 ), colors.accent )
-    else
-        surface.SetDrawColor( colors.accent )
-        surface.DrawRect( x, y, hud.ScaleWide( 3 ), h )
-    end
-    vox.DrawAngledRect( x + hud.ScaleWide( 10 ), y + hud.ScaleTall( 8 ), avatarSpaceWidth - hud.ScaleWide( 12 ), h - hud.ScaleTall( 16 ), hud.ScaleWide( 12 ), ColorAlpha( colorSecondary, 205 ) )
-    surface.SetDrawColor( ColorAlpha( colors.accent, 100 ) )
-    surface.DrawLine( x + avatarSpaceWidth, y + 1, x + avatarSpaceWidth + hud.ScaleWide( 36 ), y + 1 )
-    surface.DrawLine( x + w - hud.ScaleWide( 48 ), y + h - 2, x + w - 2, y + h - 2 )
+    vox.DrawMatGradient( x, y, w, h, BOTTOM, ColorAlpha( colorSecondary, isDark and 82 or 120 ) )
+    vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( accent, 18 ) )
+    surface.SetDrawColor( ColorAlpha( accent, 120 ) )
+    surface.DrawOutlinedRect( x, y, w, h, math.max( 1, hud.ScaleTall( 1 ) ) )
 
-    -- Draw labels
-    local labelMaxW = w - avatarSpaceWidth - padding * 2
-
-    updateSlowLabels( client, labelMaxW )
-
-    -- Limited render bounds for labels
-    render.SetScissorRect( 0, 0, labelX + labelMaxW, ScrH(), true )
-
-    local _, nameHeight = draw.SimpleText( slowLabels.name.text, slowLabels.name.font, labelX, labelY, colorTextPrimary, 0, 0 )
-
-    local teamHeight
-    if ( showJob ) then
-        _, teamHeight = draw.SimpleText( slowLabels.job.text, slowLabels.job.font, labelX, labelY + nameHeight, teamColor, 0, 0 )
-    else
-        teamHeight = 0
-    end
-
-    local moneyHeight = 0
-    if ( hud:GetOptionValue( 'display_money' ) ) then
-        local econW = hud.ScaleWide( 124 )
-        vox.DrawAngledRect( x + w - padding - econW, y + padding, econW, hud.ScaleTall( 26 ), hud.ScaleWide( 8 ), ColorAlpha( colorSecondary, 205 ) )
-        draw.SimpleText( 'BALANCE', hud.fonts.ExtraTinyBold, x + w - padding - econW + hud.ScaleWide( 10 ), y + padding + hud.ScaleTall( 4 ), colorTextSecondary, 0, 0 )
-        _, moneyHeight = draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, x + w - padding - hud.ScaleWide( 8 ), y + padding + hud.ScaleTall( 14 ), colors.money or colors.positive, 2, 1 )
-    end
-    if ( hud:GetOptionValue( 'display_salary' ) ) then
-        draw.SimpleText( 'STIPEND ' .. salaryFormatted, hud.fonts.ExtraTinyBold, x + w - padding, y + padding + hud.ScaleTall( 34 ), colorTextSecondary, 2, 0 )
-    end
-
+    updateSlowLabels( client, contentW - hud.ScaleWide( 20 ) )
+    render.SetScissorRect( 0, 0, contentX + contentW - hud.ScaleWide( 22 ), ScrH(), true )
+        local _, nameHeight = draw.SimpleText( slowLabels.name.text, slowLabels.name.font, contentX, nameY, colorTextPrimary, 0, 0 )
+        if ( showJob ) then
+            draw.SimpleText( slowLabels.job.text, slowLabels.job.font, contentX, nameY + nameHeight - hud.ScaleTall( 1 ), teamColor, 0, 0 )
+        end
     render.SetScissorRect( 0, 0, 0, 0, false )
 
-    local contentH = nameHeight + teamHeight + moneyHeight
-    local topPartH = contentH + padding * 2
-    local lineY = labelY + contentH + padding
-    local lineW = w - avatarSpaceWidth - padding * 2
-    local lineH = math.max( 1, hud.ScaleTall( 2 ) )
+    local dotSize = hud.ScaleTall( 10 )
+    vox.DrawCircle( x + w - padding - dotSize * .5, y + padding + dotSize * .5, dotSize * .55, ColorAlpha( colors.positive or accent, 45 ) )
+    vox.DrawCircle( x + w - padding - dotSize * .5, y + padding + dotSize * .5, dotSize * .32, colors.positive or accent )
 
-    -- Prepare a mask for avatar
-    local avatarY = y + padding
-    local avatarSize = math.min( contentH, avatarSpaceWidth - padding * 2 )
-    local circleRadius = math.Round( avatarSize * .5 )
-    local circleOutlineThickness = hud.ScaleTall( 2.5 )
-
-    local maskX0 = x + math.Round( avatarSpaceWidth * .5 )
-    local maskY0 = avatarY + circleRadius
-    local maskX, maskY = maskX0 - circleRadius, avatarY
-
-    if ( not self.AvatarMask or not lastMaskY or lastMaskY ~= maskY0 ) then
-        lastMaskY = maskY0
-        self.AvatarMask = vox.CalculateCircle( maskX0, maskY0, circleRadius, 32 )
-    end
-
-    -- Draw avatar
     if ( IsValid( self.AvatarPanel ) ) then
-        vox.DrawWithPolyMask( self.AvatarMask, function()
-            if ( self.AvatarPanel:GetClassName() ~= 'AvatarImage' ) then
-                -- Draw fancy background for model icons
-                vox.DrawCircle( maskX0, maskY0, circleRadius, colorPrimary )
-                vox.DrawMatGradient( maskX, maskY, avatarSize, avatarSize, BOTTOM, ColorAlpha( teamColor, isDark and 25 or 150 )  )
-            end
+        local circleRadius = avatarSize * .5
+        local maskX0, maskY0 = avatarX + circleRadius, avatarY + circleRadius
+        if ( not self.AvatarMask or self.AvatarMaskRadius ~= circleRadius or self.AvatarMaskX ~= maskX0 or self.AvatarMaskY ~= maskY0 ) then
+            self.AvatarMaskRadius, self.AvatarMaskX, self.AvatarMaskY = circleRadius, maskX0, maskY0
+            self.AvatarMask = vox.CalculateCircle( maskX0, maskY0, circleRadius, 48 )
+        end
 
-            self.AvatarPanel:SetPos( maskX, maskY )
+        vox.DrawCircle( maskX0, maskY0, circleRadius + hud.ScaleTall( 4 ), ColorAlpha( colorSecondary, 220 ) )
+        vox.DrawWithPolyMask( self.AvatarMask, function()
+            vox.DrawCircle( maskX0, maskY0, circleRadius, colorPrimary )
+            vox.DrawMatGradient( avatarX, avatarY, avatarSize, avatarSize, BOTTOM, ColorAlpha( teamColor, isDark and 35 or 120 ) )
+            self.AvatarPanel:SetPos( avatarX, avatarY )
             self.AvatarPanel:SetSize( avatarSize, avatarSize )
             self.AvatarPanel:PaintManual()
-
-            if ( client:IsSpeaking() ) then
-                local micSize = avatarSize * .5
-
-                micSize = micSize + ( micSize * .2 * math.abs( math.sin( CurTime() * 2 ) ) )
-
-                surface.SetDrawColor( 0, 0, 0, 225 )
-                surface.DrawRect( maskX, maskY, avatarSize, avatarSize )
-
-                WIMG_MICROPHONE:DrawRotated( maskX0, maskY0, micSize, micSize, 0 )
-            end
         end )
-
-        vox.DrawOutlinedCircle( maskX0, maskY0, circleRadius + circleOutlineThickness * .5, circleOutlineThickness, teamColor )
-        vox.DrawAngledRect( maskX0 - circleRadius, maskY0 + circleRadius - hud.ScaleTall( 13 ), circleRadius * 2, hud.ScaleTall( 18 ), hud.ScaleWide( 6 ), ColorAlpha( colorPrimary, 230 ) )
-        draw.SimpleText( 'ID', hud.fonts.ExtraTinyBold, maskX0, maskY0 + circleRadius - hud.ScaleTall( 4 ), colorTextSecondary, 1, 1 )
+        vox.DrawOutlinedCircle( maskX0, maskY0, circleRadius + hud.ScaleTall( 1.5 ), hud.ScaleTall( 3 ), ColorAlpha( teamColor, 230 ) )
     end
 
-    -- Draw separator
-    if ( isDark ) then
-        surface.SetDrawColor( 0, 0, 0, 50 )
-    else
-        surface.SetDrawColor( 100, 100, 100, 100 )
-    end
-    surface.DrawRect( x, lineY, w, lineH )
+    local walletY = y + hud.ScaleTall( 64 )
+    local walletH = hud.ScaleTall( 43 )
+    draw.RoundedBox( hud.ScaleTall( 9 ), contentX, walletY, contentW, walletH, ColorAlpha( colorSecondary, 155 ) )
+    vox.DrawMatGradient( contentX, walletY, contentW * .52, walletH, RIGHT, ColorAlpha( moneyColor, 34 ) )
+    draw.RoundedBox( hud.ScaleTall( 3 ), contentX + hud.ScaleWide( 7 ), walletY + hud.ScaleTall( 8 ), hud.ScaleWide( 4 ), walletH - hud.ScaleTall( 16 ), ColorAlpha( moneyColor, 210 ) )
+    surface.SetDrawColor( ColorAlpha( colorTextSecondary, isDark and 52 or 120 ) )
+    surface.DrawRect( contentX + contentW * .56, walletY + hud.ScaleTall( 9 ), hud.ScaleWide( 1 ), walletH - hud.ScaleTall( 18 ) )
 
-    local footerH = h - topPartH
-    local footerY0 = lineY + footerH * .5
+    draw.SimpleText( moneyFormatted, hud.fonts.SmallBold, contentX + hud.ScaleWide( 17 ), walletY + hud.ScaleTall( 13 ), colorTextPrimary, 0, 1 )
+    draw.SimpleText( 'Wallet', hud.fonts.ExtraTinyBold, contentX + hud.ScaleWide( 17 ), walletY + hud.ScaleTall( 31 ), colorTextSecondary, 0, 1 )
+    draw.SimpleText( salaryFormatted:gsub( '%+%s+', '+' ), hud.fonts.SmallBold, contentX + contentW - hud.ScaleWide( 10 ), walletY + hud.ScaleTall( 13 ), moneyColor, 2, 1 )
+    draw.SimpleText( 'Salary', hud.fonts.ExtraTinyBold, contentX + contentW - hud.ScaleWide( 10 ), walletY + hud.ScaleTall( 31 ), colorTextSecondary, 2, 1 )
 
-    -- Draw icons
-    local iconSize = hud.ScaleTall( UNSCALED_ICON_SIZE )
-    local iconSpace = hud.ScaleTall( UNSCALED_SPACE ) * .75
-    local iconX0 = x + avatarSpaceWidth * .5
-    local iconY0 = footerY0 - iconSize * .5
-
-    drawStatusIcon( iconX0 - iconSize - iconSpace, iconY0, iconSize, iconSize, WIMG_LICENSE, client:getDarkRPVar( 'HasGunlicense' ) and hud:GetColor( 'accent' )  )
-    drawStatusIcon( iconX0 + iconSpace, iconY0, iconSize, iconSize, WIMG_STAR, client:getDarkRPVar( 'wanted' ) and hud.GetAnimColor( 0 ) )
-
-    -- Draw indicators
-    local rectSpace = hud.ScaleTall( 3 )
-    local totalIndictatorsH = rectAmount * rectH + ( rectAmount - 1 ) * rectSpace
-    local rectY = footerY0 - totalIndictatorsH * .5
-
+    local barsX = x + padding + hud.ScaleWide( 10 )
+    local barsY = walletY + walletH + hud.ScaleTall( 10 )
+    local barsW = w - padding * 2 - hud.ScaleWide( 20 )
     if ( hud:GetOptionValue( 'display_health' ) ) then
-        drawIndicator( labelX, rectY, lineW, rectH, WIMG_HEART, colors.negative, lerpHealth, math.Round( lerpHealth * 100 ) .. '%' )
+        drawIndicator( barsX, barsY, barsW, rowH, WIMG_HEART, colors.negative, lerpHealth, 'Health' )
+        barsY = barsY + rowH + rowGap
     end
-
-    rectY = rectY + rectH + rectSpace
-
+    if ( hasArmor ) then
+        drawIndicator( barsX, barsY, barsW, rowH, WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor, 'Armor' )
+        barsY = barsY + rowH + rowGap
+    end
     if ( hasHunger ) then
-        local iconSpace = hud.ScaleTall( UNSCALED_SPACE * 1 )
-        local halfLineWidth = lineW * .5 - iconSpace * .5
         local hungerFraction = math.Clamp( client:getDarkRPVar( 'Energy', 0 ) / 100, 0, 1 )
-
         lerpHunger = Lerp( animSpeed, lerpHunger or hungerFraction, hungerFraction )
-
-        drawIndicator( labelX, rectY, halfLineWidth, rectH, WIMG_FOOD, colors.hunger or Color( 245, 197, 66 ), lerpHunger )
-        drawIndicator( labelX + halfLineWidth + iconSpace, rectY, halfLineWidth, rectH, WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor )
-    elseif ( hasArmor ) then
-        drawIndicator( labelX, rectY, lineW, rectH, WIMG_SHIELD, colors.armor or Color( 88, 166, 255 ), lerpArmor )
+        drawIndicator( barsX, barsY, barsW, rowH, WIMG_FOOD, colors.hunger or Color( 245, 197, 66 ), lerpHunger, 'Hunger' )
+        barsY = barsY + rowH + rowGap
     end
 
-    -- Draw help
-    local addBlockSpace = hud.ScaleTall( 7.5 )
-
-    if ( CONVAR_HELP:GetBool() ) then
-        local addBlockH = hud.ScaleTall( 50 )
-        local blockY = y - addBlockH - addBlockSpace
-
-        hud.OverrideAlpha( 0.5 + 0.5 * math.abs( math.sin( CurTime() * 2 ) ), function()
-            local helpFont = hud.fonts.Small
-            local helpText1 = vox.lang:Get( 'hud_help_type' ) .. ' '
-            local helpText2 = '!hud'
-            local helpText3 = ' ' .. vox.lang:Get( 'hud_help_to' )
-
-            surface.SetFont( helpFont )
-            local helpTextW1 = surface.GetTextSize( helpText1 )
-            local helpTextW3 = surface.GetTextSize( helpText3 )
-            surface.SetFont( hud.fonts.SmallBold )
-            local helpTextW2 = surface.GetTextSize( helpText2 )
-            local helpTextTotalW = ( helpTextW1 + helpTextW2 + helpTextW3 )
-            local helpTextX = x + w * .5 - helpTextTotalW * .5
-
-            hud.DrawRoundedBox( x, blockY, w, addBlockH, colorPrimary )
-
-            draw.SimpleText( vox.lang:Get( 'introduction_u' ), hud.fonts.TinyBold, x + w * .5, blockY + addBlockH * .5, colorTextSecondary, 1, 4 )
-
-            draw.SimpleText( helpText1, helpFont, helpTextX, blockY + addBlockH * .5, colorTextPrimary, 0, 0 )
-            draw.SimpleText( helpText2, hud.fonts.SmallBold, helpTextX + helpTextW1, blockY + addBlockH * .5, colors.accent, 0, 0 )
-            draw.SimpleText( helpText3, helpFont, helpTextX + helpTextW1 + helpTextW2, blockY + addBlockH * .5, colorTextPrimary, 0, 0 )
-        end )
-    elseif ( vox.hud:GetOptionValue( 'display_level' ) and vox.hud.IsLevellingEnabled() ) then
-        local addBlockH = hud.ScaleTall( 47.5 )
-        local blockY = y - addBlockH - addBlockSpace
+    if ( showLevel ) then
         local level, xp, maxXP = vox.hud.GetLevelData( client )
-        local nextLevelFraction = xp / maxXP
-        local rectH = math.min( h, hud.ScaleTall( UNSCALED_BAR_H ) )
-
-        hud.DrawRoundedBox( x, blockY, w, addBlockH, colorPrimary )
-
-        local textW = draw.SimpleText( vox.lang:Get( 'hud.level.name' ) .. ': ', hud.fonts.Tiny, x + padding, blockY + padding, colorTextSecondary, 0, 0 )
-        draw.SimpleText( level, hud.fonts.SmallBold, x + padding + textW, blockY + padding, ( isDark and ( colors.xp or COLOR_XP ) or colorTextPrimary ), 0, 0 )
-
-        local textW2 = draw.SimpleText( ' / ' .. maxXP, hud.fonts.Tiny, x + w - padding, blockY + padding, colorTextSecondary, 2, 0 )
-        draw.SimpleText( xp, hud.fonts.TinyBold, x + w - padding - textW2, blockY + padding, colorTextPrimary, 2, 0 )
-
-        hud.DrawRoundedBox( x + padding, blockY + addBlockH - padding - rectH, w - padding * 2, rectH, ColorAlpha( colorTextPrimary, isDark and 10 or 200 ) )
-        vox.hud.ScissorRect( x + padding, blockY + addBlockH - padding - rectH, ( w - padding * 2 ) * nextLevelFraction, rectH, function()
-            hud.DrawRoundedBox( x + padding, blockY + addBlockH - padding - rectH, w - padding * 2, rectH, ( colors.xp or COLOR_XP ) )
-        end )
+        local nextLevelFraction = math.Clamp( xp / math.max( maxXP, 1 ), 0, 1 )
+        local levelY = barsY + hud.ScaleTall( 2 )
+        draw.SimpleText( vox.lang:Get( 'hud.level.name' ) .. ' ' .. level, hud.fonts.ExtraTinyBold, barsX, levelY + hud.ScaleTall( 7 ), colorTextPrimary, 0, 1 )
+        draw.SimpleText( xp .. '/' .. maxXP .. ' XP', hud.fonts.ExtraTinyBold, barsX + barsW, levelY + hud.ScaleTall( 7 ), colorTextSecondary, 2, 1 )
+        draw.RoundedBox( hud.ScaleTall( 4 ), barsX + hud.ScaleWide( 70 ), levelY + hud.ScaleTall( 17 ), barsW - hud.ScaleWide( 70 ), hud.ScaleTall( 7 ), ColorAlpha( colorTextPrimary, isDark and 18 or 90 ) )
+        render.SetScissorRect( barsX + hud.ScaleWide( 70 ), levelY + hud.ScaleTall( 17 ), barsX + hud.ScaleWide( 70 ) + ( barsW - hud.ScaleWide( 70 ) ) * nextLevelFraction, levelY + hud.ScaleTall( 24 ), true )
+            draw.RoundedBox( hud.ScaleTall( 4 ), barsX + hud.ScaleWide( 70 ), levelY + hud.ScaleTall( 17 ), barsW - hud.ScaleWide( 70 ), hud.ScaleTall( 7 ), colors.xp or COLOR_XP )
+        render.SetScissorRect( 0, 0, 0, 0, false )
     end
 end
 
