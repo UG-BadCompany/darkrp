@@ -13,9 +13,9 @@ local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
 local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
 
 local C = {
-    bg = Color(5, 14, 28, 232),
-    panel = Color(9, 28, 52, 232),
-    card = Color(12, 35, 65, 232),
+    bg = Color(4, 10, 24, 246),
+    panel = Color(6, 16, 34, 242),
+    card = Color(7, 19, 39, 226),
     border = Color(0, 174, 255, 95),
     accent = Color(0, 174, 255),
     green = Color(35, 225, 120),
@@ -36,9 +36,9 @@ local function glass(x,y,w,h,r,accent)
     accent = accent or C.accent
     rr(x - 1,y - 1,w + 2,h + 2,r + 1,ColorAlpha(accent,34))
     rr(x,y,w,h,r,C.bg)
-    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(8,24,45,218))
-    surface.SetDrawColor(ColorAlpha(accent,20))
-    surface.DrawRect(x + 1,y + 1,w - 2,math.floor(h * .38))
+    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(5,15,32,238))
+    surface.SetDrawColor(ColorAlpha(accent,10))
+    surface.DrawRect(x + 1,y + 1,w - 2,math.floor(h * .22))
 end
 
 local function bar(x,y,w,h,frac,col)
@@ -173,10 +173,9 @@ local function drawReferenceMain(self, client, sw, sh)
     local moneyX, moneyY = x + 96 * scale, y + 67 * scale
     local moneyW, moneyH = w - 112 * scale, 45 * scale
     local salaryX = x + w - 18 * scale
-    rr(moneyX - 9 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,205))
-    rr(moneyX - 4 * scale,moneyY + 6 * scale,4 * scale,moneyH - 16 * scale,3 * scale,ColorAlpha(C.green,225))
-    surface.SetDrawColor(ColorAlpha(C.green,28))
-    surface.DrawRect(moneyX - 2 * scale,moneyY - 1 * scale,moneyW * .46,moneyH - 2 * scale)
+    rr(moneyX - 9 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,196))
+    rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 18 * scale,2 * scale,ColorAlpha(C.green,230))
+    rr(moneyX - 8 * scale,moneyY + 2 * scale,14 * scale,moneyH - 10 * scale,7 * scale,ColorAlpha(C.green,28))
     surface.SetDrawColor(Color(62, 96, 130, 120)); surface.DrawLine(x + w - 108 * scale, moneyY + 5 * scale, x + w - 108 * scale, moneyY + 35 * scale)
     draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX + 4 * scale,moneyY + 1 * scale,C.text,0,0)
     draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 28 * scale,C.soft,0,0)
