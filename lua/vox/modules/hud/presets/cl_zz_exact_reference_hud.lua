@@ -2,11 +2,35 @@
 local hud = vox.hud
 if not hud then return end
 
-surface.CreateFont('VoxRef.Title', { font = 'Tahoma', size = 18, weight = 800, extended = true })
-surface.CreateFont('VoxRef.Text', { font = 'Tahoma', size = 14, weight = 500, extended = true })
-surface.CreateFont('VoxRef.Small', { font = 'Tahoma', size = 12, weight = 500, extended = true })
-surface.CreateFont('VoxRef.Tiny', { font = 'Tahoma', size = 10, weight = 600, extended = true })
-surface.CreateFont('VoxRef.Big', { font = 'Tahoma', size = 24, weight = 900, extended = true })
+local lastFontScale
+local function createReferenceFonts()
+    local scale = (hud.GetScale and hud.GetScale() or 1)
+    local fontScale = 1
+    if vox.inconfig and vox.inconfig.options and vox.inconfig.options['hud_font_size'] then
+        fontScale = (hud:GetOptionValue('font_size') or 100) / 100
+    end
+
+    local combined = math.Round(scale * fontScale * 1000)
+    if lastFontScale == combined then return end
+    lastFontScale = combined
+
+    local function size(px)
+        return math.max(math.Round(px * scale * fontScale), 8)
+    end
+
+    surface.CreateFont('VoxRef.Title', { font = 'Tahoma', size = size(18), weight = 800, extended = true })
+    surface.CreateFont('VoxRef.Text', { font = 'Tahoma', size = size(14), weight = 500, extended = true })
+    surface.CreateFont('VoxRef.Small', { font = 'Tahoma', size = size(12), weight = 500, extended = true })
+    surface.CreateFont('VoxRef.Tiny', { font = 'Tahoma', size = size(10), weight = 600, extended = true })
+    surface.CreateFont('VoxRef.Big', { font = 'Tahoma', size = size(24), weight = 900, extended = true })
+end
+createReferenceFonts()
+
+local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
+local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
+local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
+local WIMG_LICENSE = vox.wimg.Create( 'hud_license', 'smooth mips' )
+local WIMG_WANTED = vox.wimg.Create( 'hud_wanted', 'smooth mips' )
 
 local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
 local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
@@ -28,6 +52,25 @@ local C = {
     soft = Color(150, 178, 205),
     track = Color(18, 35, 58, 235)
 }
+
+local function syncThemeColors()
+    local theme = hud.GetCurrentTheme and hud:GetCurrentTheme()
+    local colors = theme and theme.colors
+    if not colors then return end
+
+    C.bg = ColorAlpha(colors.primary or C.bg, 218)
+    C.panel = ColorAlpha(colors.secondary or C.panel, 198)
+    C.card = ColorAlpha(colors.secondary or C.card, 178)
+    C.border = ColorAlpha(colors.accent or C.border, 135)
+    C.accent = colors.accent or C.accent
+    C.green = colors.money or colors.positive or C.green
+    C.red = colors.negative or C.red
+    C.blue = colors.armor or C.blue
+    C.amber = colors.hunger or C.amber
+    C.text = colors.textPrimary or C.text
+    C.soft = colors.textSecondary or C.soft
+    C.track = ColorAlpha(colors.textPrimary or C.track, (theme.isDark or theme.dark) and 26 or 95)
+end
 
 local function rr(x,y,w,h,r,col)
     draw.RoundedBox(r or 8, math.floor(x), math.floor(y), math.floor(w), math.floor(h), col)
@@ -158,12 +201,22 @@ end
 
 local function drawReferenceMain(self, client, sw, sh)
     if not IsValid(client) then return end
-    local scale = math.Clamp(sh / 1080, .82, 1)
-    local pad = math.floor(16 * scale)
+    syncThemeColors()
+    createReferenceFonts()
+
+    local scale = math.Clamp(sh / 1080, .82, 1) * (hud.GetScale and hud.GetScale() or 1)
+    local pad = hud.GetScreenPadding and hud.GetScreenPadding() or math.floor(16 * scale)
     local x, y, w = pad, sh - math.floor(312 * scale), math.floor(286 * scale)
     local rowH = math.floor(22 * scale)
+    local showMoney = hud:GetOptionValue('display_money')
+    local showSalary = hud:GetOptionValue('display_salary')
+    local showJob = hud:GetOptionValue('display_job')
+    local showHealth = hud:GetOptionValue('display_health')
+    local showArmor = hud:GetOptionValue('display_armor')
     local showHunger, hunger = hasHunger(client)
+    showHunger = showHunger and hud:GetOptionValue('display_hunger')
     local level, xp, maxXP, xpFrac = getLevelData(client)
+    local showLevel = level and (hud:GetOptionValue('display_level') or hud:GetOptionValue('display_xp'))
     local h = math.floor(294 * scale)
 
     local hp = math.Clamp(client:Health() / math.max(client:GetMaxHealth(),1), 0, 1)
@@ -177,7 +230,7 @@ local function drawReferenceMain(self, client, sw, sh)
     local salary = client:getDarkRPVar('salary') or 0
     local job = client:getDarkRPVar('job') or team.GetName(client:Team()) or 'Citizen'
 
-    glass(x,y,w,h,14 * scale,C.accent)
+    glass(x,y,w,h,math.max(hud.GetRoundness and hud.GetRoundness() or 14 * scale, 12 * scale),C.accent)
     draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13 * scale,C.text,1,1)
 
     local avSize = math.floor(70 * scale)
@@ -197,35 +250,49 @@ local function drawReferenceMain(self, client, sw, sh)
     rr(x+w-31 * scale,y+19 * scale,18 * scale,18 * scale,9 * scale,Color(7, 25, 50, 175))
     rr(x+w-25 * scale,y+25 * scale,6 * scale,6 * scale,3 * scale,C.green)
     draw.SimpleText(client:Name(),'VoxRef.Title',x+91 * scale,y+20 * scale,C.text,0,0)
-    draw.SimpleText(job,'VoxRef.Small',x+91 * scale,y+42 * scale,C.green,0,0)
+    if showJob then
+        draw.SimpleText(job,'VoxRef.Small',x+91 * scale,y+42 * scale,C.green,0,0)
+    end
 
     local moneyX, moneyY = x + 94 * scale, y + 73 * scale
     local moneyW, moneyH = w - 111 * scale, 52 * scale
     local salaryX = moneyX + moneyW - 10 * scale
     local dividerX = moneyX + moneyW * .58
-    rr(moneyX - 8 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,190))
-    rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 17 * scale,2 * scale,Color(16, 115, 76, 220))
-    surface.SetDrawColor(Color(62, 96, 130, 105)); surface.DrawLine(dividerX, moneyY + 8 * scale, dividerX, moneyY + 39 * scale)
-    render.SetScissorRect(moneyX, moneyY, dividerX - 8 * scale, moneyY + 27 * scale, true)
-        draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX + 4 * scale,moneyY + 1 * scale,C.text,0,0)
-    render.SetScissorRect(0,0,0,0,false)
-    draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 29 * scale,C.soft,0,0)
-    render.SetScissorRect(dividerX + 7 * scale, moneyY, salaryX, moneyY + 27 * scale, true)
-        draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 3 * scale,C.green,2,0)
-    render.SetScissorRect(0,0,0,0,false)
-    draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 29 * scale,C.soft,2,0)
+    if showMoney or showSalary then
+        rr(moneyX - 8 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,190))
+        rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 17 * scale,2 * scale,ColorAlpha(C.green, 220))
+        if showMoney and showSalary then
+            surface.SetDrawColor(Color(62, 96, 130, 105)); surface.DrawLine(dividerX, moneyY + 8 * scale, dividerX, moneyY + 39 * scale)
+        end
+        if showMoney then
+            render.SetScissorRect(moneyX, moneyY, (showSalary and dividerX - 8 * scale or salaryX), moneyY + 27 * scale, true)
+                draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX + 4 * scale,moneyY + 1 * scale,C.text,0,0)
+            render.SetScissorRect(0,0,0,0,false)
+            draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 29 * scale,C.soft,0,0)
+        end
+        if showSalary then
+            render.SetScissorRect(showMoney and dividerX + 7 * scale or moneyX, moneyY, salaryX, moneyY + 27 * scale, true)
+                draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 3 * scale,C.green,2,0)
+            render.SetScissorRect(0,0,0,0,false)
+            draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 29 * scale,C.soft,2,0)
+        end
+    end
 
     local rowX, rowY, rowW = x + 20 * scale, y + 147 * scale, w - 42 * scale
-    drawStatRow(rowX, rowY, rowW, WIMG_HEART, 'Health', smooth.hp, C.red, math.floor(hp*100)..'%', scale)
-    rowY = rowY + rowH
-    drawStatRow(rowX, rowY, rowW, WIMG_SHIELD, 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%', scale)
-    rowY = rowY + rowH
+    if showHealth then
+        drawStatRow(rowX, rowY, rowW, WIMG_HEART, 'Health', smooth.hp, C.red, math.floor(hp*100)..'%', scale)
+        rowY = rowY + rowH
+    end
+    if showArmor then
+        drawStatRow(rowX, rowY, rowW, WIMG_SHIELD, 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%', scale)
+        rowY = rowY + rowH
+    end
     if showHunger then
         drawStatRow(rowX, rowY, rowW, WIMG_FOOD, 'Hunger', smooth.hu, C.amber, math.floor(hunger*100)..'%', scale)
         rowY = rowY + rowH
     end
 
-    if level then
+    if showLevel then
         rowY = math.max(rowY + math.floor(8 * scale), y + math.floor(218 * scale))
         draw.SimpleText('◎  Level ' .. level, 'VoxRef.Small', rowX, rowY, C.text, 0, 0)
         draw.SimpleText(string.Comma(xp) .. '/' .. string.Comma(maxXP) .. ' XP', 'VoxRef.Tiny', rowX + rowW, rowY + 1 * scale, C.soft, 2, 0)
@@ -279,6 +346,6 @@ local function drawRefWeaponSelector(self, client, sw, sh)
     end
 end
 
-hud:RegisterElement('main', { priority = 10, drawFn = drawReferenceMain, hideElements = {'DarkRP_HUD','DarkRP_LocalPlayerHUD','DarkRP_EntityDisplay'} })
+hud:RegisterHUDPreset('tactical_card', { name = 'Reference Card', style = 0, drawFn = drawReferenceMain })
 hud:RegisterElement('notifications', { priority = 90, drawFn = drawRefNotifications, hideElements = {} })
 hud:RegisterElement('weapon_selector', { priority = 80, drawFn = drawRefWeaponSelector, hideElements = {'CHudWeaponSelection'} })
