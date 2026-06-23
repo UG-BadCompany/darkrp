@@ -8,10 +8,14 @@ surface.CreateFont('VoxRef.Small', { font = 'Tahoma', size = 12, weight = 500, e
 surface.CreateFont('VoxRef.Tiny', { font = 'Tahoma', size = 10, weight = 600, extended = true })
 surface.CreateFont('VoxRef.Big', { font = 'Tahoma', size = 24, weight = 900, extended = true })
 
+local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
+local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
+local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
+
 local C = {
-    bg = Color(5, 14, 28, 232),
-    panel = Color(9, 28, 52, 232),
-    card = Color(12, 35, 65, 232),
+    bg = Color(4, 10, 24, 246),
+    panel = Color(6, 16, 34, 242),
+    card = Color(7, 19, 39, 226),
     border = Color(0, 174, 255, 95),
     accent = Color(0, 174, 255),
     green = Color(35, 225, 120),
@@ -28,19 +32,24 @@ local function rr(x,y,w,h,r,col)
 end
 
 local function glass(x,y,w,h,r,accent)
-    rr(x,y,w,h,r or 10,C.bg)
-    rr(x+1,y+1,w-2,h-2,r or 10,Color(8,24,45,210))
-    surface.SetDrawColor(accent or C.border)
-    surface.DrawOutlinedRect(x,y,w,h,1)
-    surface.SetDrawColor(ColorAlpha(accent or C.accent,26))
-    surface.DrawRect(x+1,y+1,3,h-2)
+    r = r or 12
+    accent = accent or C.accent
+    rr(x - 1,y - 1,w + 2,h + 2,r + 1,ColorAlpha(accent,34))
+    rr(x,y,w,h,r,C.bg)
+    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(5,15,32,238))
+    surface.SetDrawColor(ColorAlpha(accent,10))
+    surface.DrawRect(x + 1,y + 1,w - 2,math.floor(h * .22))
 end
 
 local function bar(x,y,w,h,frac,col)
     frac = math.Clamp(frac or 0,0,1)
+    rr(x - 1,y - 1,w + 2,h + 2,h/2 + 1,ColorAlpha(col,24))
     rr(x,y,w,h,h/2,C.track)
-    rr(x,y,w*frac,h,h/2,col)
-    surface.SetDrawColor(ColorAlpha(col,90)); surface.DrawOutlinedRect(x,y,w,h,1)
+    if frac > 0 then
+        render.SetScissorRect(x,y,x + w * frac,y + h,true)
+            rr(x,y,w,h,h/2,col)
+        render.SetScissorRect(0,0,0,0,false)
+    end
 end
 
 local smooth = { hp = 1, ar = 0, hu = 1, xp = .65 }
@@ -71,22 +80,18 @@ end
 local function ensureModelPanel(client, x, y, size)
     if not IsValid(modelPanel) then
         modelPanel = vgui.Create('DModelPanel')
-        modelPanel:SetPaintedManually(false)
+        modelPanel:SetPaintedManually(true)
         modelPanel:SetMouseInputEnabled(false)
         modelPanel:SetKeyboardInputEnabled(false)
         modelPanel.LayoutEntity = function() end
-        modelPanel.PaintOver = function(_, w, h)
-            surface.SetDrawColor(C.accent)
-            surface.DrawOutlinedRect(0, 0, w, h, 1)
-        end
     end
 
     modelPanel:SetVisible(true)
     modelPanel:SetPos(x, y)
     modelPanel:SetSize(size, size)
-    modelPanel:SetFOV(22)
-    modelPanel:SetCamPos(Vector(24, 0, 62))
-    modelPanel:SetLookAt(Vector(0, 0, 62))
+    modelPanel:SetFOV(28)
+    modelPanel:SetCamPos(Vector(24, 0, 64))
+    modelPanel:SetLookAt(Vector(0, 0, 63))
 
     local current = hud.GetModelData and hud.GetModelData(client)
     if current and (not lastModelData or not hud.CompareModelData(current, lastModelData)) then
@@ -95,17 +100,31 @@ local function ensureModelPanel(client, x, y, size)
     elseif not current and modelPanel:GetModel() ~= client:GetModel() then
         modelPanel:SetModel(client:GetModel())
     end
+
+    local ent = modelPanel.Entity
+    if IsValid(ent) then
+        local boneID = ent:LookupBone('ValveBiped.Bip01_Head1')
+        if boneID then
+            local bonePos = ent:GetBonePosition(boneID)
+            if bonePos then
+                bonePos:Add(Vector(0, 0, 2))
+                modelPanel:SetLookAt(bonePos)
+                modelPanel:SetCamPos(bonePos + Vector(24, 0, 3))
+                ent:SetEyeTarget(bonePos + Vector(24, 0, 3))
+            end
+        end
+    end
 end
 
 hook.Add('ShutDown', 'VoxRef.RemoveModelPanel', function()
     if IsValid(modelPanel) then modelPanel:Remove() end
 end)
 
-local function drawStatRow(x, y, w, icon, label, frac, col, value)
-    local iconW = 18
-    draw.SimpleText(icon, 'VoxRef.Small', x, y + 5, col, 1, 1)
-    draw.SimpleText(label, 'VoxRef.Small', x + 16, y, C.text, 0, 0)
-    bar(x + 86, y + 4, w - 132, 8, frac, col)
+local function drawStatRow(x, y, w, icon, label, frac, col, value, scale)
+    local iconSize = math.floor(15 * (scale or 1))
+    icon:Draw(x, y + math.floor(2 * (scale or 1)), iconSize, iconSize, col)
+    draw.SimpleText(label, 'VoxRef.Small', x + math.floor(22 * (scale or 1)), y, C.text, 0, 0)
+    bar(x + math.floor(88 * (scale or 1)), y + math.floor(5 * (scale or 1)), w - math.floor(134 * (scale or 1)), math.max(math.floor(8 * (scale or 1)), 5), frac, col)
     draw.SimpleText(value, 'VoxRef.Small', x + w, y, C.text, 2, 0)
 end
 
@@ -113,11 +132,11 @@ local function drawReferenceMain(self, client, sw, sh)
     if not IsValid(client) then return end
     local scale = math.Clamp(sh / 768, .82, 1.25)
     local pad = math.floor(16 * scale)
-    local x, y, w = pad, sh - math.floor(214 * scale), math.floor(304 * scale)
-    local rowH = math.floor(21 * scale)
+    local x, y, w = pad, sh - math.floor(226 * scale), math.floor(306 * scale)
+    local rowH = math.floor(22 * scale)
     local showHunger, hunger = hasHunger(client)
     local level, xp, maxXP, xpFrac = getLevelData(client)
-    local h = math.floor((level and 214 or 184) * scale - (showHunger and 0 or rowH))
+    local h = math.floor((level and 216 or 188) * scale - (showHunger and 0 or rowH))
 
     local hp = math.Clamp(client:Health() / math.max(client:GetMaxHealth(),1), 0, 1)
     local ar = math.Clamp(client:Armor() / math.max(client:GetMaxArmor() or 100,1), 0, 1)
@@ -130,33 +149,46 @@ local function drawReferenceMain(self, client, sw, sh)
     local salary = client:getDarkRPVar('salary') or 0
     local job = client:getDarkRPVar('job') or team.GetName(client:Team()) or 'Citizen'
 
-    glass(x,y,w,h,12,C.accent)
+    glass(x,y,w,h,14 * scale,C.accent)
     draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13 * scale,C.text,1,1)
 
-    local avSize = math.floor(72 * scale)
-    local avX, avY = x + math.floor(12 * scale), y + math.floor(14 * scale)
-    rr(avX - 2,avY - 2,avSize + 4,avSize + 4,10,Color(5,15,25,255))
+    local avSize = math.floor(74 * scale)
+    local avX, avY = x + math.floor(12 * scale), y + math.floor(15 * scale)
+    local avR = avSize * .5
+    local avCX, avCY = avX + avR, avY + avR
+    rr(avX - 4,avY - 4,avSize + 8,avSize + 8,avR + 4,ColorAlpha(C.accent,28))
+    rr(avX - 2,avY - 2,avSize + 4,avSize + 4,avR + 2,Color(5,15,25,245))
     ensureModelPanel(client, avX, avY, avSize)
+    local avatarMask = vox.CalculateCircle(avCX, avCY, avR, 48)
+    vox.DrawWithPolyMask(avatarMask, function()
+        rr(avX,avY,avSize,avSize,avR,C.panel)
+        modelPanel:PaintManual()
+    end)
+    vox.DrawOutlinedCircle(avCX, avCY, avR + 1, math.max(2 * scale, 1), C.accent)
 
     rr(x+w-29 * scale,y+18 * scale,8 * scale,8 * scale,4 * scale,C.green)
     draw.SimpleText(client:Name(),'VoxRef.Title',x+96 * scale,y+18 * scale,C.text,0,0)
     draw.SimpleText(job,'VoxRef.Small',x+96 * scale,y+40 * scale,C.green,0,0)
 
     local moneyX, moneyY = x + 96 * scale, y + 67 * scale
+    local moneyW, moneyH = w - 112 * scale, 45 * scale
     local salaryX = x + w - 18 * scale
-    draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX,moneyY,C.text,0,0)
-    draw.SimpleText('Wallet','VoxRef.Tiny',moneyX,moneyY + 27 * scale,C.soft,0,0)
-    surface.SetDrawColor(Color(62, 96, 130, 120)); surface.DrawLine(x + w - 98 * scale, moneyY + 4 * scale, x + w - 98 * scale, moneyY + 34 * scale)
-    draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 1 * scale,C.green,2,0)
-    draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 28 * scale,C.soft,2,0)
+    rr(moneyX - 9 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,196))
+    rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 18 * scale,2 * scale,ColorAlpha(C.green,230))
+    rr(moneyX - 8 * scale,moneyY + 2 * scale,14 * scale,moneyH - 10 * scale,7 * scale,ColorAlpha(C.green,28))
+    surface.SetDrawColor(Color(62, 96, 130, 120)); surface.DrawLine(x + w - 108 * scale, moneyY + 5 * scale, x + w - 108 * scale, moneyY + 35 * scale)
+    draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX + 4 * scale,moneyY + 1 * scale,C.text,0,0)
+    draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 28 * scale,C.soft,0,0)
+    draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 3 * scale,C.green,2,0)
+    draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 29 * scale,C.soft,2,0)
 
     local rowX, rowY, rowW = x + 22 * scale, y + 116 * scale, w - 46 * scale
-    drawStatRow(rowX, rowY, rowW, '♥', 'Health', smooth.hp, C.red, math.floor(hp*100)..'%')
+    drawStatRow(rowX, rowY, rowW, WIMG_HEART, 'Health', smooth.hp, C.red, math.floor(hp*100)..'%', scale)
     rowY = rowY + rowH
-    drawStatRow(rowX, rowY, rowW, '♦', 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%')
+    drawStatRow(rowX, rowY, rowW, WIMG_SHIELD, 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%', scale)
     rowY = rowY + rowH
     if showHunger then
-        drawStatRow(rowX, rowY, rowW, '✱', 'Hunger', smooth.hu, C.amber, math.floor(hunger*100)..'%')
+        drawStatRow(rowX, rowY, rowW, WIMG_FOOD, 'Hunger', smooth.hu, C.amber, math.floor(hunger*100)..'%', scale)
         rowY = rowY + rowH
     end
 
