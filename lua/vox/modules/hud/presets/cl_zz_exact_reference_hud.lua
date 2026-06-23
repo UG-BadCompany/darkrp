@@ -32,6 +32,12 @@ local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
 local WIMG_LICENSE = vox.wimg.Create( 'hud_license', 'smooth mips' )
 local WIMG_WANTED = vox.wimg.Create( 'hud_wanted', 'smooth mips' )
 
+local WIMG_HEART = vox.wimg.Create( 'hud_heart', 'smooth mips' )
+local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
+local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
+local WIMG_LICENSE = vox.wimg.Create( 'hud_license', 'smooth mips' )
+local WIMG_WANTED = vox.wimg.Create( 'hud_wanted', 'smooth mips' )
+
 local C = {
     bg = Color(3, 9, 26, 218),
     panel = Color(5, 14, 34, 198),
