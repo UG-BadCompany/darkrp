@@ -54,8 +54,8 @@ end
 vox.hud.OverrideGamemode( 'vox.hud.OverrideNotifications', overrideNotifications )
 
 local function drawNotifications( self, client, scrW, scrH )
-    local theme = hud:GetCurrentTheme()
-    local colors = ( theme and theme.colors ) or {}
+    local theme = vox.SafeTheme and vox.SafeTheme() or hud:GetCurrentTheme()
+    local colors = vox.SafeColors and vox.SafeColors( theme and theme.colors ) or ( ( theme and theme.colors ) or {} )
     local colorPrimary = colors.primary or Color( 20, 22, 28, 240 )
     local colorSecondary = colors.secondary or Color( 30, 34, 44, 240 )
     local colorTertiary = colors.tertiary or Color( 45, 50, 62, 240 )
@@ -92,13 +92,13 @@ local function drawNotifications( self, client, scrW, scrH )
         local data = cache[ index ]
         if ( not data ) then continue end
 
-        local notifText = data.text
+        local notifText = vox.SafeText and vox.SafeText( data.text ) or tostring( data.text or '' )
         local notifType = data.type or 0
         local notifTypeData = NOTIFICATION_TYPES[ notifType ] or NOTIFICATION_TYPES[ NOTIFY_GENERIC ]
         local colorKey = notifTypeData.colorKey or 'accent'
         local notifColor = colors[ colorKey ] or colors.accent or Color( 0, 174, 255 )
         local timeLeft = math.max( 0, data.endtime - CurTime() )
-        local lifeFraction = timeLeft / data.duration
+        local lifeFraction = timeLeft / math.max( tonumber( data.duration ) or 0, 0.01 )
         local expired = lifeFraction == 0
         local targetFraction = expired and 0 or 1
         local wimgObject = notifTypeData.wimg

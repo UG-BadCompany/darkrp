@@ -1,6 +1,10 @@
 vox.scoreboard.Buttons = vox.scoreboard.Buttons or {}
 
 local function openFrame()
+    if (IsValid(vox.scoreboard.Frame)) then
+        vox.scoreboard.Frame:Remove()
+    end
+
     local ratio = 1.641
     local scale = vox.scoreboard:GetOptionValue('scale') / 100
     local height = math.min(math.ceil((702 / 1080 * ScrH()) * scale), ScrH() * .9)
@@ -160,10 +164,15 @@ hook.Add('ScoreboardShow', 'vox.scoreboard.Show', function()
 end)
 
 hook.Add('ScoreboardHide', 'vox.scoreboard.Hide', function()
-    if (IsValid(vox.scoreboard.Frame) and not vox.scoreboard.Frame.closeDisabled) then
-        vox.scoreboard.Frame:Remove()
+    if (IsValid(vox.scoreboard.Frame)) then
+        vox.scoreboard.Frame:SetKeyboardInputEnabled(false)
         vox.scoreboard.Frame:SetMouseInputEnabled(false)
-        hook.Run('vox.scoreboard.OnClosed')
+        vox.scoreboard.Frame:ShowCloseButton(false)
+
+        if (not vox.scoreboard.Frame.closeDisabled) then
+            vox.scoreboard.Frame:Remove()
+            hook.Run('vox.scoreboard.OnClosed')
+        end
     end
 
     return true

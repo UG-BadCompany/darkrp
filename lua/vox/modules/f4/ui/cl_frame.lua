@@ -245,6 +245,12 @@ do
     end
 end
 
+function PANEL:OnKeyCodePressed(key)
+    if (key == KEY_ESCAPE) then
+        self:Remove()
+    end
+end
+
 function PANEL:Think()
     if (self.currentJob ~= LocalPlayer():Team() and not self.jobRemoveCalled) then
         self:Remove()

@@ -60,6 +60,10 @@ function vox.f4.ConvertJobColor(color)
 end
 
 function vox.f4.OpenFrame()
+    if (IsValid(vox.f4.frame)) then
+        vox.f4.frame:Remove()
+    end
+
     local frame = vgui.Create('vox.f4.Frame')
     local scale = (vox.f4:GetOptionValue('scale') or 100) / 100
     frame:SetSize(ScrW() * math.min(.78, .68 * scale), ScrH() * math.min(.82, .72 * scale))
