@@ -6,7 +6,7 @@ local lastChosenTab = 1
 
 local L = function(...) return vox.lang:Get(...) end
 
-DEFINE_BASECLASS('vox.Frame')
+DEFINE_BASECLASS('VoxRootFrame')
 
 local PANEL = {}
 
@@ -17,7 +17,7 @@ function PANEL:Init()
     self.containerPadding = padding
     self:SetAlpha(0)
     self:AlphaTo(255, .22, 0)
-    self:SetSize(ScrW() * .82, ScrH() * .82)
+    self:SetSize(ScrW() * .88, ScrH() * .86)
     self:Center()
 
     self.container = self:Add('Panel')
@@ -25,7 +25,7 @@ function PANEL:Init()
     self.container.Paint = function(panel, w, h)
         vox.DrawVoxGlass(0, 0, w, h, { radius = 22, alpha = 238, accent = colorAccent })
         vox.DrawVoxCornerTicks(16, 16, w - 32, h - 32, ColorAlpha(colorAccent, 80), 28)
-        draw.SimpleText('COMMAND CENTER', vox.Font('Comfortaa Bold@18'), vox.ScaleWide(24), vox.ScaleTall(18), ColorAlpha(color_white, 230), 0, 1)
+        draw.SimpleText('VOX MENU // COMMAND CENTER', vox.Font('Comfortaa Bold@18'), vox.ScaleWide(24), vox.ScaleTall(18), ColorAlpha(color_white, 230), 0, 1)
     end
 
     self.sidebar = self:Add('vox.Sidebar')
@@ -269,7 +269,7 @@ function PANEL:Think()
     end
 end
 
-vox.gui.Register('vox.f4.Frame', PANEL, 'vox.Frame')
+vox.gui.Register('vox.f4.Frame', PANEL, 'VoxRootFrame')
 
 -- Vox local preview helper
 -- vox.gui.Test('vox.f4.Frame', .65, .65, function(panel)

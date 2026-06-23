@@ -20,5 +20,5 @@ local function drawCommandStrip( self, client, scrW, scrH )
     vox.DrawVoxStatModule( x + w - hud.ScaleWide( 166 ), y + hud.ScaleTall( 8 ), hud.ScaleWide( 138 ), h - hud.ScaleTall( 16 ), 'Salary', helpers.FormatSalary( client:getDarkRPVar( 'salary' ) ), colors, { accent = colors.money or colors.positive, radius = 4 } )
 end
 
-hud:RegisterHUDPreset( 'command_strip', { name = 'Vox Command Strip', style = 1, drawFn = drawCommandStrip } )
+hud:RegisterHUDPreset( 'command_strip', { name = 'Command Strip', style = 1, drawFn = drawCommandStrip } )
 hud.DrawVoxCommandStrip = drawCommandStrip

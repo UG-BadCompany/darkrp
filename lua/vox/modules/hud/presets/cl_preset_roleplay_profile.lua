@@ -18,5 +18,5 @@ local function drawRoleplayProfile( self, client, scrW, scrH )
     helpers.DrawBar( x + hud.ScaleWide( 24 ), y + hud.ScaleTall( 112 ), hud.ScaleWide( 190 ), hud.ScaleTall( 8 ), armor, colors.armor or Color( 88, 166, 255 ), colors, 'ARMOR' )
 end
 
-hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Vox Roleplay Profile', style = 3, drawFn = drawRoleplayProfile } )
+hud:RegisterHUDPreset( 'roleplay_profile', { name = 'Roleplay Card', style = 3, drawFn = drawRoleplayProfile } )
 hud.DrawVoxRoleplayProfile = drawRoleplayProfile
