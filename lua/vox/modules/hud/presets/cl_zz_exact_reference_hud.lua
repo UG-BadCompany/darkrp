@@ -13,9 +13,9 @@ local WIMG_SHIELD = vox.wimg.Create( 'hud_shield', 'smooth mips' )
 local WIMG_FOOD = vox.wimg.Create( 'hud_food', 'smooth mips' )
 
 local C = {
-    bg = Color(4, 10, 24, 246),
-    panel = Color(6, 16, 34, 242),
-    card = Color(7, 19, 39, 226),
+    bg = Color(4, 10, 24, 205),
+    panel = Color(6, 16, 34, 188),
+    card = Color(7, 19, 39, 168),
     border = Color(0, 174, 255, 95),
     accent = Color(0, 174, 255),
     green = Color(35, 225, 120),
@@ -36,8 +36,8 @@ local function glass(x,y,w,h,r,accent)
     accent = accent or C.accent
     rr(x - 1,y - 1,w + 2,h + 2,r + 1,ColorAlpha(accent,34))
     rr(x,y,w,h,r,C.bg)
-    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(5,15,32,238))
-    surface.SetDrawColor(ColorAlpha(accent,10))
+    rr(x+1,y+1,w-2,h-2,math.max(r - 1, 0),Color(5,15,32,164))
+    surface.SetDrawColor(ColorAlpha(accent,6))
     surface.DrawRect(x + 1,y + 1,w - 2,math.floor(h * .22))
 end
 
@@ -132,11 +132,11 @@ local function drawReferenceMain(self, client, sw, sh)
     if not IsValid(client) then return end
     local scale = math.Clamp(sh / 768, .82, 1.25)
     local pad = math.floor(16 * scale)
-    local x, y, w = pad, sh - math.floor(226 * scale), math.floor(306 * scale)
-    local rowH = math.floor(22 * scale)
+    local x, y, w = pad, sh - math.floor(260 * scale), math.floor(288 * scale)
+    local rowH = math.floor(23 * scale)
     local showHunger, hunger = hasHunger(client)
     local level, xp, maxXP, xpFrac = getLevelData(client)
-    local h = math.floor((level and 216 or 188) * scale - (showHunger and 0 or rowH))
+    local h = math.floor((level and 270 or 244) * scale)
 
     local hp = math.Clamp(client:Health() / math.max(client:GetMaxHealth(),1), 0, 1)
     local ar = math.Clamp(client:Armor() / math.max(client:GetMaxArmor() or 100,1), 0, 1)
@@ -167,22 +167,21 @@ local function drawReferenceMain(self, client, sw, sh)
     vox.DrawOutlinedCircle(avCX, avCY, avR + 1, math.max(2 * scale, 1), C.accent)
 
     rr(x+w-29 * scale,y+18 * scale,8 * scale,8 * scale,4 * scale,C.green)
-    draw.SimpleText(client:Name(),'VoxRef.Title',x+96 * scale,y+18 * scale,C.text,0,0)
-    draw.SimpleText(job,'VoxRef.Small',x+96 * scale,y+40 * scale,C.green,0,0)
+    draw.SimpleText(client:Name(),'VoxRef.Title',x+94 * scale,y+20 * scale,C.text,0,0)
+    draw.SimpleText(job,'VoxRef.Small',x+94 * scale,y+42 * scale,C.green,0,0)
 
-    local moneyX, moneyY = x + 96 * scale, y + 67 * scale
+    local moneyX, moneyY = x + 94 * scale, y + 76 * scale
     local moneyW, moneyH = w - 112 * scale, 45 * scale
     local salaryX = x + w - 18 * scale
-    rr(moneyX - 9 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,196))
-    rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 18 * scale,2 * scale,ColorAlpha(C.green,230))
-    rr(moneyX - 8 * scale,moneyY + 2 * scale,14 * scale,moneyH - 10 * scale,7 * scale,ColorAlpha(C.green,28))
+    rr(moneyX - 9 * scale,moneyY - 4 * scale,moneyW,moneyH,10 * scale,ColorAlpha(C.card,150))
+    rr(moneyX - 4 * scale,moneyY + 7 * scale,3 * scale,moneyH - 18 * scale,2 * scale,Color(16, 115, 76, 220))
     surface.SetDrawColor(Color(62, 96, 130, 120)); surface.DrawLine(x + w - 108 * scale, moneyY + 5 * scale, x + w - 108 * scale, moneyY + 35 * scale)
     draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX + 4 * scale,moneyY + 1 * scale,C.text,0,0)
     draw.SimpleText('Wallet','VoxRef.Tiny',moneyX + 4 * scale,moneyY + 28 * scale,C.soft,0,0)
     draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 3 * scale,C.green,2,0)
     draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 29 * scale,C.soft,2,0)
 
-    local rowX, rowY, rowW = x + 22 * scale, y + 116 * scale, w - 46 * scale
+    local rowX, rowY, rowW = x + 22 * scale, y + 146 * scale, w - 46 * scale
     drawStatRow(rowX, rowY, rowW, WIMG_HEART, 'Health', smooth.hp, C.red, math.floor(hp*100)..'%', scale)
     rowY = rowY + rowH
     drawStatRow(rowX, rowY, rowW, WIMG_SHIELD, 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%', scale)
