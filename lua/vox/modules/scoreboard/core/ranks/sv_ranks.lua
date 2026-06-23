@@ -1,3 +1,7 @@
+vox.scoreboard = vox.scoreboard or {}
+vox.scoreboard.db = vox.scoreboard.db or {}
+assert(vox.scoreboard.db.Create, 'vox.scoreboard.db is not initialized before scoreboard ranks load')
+
 util.AddNetworkString('vox.scoreboard:SyncRanks')
 util.AddNetworkString('vox.scoreboard:ReplaceRank')
 util.AddNetworkString('vox.scoreboard:DeleteRank')

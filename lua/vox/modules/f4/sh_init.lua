@@ -7,7 +7,7 @@ vox:Addon('f4', {
 
 ----------------------------------------------------------------
 
-vox.Include('sv_sql.lua')
+vox.Include('vox/modules/f4/sv_sql.lua')
 vox.IncludeFolder('vox/modules/f4/languages/')
 vox.IncludeFolder('vox/modules/f4/core/', true)
 vox.IncludeFolder('vox/modules/f4/cfg/', true)

@@ -1,3 +1,7 @@
+vox.f4 = vox.f4 or {}
+vox.f4.db = vox.f4.db or {}
+assert(vox.f4.db.Create, 'vox.f4.db is not initialized before f4 stats load')
+
 util.AddNetworkString('vox.f4:RequestStats')
 
 local DAY_SECONDS = (24 * 60 * 60)
