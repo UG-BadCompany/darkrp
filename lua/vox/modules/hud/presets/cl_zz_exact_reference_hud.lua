@@ -19,7 +19,8 @@ local C = {
     blue = Color(70, 135, 255),
     amber = Color(255, 190, 65),
     text = Color(240, 248, 255),
-    soft = Color(150, 178, 205)
+    soft = Color(150, 178, 205),
+    track = Color(18, 35, 58, 235)
 }
 
 local function rr(x,y,w,h,r,col)
@@ -35,53 +36,136 @@ local function glass(x,y,w,h,r,accent)
     surface.DrawRect(x+1,y+1,3,h-2)
 end
 
-local function bar(x,y,w,h,frac,col,label)
+local function bar(x,y,w,h,frac,col)
     frac = math.Clamp(frac or 0,0,1)
-    rr(x,y,w,h,h/2,Color(20,38,58,230))
+    rr(x,y,w,h,h/2,C.track)
     rr(x,y,w*frac,h,h/2,col)
-    surface.SetDrawColor(ColorAlpha(col,160)); surface.DrawOutlinedRect(x,y,w,h,1)
-    if label then draw.SimpleText(label,'VoxRef.Tiny',x+w+6,y+h/2,C.text,0,1) end
+    surface.SetDrawColor(ColorAlpha(col,90)); surface.DrawOutlinedRect(x,y,w,h,1)
 end
 
-local smooth = { hp = 1, ar = 0, hu = 1, xp = .65, money = 0 }
+local smooth = { hp = 1, ar = 0, hu = 1, xp = .65 }
+local modelPanel
+local lastModelData
+
 local function formatMoney(v)
     if DarkRP and DarkRP.formatMoney then return DarkRP.formatMoney(v or 0) end
     return '$' .. string.Comma(v or 0)
 end
 
+local function hasHunger(client)
+    local energy = client:getDarkRPVar('Energy')
+    if energy ~= nil then return true, math.Clamp((tonumber(energy) or 0) / 100, 0, 1) end
+    if DarkRP and DarkRP.disabledDefaults and DarkRP.disabledDefaults.modules and DarkRP.disabledDefaults.modules.hungermod == false then
+        return true, 1
+    end
+    return false, 0
+end
+
+local function getLevelData(client)
+    if not hud.IsLevellingEnabled or not hud.IsLevellingEnabled() or not hud.GetLevelData then return end
+    local level, xp, maxXP = hud.GetLevelData(client)
+    if not level or not xp or not maxXP or maxXP <= 0 then return end
+    return level, xp, maxXP, math.Clamp(xp / maxXP, 0, 1)
+end
+
+local function ensureModelPanel(client, x, y, size)
+    if not IsValid(modelPanel) then
+        modelPanel = vgui.Create('DModelPanel')
+        modelPanel:SetPaintedManually(false)
+        modelPanel:SetMouseInputEnabled(false)
+        modelPanel:SetKeyboardInputEnabled(false)
+        modelPanel.LayoutEntity = function() end
+        modelPanel.PaintOver = function(_, w, h)
+            surface.SetDrawColor(C.accent)
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
+        end
+    end
+
+    modelPanel:SetVisible(true)
+    modelPanel:SetPos(x, y)
+    modelPanel:SetSize(size, size)
+    modelPanel:SetFOV(22)
+    modelPanel:SetCamPos(Vector(24, 0, 62))
+    modelPanel:SetLookAt(Vector(0, 0, 62))
+
+    local current = hud.GetModelData and hud.GetModelData(client)
+    if current and (not lastModelData or not hud.CompareModelData(current, lastModelData)) then
+        hud.UpdateModelIcon(modelPanel, current)
+        lastModelData = current
+    elseif not current and modelPanel:GetModel() ~= client:GetModel() then
+        modelPanel:SetModel(client:GetModel())
+    end
+end
+
+hook.Add('ShutDown', 'VoxRef.RemoveModelPanel', function()
+    if IsValid(modelPanel) then modelPanel:Remove() end
+end)
+
+local function drawStatRow(x, y, w, icon, label, frac, col, value)
+    local iconW = 18
+    draw.SimpleText(icon, 'VoxRef.Small', x, y + 5, col, 1, 1)
+    draw.SimpleText(label, 'VoxRef.Small', x + 16, y, C.text, 0, 0)
+    bar(x + 86, y + 4, w - 132, 8, frac, col)
+    draw.SimpleText(value, 'VoxRef.Small', x + w, y, C.text, 2, 0)
+end
+
 local function drawReferenceMain(self, client, sw, sh)
     if not IsValid(client) then return end
-    local pad = 16
-    local x, y, w, h = pad, sh - 190, 270, 172
+    local scale = math.Clamp(sh / 768, .82, 1.25)
+    local pad = math.floor(16 * scale)
+    local x, y, w = pad, sh - math.floor(214 * scale), math.floor(304 * scale)
+    local rowH = math.floor(21 * scale)
+    local showHunger, hunger = hasHunger(client)
+    local level, xp, maxXP, xpFrac = getLevelData(client)
+    local h = math.floor((level and 214 or 184) * scale - (showHunger and 0 or rowH))
+
     local hp = math.Clamp(client:Health() / math.max(client:GetMaxHealth(),1), 0, 1)
     local ar = math.Clamp(client:Armor() / math.max(client:GetMaxArmor() or 100,1), 0, 1)
-    local hunger = math.Clamp((client:getDarkRPVar('Energy') or 100) / 100, 0, 1)
     smooth.hp = Lerp(FrameTime()*10, smooth.hp, hp)
     smooth.ar = Lerp(FrameTime()*10, smooth.ar, ar)
     smooth.hu = Lerp(FrameTime()*10, smooth.hu, hunger)
+    if xpFrac then smooth.xp = Lerp(FrameTime()*10, smooth.xp, xpFrac) end
+
     local money = client:getDarkRPVar('money') or 0
     local salary = client:getDarkRPVar('salary') or 0
     local job = client:getDarkRPVar('job') or team.GetName(client:Team()) or 'Citizen'
+
     glass(x,y,w,h,12,C.accent)
-    draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13,C.text,1,1)
-    -- avatar frame
-    local avSize = 62
-    rr(x+12,y+14,avSize,avSize,10,Color(5,15,25,255))
-    surface.SetDrawColor(C.accent); surface.DrawOutlinedRect(x+12,y+14,avSize,avSize,1)
-    draw.SimpleText(string.sub(client:Name(),1,1),'VoxRef.Big',x+12+avSize/2,y+14+avSize/2,C.text,1,1)
-    rr(x+w-29,y+18,8,8,4,C.green)
-    draw.SimpleText(client:Name(),'VoxRef.Title',x+86,y+18,C.text,0,0)
-    draw.SimpleText(job,'VoxRef.Small',x+86,y+40,C.green,0,0)
-    draw.SimpleText(formatMoney(money),'VoxRef.Big',x+86,y+66,C.text,0,0)
-    draw.SimpleText('Wallet','VoxRef.Tiny',x+86,y+92,C.soft,0,0)
-    draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',x+w-16,y+67,C.green,2,0)
-    draw.SimpleText('Salary','VoxRef.Tiny',x+w-16,y+92,C.soft,2,0)
-    local bx, by = x+26, y+114
-    draw.SimpleText('♥','VoxRef.Small',x+14,by+2,C.red,0,1); bar(bx,by,160,9,smooth.hp,C.red,math.floor(hp*100)..'%')
-    draw.SimpleText('♦','VoxRef.Small',x+14,by+19,C.blue,0,1); bar(bx,by+17,160,9,smooth.ar,C.blue,math.floor(ar*100)..'%')
-    draw.SimpleText('★','VoxRef.Small',x+14,by+36,C.amber,0,1); bar(bx,by+34,160,9,smooth.hu,C.amber,math.floor(hunger*100)..'%')
-    draw.SimpleText('◎ Level 12','VoxRef.Small',x+18,y+h-19,C.accent,0,1)
-    bar(x+104,y+h-24,100,8,.65,C.blue,nil)
+    draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13 * scale,C.text,1,1)
+
+    local avSize = math.floor(72 * scale)
+    local avX, avY = x + math.floor(12 * scale), y + math.floor(14 * scale)
+    rr(avX - 2,avY - 2,avSize + 4,avSize + 4,10,Color(5,15,25,255))
+    ensureModelPanel(client, avX, avY, avSize)
+
+    rr(x+w-29 * scale,y+18 * scale,8 * scale,8 * scale,4 * scale,C.green)
+    draw.SimpleText(client:Name(),'VoxRef.Title',x+96 * scale,y+18 * scale,C.text,0,0)
+    draw.SimpleText(job,'VoxRef.Small',x+96 * scale,y+40 * scale,C.green,0,0)
+
+    local moneyX, moneyY = x + 96 * scale, y + 67 * scale
+    local salaryX = x + w - 18 * scale
+    draw.SimpleText(formatMoney(money),'VoxRef.Big',moneyX,moneyY,C.text,0,0)
+    draw.SimpleText('Wallet','VoxRef.Tiny',moneyX,moneyY + 27 * scale,C.soft,0,0)
+    surface.SetDrawColor(Color(62, 96, 130, 120)); surface.DrawLine(x + w - 98 * scale, moneyY + 4 * scale, x + w - 98 * scale, moneyY + 34 * scale)
+    draw.SimpleText('+'..formatMoney(salary),'VoxRef.Title',salaryX,moneyY + 1 * scale,C.green,2,0)
+    draw.SimpleText('Salary','VoxRef.Tiny',salaryX,moneyY + 28 * scale,C.soft,2,0)
+
+    local rowX, rowY, rowW = x + 22 * scale, y + 116 * scale, w - 46 * scale
+    drawStatRow(rowX, rowY, rowW, '♥', 'Health', smooth.hp, C.red, math.floor(hp*100)..'%')
+    rowY = rowY + rowH
+    drawStatRow(rowX, rowY, rowW, '♦', 'Armor', smooth.ar, C.blue, math.floor(ar*100)..'%')
+    rowY = rowY + rowH
+    if showHunger then
+        drawStatRow(rowX, rowY, rowW, '✱', 'Hunger', smooth.hu, C.amber, math.floor(hunger*100)..'%')
+        rowY = rowY + rowH
+    end
+
+    if level then
+        rowY = rowY + math.floor(10 * scale)
+        draw.SimpleText('◎  Level ' .. level, 'VoxRef.Small', rowX, rowY, C.text, 0, 0)
+        draw.SimpleText(string.Comma(xp) .. '/' .. string.Comma(maxXP) .. ' XP', 'VoxRef.Tiny', rowX + rowW, rowY + 1 * scale, C.soft, 2, 0)
+        bar(rowX + 96 * scale, rowY + 20 * scale, rowW - 116 * scale, 8 * scale, smooth.xp, C.blue)
+    end
 end
 
 local notifyCache = {}
