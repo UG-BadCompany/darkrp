@@ -16,5 +16,5 @@ local function drawMinimalEdge( self, client, scrW, scrH )
     vox.DrawVoxBadge( scrW - space - hud.ScaleWide( 230 ), scrH - space - hud.ScaleTall( 34 ), hud.ScaleWide( 210 ), hud.ScaleTall( 24 ), helpers.FormatMoney( client:getDarkRPVar( 'money' ) ), colors, { accent = colors.money or colors.positive } )
 end
 
-hud:RegisterHUDPreset( 'minimal_edge', { name = 'Vox Minimal Edge', style = 2, drawFn = drawMinimalEdge } )
+hud:RegisterHUDPreset( 'minimal_edge', { name = 'Minimal Corner', style = 2, drawFn = drawMinimalEdge } )
 hud.DrawVoxMinimalEdge = drawMinimalEdge

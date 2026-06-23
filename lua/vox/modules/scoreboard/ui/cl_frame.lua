@@ -7,20 +7,20 @@ local COLOR_GRAY = Color(149, 149, 149)
 local PANEL = {}
 
 function PANEL:Init()
-    self:SetTitle(vox.utf8.upper(vox.scoreboard:GetOptionValue('title')))
+    self:SetTitle('VOX SCOREBOARD')
 
     self.blur = vox.scoreboard.IsBlurActive()
 
     self:SetAlpha(0)
     self:AlphaTo(255, .16, 0)
-    self:SetSize(ScrW() * .74, ScrH() * .78)
+    self:SetSize(ScrW() * .80, ScrH() * .82)
     self:Center()
 
     self.container = self:Add('vox.Panel')
 
     self.sidebar = self:Add('vox.MiniSidebar')
     self.sidebar:SetContainer(self.container)
-    self.sidebar:SetWide(vox.ScaleTall(45)) -- it's important to set width at this point
+    self.sidebar:SetWide(vox.ScaleTall(64)) -- it's important to set width at this point
 
     self.sidebar:AddTab({
         name = '<PLAYERS>',
@@ -90,7 +90,7 @@ function PANEL:Think()
     end
 end
 
-vox.gui.Register('vox.Scoreboard.Frame', PANEL, 'vox.Frame')
+vox.gui.Register('vox.Scoreboard.Frame', PANEL, 'VoxRootFrame')
 
 -- Vox local preview helper
 -- vox.gui.Test('vox.Scoreboard.Frame', .6, .6, function(self)

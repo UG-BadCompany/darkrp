@@ -17,15 +17,22 @@ function helpers.GetPlayerJob( client )
 end
 
 function helpers.GetThemeData( client )
-    local colors, theme = vox.GetThemeColors()
+    local colors, theme = (vox.GetThemeColors and vox.GetThemeColors()) or {}, nil
+    colors = colors or (vox.PremiumPalette and vox.PremiumPalette()) or {}
+    colors.textPrimary = colors.textPrimary or colors.text or color_white
+    colors.textSecondary = colors.textSecondary or colors.muted or Color( 145, 160, 184 )
+    colors.accent = colors.accent or Color( 0, 188, 255 )
+    colors.negative = colors.negative or Color( 255, 78, 104 )
+    colors.positive = colors.positive or Color( 72, 221, 142 )
+    colors.money = colors.money or colors.positive
     return theme, colors, team.GetColor( client:Team() )
 end
 
 function helpers.DrawBar( x, y, w, h, fraction, color, colors, label )
     fraction = math.Clamp( fraction or 0, 0, 1 )
-    vox.DrawAngledRect( x, y, w, h, h * .45, ColorAlpha( colors.textPrimary or color_white, 18 ) )
+    draw.RoundedBox( h * .5, x, y, w, h, ColorAlpha( colors.textPrimary or color_white, 20 ) )
     render.SetScissorRect( x, y, x + w * fraction, y + h, true )
-        vox.DrawAngledRect( x, y, w, h, h * .45, color )
+        draw.RoundedBox( h * .5, x, y, w, h, color )
     render.SetScissorRect( 0, 0, 0, 0, false )
     if label then draw.SimpleText( label, hud.fonts.ExtraTinyBold, x + w, y + h * .5, colors.textSecondary, 2, 1 ) end
 end
