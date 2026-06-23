@@ -104,35 +104,8 @@ end
 
 function vox.GetThemeColors()
     local theme = vox.SafeTheme()
-    return vox.SafeColors( theme.colors ), theme
+    return theme.colors or {}, theme
 end
-
-function vox.SafeColors( colors )
-    local fallback = {
-        primary = Color( 7, 10, 18 ),
-        secondary = Color( 16, 22, 34 ),
-        tertiary = Color( 24, 35, 56 ),
-        accent = Color( 0, 188, 255 ),
-        secondaryAccent = Color( 139, 92, 246 ),
-        textPrimary = color_white or Color( 255, 255, 255 ),
-        textSecondary = Color( 170, 184, 205 ),
-        positive = Color( 72, 221, 142 ),
-        negative = Color( 255, 78, 104 ),
-        warning = Color( 255, 190, 88 ),
-        armor = Color( 88, 166, 255 ),
-        hunger = Color( 255, 190, 88 ),
-        money = Color( 72, 221, 142 )
-    }
-
-    colors = istable( colors ) and colors or {}
-
-    for key, value in pairs( fallback ) do
-        colors[ key ] = vox.SafeColor( colors[ key ], value )
-    end
-
-    return colors
-end
-
 
 function vox.SafeFont( preferred, fallback )
     local font = preferred or fallback or 'Trebuchet24'
@@ -159,39 +132,6 @@ end
 function vox.SafeIcon( path, fallback, params )
     return vox.SafeMaterial( path, fallback or 'icon16/information.png', params )
 end
-function vox.SafePlayer( ply )
-    if IsValid( ply ) and ply:IsPlayer() then
-        return ply
-    end
-
-    if CLIENT and IsValid( LocalPlayer() ) then
-        return LocalPlayer()
-    end
-end
-
-function vox.SafeMoney( value )
-    value = tonumber( value ) or 0
-
-    if DarkRP and DarkRP.formatMoney then
-        return DarkRP.formatMoney( value )
-    end
-
-    return '$' .. string.Comma( math.floor( value ) )
-end
-
-function vox.SafeText( value, fallback )
-    if value == nil then
-        return fallback or ''
-    end
-
-    value = tostring( value )
-    if value == '' then
-        return fallback or ''
-    end
-
-    return value
-end
-
 
 function vox:Config(key)
     local tSequence = string.Explode('.', key)

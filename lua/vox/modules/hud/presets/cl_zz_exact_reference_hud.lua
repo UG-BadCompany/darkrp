@@ -1,7 +1,3 @@
--- Disabled compatibility shim: this exact-reference prototype used mock data and overrode the functional Vox UI panels.
--- The maintained reference-style panels/elements now provide the visual direction while preserving real DarkRP logic.
-do return end
-
 -- Vox UI exact reference visual HUD override
 local hud = vox.hud
 if not hud then return end

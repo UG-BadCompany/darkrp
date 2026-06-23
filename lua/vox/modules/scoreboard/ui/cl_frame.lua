@@ -62,14 +62,6 @@ function PANEL:PerformLayout(w, h)
     self.sidebar:Dock(LEFT)
 end
 
-function PANEL:OnKeyCodePressed(key)
-    if (key == KEY_ESCAPE) then
-        self.closeDisabled = nil
-        self:Remove()
-        hook.Run('vox.scoreboard.OnClosed')
-    end
-end
-
 function PANEL:Paint(w, h)
     if (self.blur) then
         vox.DrawBlurExpensive(self, 9)
@@ -81,12 +73,6 @@ function PANEL:Paint(w, h)
 end
 
 function PANEL:Think()
-    local rightMouseDown = input.IsMouseDown and input.IsMouseDown( MOUSE_RIGHT )
-    if (not self.closeDisabled) then
-        self:SetKeyboardInputEnabled( rightMouseDown )
-        self:ShowCloseButton( rightMouseDown )
-    end
-
     if (self.closeDisabled) then
         local bindButtonName = input.LookupBinding('+showscores', true)
         local bindButtonInt = bindButtonName and input.GetKeyCode(bindButtonName)
@@ -96,12 +82,8 @@ function PANEL:Think()
         if (self.oldState == nil) then
             self.oldState = newState
         elseif (self.oldState ~= newState) then
-            if (not newState) then
-                self.closeDisabled = nil
-                self:SetKeyboardInputEnabled(false)
-                self:SetMouseInputEnabled(false)
+            if (newState) then
                 self:Remove()
-                hook.Run('vox.scoreboard.OnClosed')
             end
             self.oldState = newState
         end
