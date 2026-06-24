@@ -7,6 +7,11 @@ local oldScrollValue = 0
 
 local L = function(...) return vox.lang:Get(...) end
 
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or vox:Config('colors.accent')
+end
+
 local PANEL = {}
 
 local cvShowFavorite = CreateClientConVar('cl_vox_f4_show_favorite_jobs', '1', true, false)
@@ -32,7 +37,13 @@ function PANEL:Init()
     self.toolbar:DockPadding(toolbarPadding, toolbarPadding, toolbarPadding * 2, toolbarPadding)
     self.toolbar:DockMargin(0, 0, 0, vox.ScaleTall(10))
     self.toolbar.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+        local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
+        if vox.DrawVoxPanel then
+            vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
+            vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(5), h - vox.ScaleTall(16), themeAccent)
+        else
+            draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
+        end
     end
     self.toolbar.PerformLayout = function(panel, w, h)
         self.favToggler:SetWide(self.favToggler:GetContentWidth())
@@ -90,8 +101,9 @@ function PANEL:Init()
         local frame = vox.f4.frame
         if (not IsValid(frame)) then return end -- just in case
 
-        local realW, realH = frame.container:GetSize()
-        local padding = frame.containerPadding
+        local container = frame.container or frame.content or frame
+        local realW, realH = container:GetSize()
+        local padding = frame.containerPadding or vox.ScaleTall(18)
 
         if (panel.blur > 0) then
             vox.DrawBlurExpensive(panel, panel.blur)
@@ -276,7 +288,8 @@ function PANEL:CreateCategory(name, members, color)
     pnlCategory.m_bSquareCorners = true
     pnlCategory:SetExpanded(true)
     pnlCategory.canvas.Paint = function(p, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorPrimary, false, false, true, true)
+        local themePrimary, themeSecondary = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, themePrimary, false, false, true, true)
     end
 
     if (color) then
@@ -330,8 +343,9 @@ function PANEL:CreateMember(member, content, reason)
     item:Import('click')
     item:Import('hovercolor')
     item:SetColorKey('colorBG')
-    item:SetColorIdle(colorSecondary)
-    item:SetColorHover(colorTertiary)
+    local _, themeSecondary, themeTertiary = getThemeColors()
+    item:SetColorIdle(themeSecondary)
+    item:SetColorHover(themeTertiary)
     item:AddHoverSound()
     item:AddClickEffect()
     item.DoClick = function()

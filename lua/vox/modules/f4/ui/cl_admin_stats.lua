@@ -204,7 +204,12 @@ do
     function PANEL:InitBlock(id, title, class)
         local block = self:Add('Panel')
         block.Paint = function(panel, w, h)
-            draw.RoundedBox(8, 0, 0, w, h, colorPrimary)
+            local primary, secondary, _, accent = getThemeColors()
+            if vox.DrawVoxPanel then
+                vox.DrawVoxPanel(0, 0, w, h, { primary = primary, secondary = secondary, accent = accent }, 8)
+            else
+                draw.RoundedBox(8, 0, 0, w, h, primary)
+            end
         end
 
         local header = block:Add('vox.Label')
@@ -216,7 +221,10 @@ do
         header:CenterText()
         header:SetTall(self.smallHeaderHeight)
         header.Paint = function(panel, w, h)
-            draw.RoundedBoxEx(8, 0, 0, w, h, colorSecondary, true, true)
+            local _, secondary, _, accent = getThemeColors()
+            draw.RoundedBoxEx(8, 0, 0, w, h, secondary, true, true)
+            surface.SetDrawColor(ColorAlpha(accent, 90))
+            surface.DrawRect(vox.ScaleWide(12), h - 1, w - vox.ScaleWide(24), 1)
         end
 
         local content = block:Add(class or 'Panel')

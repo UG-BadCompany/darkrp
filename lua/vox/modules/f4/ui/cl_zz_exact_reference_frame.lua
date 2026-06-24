@@ -48,6 +48,9 @@ function PANEL:Init()
     self:SetAlpha(0); self:AlphaTo(255,.15,0); self:MakePopup()
     self.active='dashboard'
     self.sidebar=self:Add('Panel'); self.content=self:Add('Panel')
+    -- Compatibility for legacy F4 tab panels/previews that expect the old frame.container API.
+    self.container = self.content
+    self.containerPadding = 18
     self.closeButton=self:Add('DButton'); self.closeButton:SetText(''); self.closeButton.DoClick=function() self:Remove() end
     self.closeButton.Paint=function(p,w,h) draw.SimpleText('×','VoxRef.Title',w*.5,h*.5,p:IsHovered() and C.red or C.text,1,1) end
     self.tabs={
@@ -57,7 +60,7 @@ function PANEL:Init()
         {id='inventory',name='Inventory',desc='Your items & equipment',icon=ICON.inventory,class='vox.f4.Inventory'},
         {id='upgrades',name='Upgrades',desc='Enhance your abilities',icon=ICON.upgrades,class='vox.f4.Upgrades'},
         {id='settings',name='Settings',desc='Personalize your experience',icon=ICON.settings,class='vox.f4.Settings'},
-        {id='admin',name='Admin Panel',desc='Staff management',icon=ICON.admin,admin=true}
+        {id='admin',name='Admin Panel',desc='Staff management',icon=ICON.admin,class='vox.f4.AdminStats',admin=true}
     }
     self:BuildSidebar(); self:BuildContent()
 end
@@ -97,10 +100,6 @@ function PANEL:BuildSidebar()
             draw.SimpleText(t.desc,'VoxRef.Tiny',48,24,C.soft,0,0)
         end
         b.DoClick=function()
-            if t.admin then
-                if vox.f4 and vox.f4.OpenAdminSettings then vox.f4.OpenAdminSettings(); self:Remove() end
-                return
-            end
             self.active=t.id; self.activeTab=t; self:BuildContent()
         end
     end
