@@ -26,10 +26,13 @@ function PANEL:Init()
     self.button:Import('click')
     self.button:Import('hovercolor')
     self.button:SetColorKey('backgroundColor')
-    self.button:SetColorIdle(vox.ColorBetween(colorSecondary, colorPrimary))
-    self.button:SetColorHover(colorTertiary)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.button:SetColorIdle(vox.ColorBetween(colors.secondary or colorSecondary, colors.primary or colorPrimary))
+    self.button:SetColorHover(colors.tertiary or colorTertiary)
     self.button.textColor = color_white
     self.button.Paint = function(p, w, h)
+        local uiColors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        p:SetColorHover(uiColors.tertiary or colorTertiary)
         if (self.m_bSquareCorners and self.canvas:GetTall() > 0) then
             draw.RoundedBoxEx(8, 0, 0, w, h, p.backgroundColor, true, true)
         else
@@ -40,7 +43,7 @@ function PANEL:Init()
         local sz = math.floor(h * .5)
 
         if (self.wimage) then
-            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, colorAccent)
+            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, uiColors.accent or colorAccent)
 
             x = h
         end
@@ -77,9 +80,11 @@ end
 
 function PANEL:SetExpanded(bBool)
     if (bBool) then
-        self.button:SetColorIdle(colorSecondary)
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        self.button:SetColorIdle(colors.secondary or colorSecondary)
     else
-        self.button:SetColorIdle(vox.ColorBetween(colorSecondary, colorPrimary))
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        self.button:SetColorIdle(vox.ColorBetween(colors.secondary or colorSecondary, colors.primary or colorPrimary))
     end
 
     self.m_bExpanded = bBool
