@@ -6,14 +6,14 @@ surface.CreateFont('VoxRef.Tiny', {font='Tahoma', size=10, weight=600, extended=
 surface.CreateFont('VoxRef.CardTitle', {font='Tahoma', size=20, weight=900, extended=true})
 
 local C={bg=Color(5,13,30,246),panel=Color(8,21,44,238),card=Color(12,28,58,232),card2=Color(15,36,70,232),border=Color(54,91,145,110),accent=Color(70,135,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
-local WIMG_WALLET = vox.wimg.Create('hud_license', 'smooth mips')
-local WIMG_JOB = vox.wimg.Create('hud_shield', 'smooth mips')
-local WIMG_SHIELD = vox.wimg.Create('hud_shield', 'smooth mips')
-local WIMG_PLAYERS = vox.wimg.Create('hud_chat', 'smooth mips')
-local WIMG_TIME = vox.wimg.Create('hud_lockdown', 'smooth mips')
-local WIMG_ALERT = vox.wimg.Create('hud_connection_lost', 'smooth mips')
-local WIMG_STAR = vox.wimg.Create('hud_wanted', 'smooth mips')
-local WIMG_ACTION = vox.wimg.Create('hud_microphone', 'smooth mips')
+local WIMG_WALLET = vox.wimg.Simple('https://i.imgur.com/gltIVYm.png', 'smooth mips')
+local WIMG_JOB = vox.wimg.Simple('https://i.imgur.com/6Bvc6jX.png', 'smooth mips')
+local WIMG_SHIELD = vox.wimg.Simple('https://i.imgur.com/6Bvc6jX.png', 'smooth mips')
+local WIMG_PLAYERS = vox.wimg.Simple('https://i.imgur.com/q5Lw2qs.png', 'smooth mips')
+local WIMG_TIME = vox.wimg.Simple('https://i.imgur.com/4K2lTOO.png', 'smooth mips')
+local WIMG_ALERT = vox.wimg.Simple('https://i.imgur.com/gcM94Fk.png', 'smooth mips')
+local WIMG_STAR = vox.wimg.Simple('https://i.imgur.com/rFyMifb.png', 'smooth mips')
+local WIMG_ACTION = vox.wimg.Simple('https://i.imgur.com/gcM94Fk.png', 'smooth mips')
 local function rr(x,y,w,h,r,col) draw.RoundedBox(r or 8,x,y,w,h,col) end
 local function outline(x,y,w,h,r,col) surface.SetDrawColor(col or C.border); surface.DrawOutlinedRect(x,y,w,h,1) end
 local function glass(x,y,w,h,r,accent) rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,Color(8,21,44,225)); outline(x,y,w,h,r,accent or C.border) end
