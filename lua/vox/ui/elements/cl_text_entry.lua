@@ -36,11 +36,16 @@ local DISPATCH = {
 }
 
 function PANEL:Init()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    local primary = colors.primary or colorBG
+    local secondary = colors.secondary or colorSecondary
+    local accent = colors.accent or colorAccent
+
     self:SetTextSpace(vox.ScaleWide(10))
     self:SetTall(vox.ScaleTall(30))
     self.colors = {
-        outline = colorSecondary,
-        accent = colorAccent
+        outline = secondary,
+        accent = accent
     }
 
     self.textEntry = self:Add('DTextEntry')
@@ -49,7 +54,8 @@ function PANEL:Init()
     self.textEntry:DockMargin(0, 0, 0, 0)
     self.textEntry:SetDrawLanguageID(false)
     self.textEntry.Paint = function(panel, w, h)
-        panel:DrawTextEntryText(panel:GetTextColor(), colorAccent, panel:GetTextColor())
+        local uiColors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        panel:DrawTextEntryText(panel:GetTextColor(), uiColors.accent or colorAccent, panel:GetTextColor())
     end
 
     for _, name in ipairs(MUTATORS) do
@@ -67,8 +73,8 @@ function PANEL:Init()
 
     self:Import('hovercolor')
     self:SetColorKey('colorBackground')
-    self:SetColorIdle(colorBG)
-    self:SetColorHover(vox.OffsetColor(colorBG, -5))
+    self:SetColorIdle(primary)
+    self:SetColorHover(vox.OffsetColor(primary, -5))
 
     self.focusAnimFraction = 0
     self.currentOutlineColor = vox.CopyColor( self.colors.outline )
@@ -92,15 +98,19 @@ end
 
 function PANEL:OnDisabled()
     local offset = -5
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    local primary = colors.primary or colorBG
     self.voxAnims = {}
-    self:SetColorIdle(vox.OffsetColor(colorBG, offset))
+    self:SetColorIdle(vox.OffsetColor(primary, offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
 end
 
 function PANEL:OnEnabled()
     local offset = 0
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    local primary = colors.primary or colorBG
     self.voxAnims = {}
-    self:SetColorIdle(vox.OffsetColor(colorBG, offset))
+    self:SetColorIdle(vox.OffsetColor(primary, offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
 end
 
@@ -140,6 +150,10 @@ function PANEL:OnLoseFocus()
 end
 
 function PANEL:Paint(w, h)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.colors.outline = colors.secondary or self.colors.outline
+    self.colors.accent = colors.accent or self.colors.accent
+
     local text = self:GetPlaceholderText()
     local color = self:GetPlaceholderColor()
     local thickness = 1
@@ -174,7 +188,7 @@ function PANEL:Paint(w, h)
         if (placeholderWebImage) then
             local size = vox.ScaleTall(12)
 
-            placeholderWebImage:Draw(x, h * .5 - size * .5, size, size, colorAccent)
+            placeholderWebImage:Draw(x, h * .5 - size * .5, size, size, self.colors.accent)
 
             x = x + size + vox.ScaleWide(5)
         end

@@ -42,11 +42,12 @@ do
 end
 
 function vox.hud.IsElementEnabled( id )
-    local optionID = 'hud_display_' .. id
+    local optionElementID = id == 'notifications' and 'alerts' or id
+    local optionID = 'hud_display_' .. optionElementID
     local optionTable = vox.inconfig.options[ optionID ]
 
     if ( optionTable ) then
-        return vox.hud:GetOptionValue( 'display_' .. id )
+        return vox.hud:GetOptionValue( 'display_' .. optionElementID )
     end
 
     return true

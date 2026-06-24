@@ -13,18 +13,23 @@ AccessorFunc(PANEL, 'm_colOutlineIdleColor', 'OutlineIdleColor')
 AccessorFunc(PANEL, 'm_bHideOptionIcon', 'HideOptionIcon')
 
 function PANEL:Init()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    local primary = colors.primary or colorPrimary
+    local secondary = colors.secondary or colorSecondary
+    local accent = colors.accent or colorAccent
+
     self:Import('click')
     self:Import('hovercolor')
     self:SetTall(vox.ScaleTall(30))
 
     self:SetColorKey('backgroundColor')
-    self:SetColorIdle(colorPrimary)
+    self:SetColorIdle(primary)
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5))
 
     self:SetFont(vox.Font('Comfortaa@16'))
 
-    self:SetOutlineIdleColor(colorSecondary)
-    self:SetOutlineActiveColor(colorAccent)
+    self:SetOutlineIdleColor(secondary)
+    self:SetOutlineActiveColor(accent)
     self:Reset()
 
     self.options = {}
@@ -36,6 +41,11 @@ function PANEL:SetOutlineIdleColor(color)
 end
 
 function PANEL:Paint(w, h)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self:SetColorIdle(colors.primary or self:GetColorIdle())
+    self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5))
+    self:SetOutlineActiveColor(colors.accent or self:GetOutlineActiveColor())
+
     local thickness = 1
     local currentOutlineColor = self.currentOutlineColor
 
