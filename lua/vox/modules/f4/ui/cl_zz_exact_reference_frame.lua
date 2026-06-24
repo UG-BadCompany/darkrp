@@ -6,23 +6,37 @@ surface.CreateFont('VoxRef.Tiny', {font='Tahoma', size=10, weight=600, extended=
 surface.CreateFont('VoxRef.CardTitle', {font='Tahoma', size=20, weight=900, extended=true})
 
 local C={bg=Color(5,13,30,246),panel=Color(8,21,44,238),card=Color(12,28,58,232),card2=Color(15,36,70,232),border=Color(54,91,145,110),accent=Color(70,135,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
-local WIMG_WALLET = vox.wimg.Simple('https://i.imgur.com/gltIVYm.png', 'smooth mips')
-local WIMG_JOB = vox.wimg.Simple('https://i.imgur.com/6Bvc6jX.png', 'smooth mips')
-local WIMG_SHIELD = vox.wimg.Simple('https://i.imgur.com/6Bvc6jX.png', 'smooth mips')
-local WIMG_PLAYERS = vox.wimg.Simple('https://i.imgur.com/q5Lw2qs.png', 'smooth mips')
-local WIMG_TIME = vox.wimg.Simple('https://i.imgur.com/4K2lTOO.png', 'smooth mips')
-local WIMG_ALERT = vox.wimg.Simple('https://i.imgur.com/gcM94Fk.png', 'smooth mips')
-local WIMG_STAR = vox.wimg.Simple('https://i.imgur.com/rFyMifb.png', 'smooth mips')
-local WIMG_ACTION = vox.wimg.Simple('https://i.imgur.com/gcM94Fk.png', 'smooth mips')
+local ICON = {
+    dashboard = Material('vox_f4menu/dashboard.png', 'smooth mips'),
+    jobs = Material('vox_f4menu/jobs.png', 'smooth mips'),
+    shop = Material('vox_f4menu/shop.png', 'smooth mips'),
+    inventory = Material('vox_f4menu/entities.png', 'smooth mips'),
+    upgrades = Material('vox_f4menu/stats.png', 'smooth mips'),
+    settings = Material('vox_f4menu/settings.png', 'smooth mips'),
+    admin = Material('vox_framework/settings.png', 'smooth mips'),
+    wallet = Material('vox_f4menu/donate.png', 'smooth mips'),
+    players = Material('vox_framework/user.png', 'smooth mips'),
+    search = Material('vox_f4menu/search.png', 'smooth mips'),
+    action = Material('vox_f4menu/rules.png', 'smooth mips'),
+    wanted = Material('vox_hud/wanted.png', 'smooth mips'),
+    time = Material('vox_hud/lockdown.png', 'smooth mips'),
+    alert = Material('vox_hud/notify_hint.png', 'smooth mips')
+}
 local function rr(x,y,w,h,r,col) draw.RoundedBox(r or 8,x,y,w,h,col) end
 local function outline(x,y,w,h,r,col) surface.SetDrawColor(col or C.border); surface.DrawOutlinedRect(x,y,w,h,1) end
 local function glass(x,y,w,h,r,accent) rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,Color(8,21,44,225)); outline(x,y,w,h,r,accent or C.border) end
 local function softCard(x,y,w,h,r,col) rr(x,y,w,h,r or 8,col or C.card); outline(x,y,w,h,r,ColorAlpha(C.border,70)) end
 local function matIcon(txt,x,y,col) draw.SimpleText(txt,'VoxRef.Title',x,y,col or C.text,1,1) end
 local function money(v) if DarkRP and DarkRP.formatMoney then return DarkRP.formatMoney(v or 0) end return '$'..string.Comma(v or 0) end
+local function drawIcon(icon,x,y,w,h,col)
+    if not icon then return end
+    surface.SetDrawColor(col or C.text)
+    surface.SetMaterial(icon)
+    surface.DrawTexturedRect(x,y,w,h)
+end
 local function iconBubble(icon,x,y,size,col)
     rr(x,y,size,size,size*.5,ColorAlpha(col or C.accent,36))
-    icon:Draw(x+size*.24,y+size*.24,size*.52,size*.52,col or C.accent)
+    drawIcon(icon,x+size*.24,y+size*.24,size*.52,size*.52,col or C.accent)
 end
 
 local PANEL={}
@@ -37,8 +51,13 @@ function PANEL:Init()
     self.closeButton=self:Add('DButton'); self.closeButton:SetText(''); self.closeButton.DoClick=function() self:Remove() end
     self.closeButton.Paint=function(p,w,h) draw.SimpleText('×','VoxRef.Title',w*.5,h*.5,p:IsHovered() and C.red or C.text,1,1) end
     self.tabs={
-        {'dashboard','Dashboard','Overview & statistics','▦'}, {'jobs','Jobs','Choose your path','♜'}, {'shop','Shop','Purchase items','▣'},
-        {'inventory','Inventory','Your items & equipment','▦'}, {'upgrades','Upgrades','Enhance your abilities','⚙'}, {'settings','Settings','Personalize your experience','⚙'}, {'admin','Admin Panel','Staff management','⚙'}
+        {id='dashboard',name='Dashboard',desc='Overview & statistics',icon=ICON.dashboard},
+        {id='jobs',name='Jobs',desc='Choose your path',icon=ICON.jobs,class='vox.f4.Jobs'},
+        {id='shop',name='Shop',desc='Purchase items',icon=ICON.shop,class='vox.f4.Shop'},
+        {id='inventory',name='Inventory',desc='Your items & equipment',icon=ICON.inventory,class='vox.f4.Inventory'},
+        {id='upgrades',name='Upgrades',desc='Enhance your abilities',icon=ICON.upgrades,class='vox.f4.Upgrades'},
+        {id='settings',name='Settings',desc='Personalize your experience',icon=ICON.settings,class='vox.f4.Settings'},
+        {id='admin',name='Admin Panel',desc='Staff management',icon=ICON.admin,admin=true}
     }
     self:BuildSidebar(); self:BuildContent()
 end
@@ -70,15 +89,21 @@ function PANEL:BuildSidebar()
     for _,t in ipairs(self.tabs) do
         local b=s:Add('DButton'); b:SetText(''); b:SetPos(12,y); b:SetSize(196,42); y=y+48
         b.Paint=function(p,w,h)
-            local active=self.active==t[1]
+            local active=self.active==t.id
             rr(0,0,w,h,7, active and Color(30,80,150,215) or Color(10,31,58,180))
             if active then rr(0,0,4,h,3,C.accent) end
             if p:IsHovered() then outline(0,0,w,h,7,ColorAlpha(C.accent,80)) end
-            matIcon(t[4],24,21,active and C.text or C.soft)
-            draw.SimpleText(t[2],'VoxRef.Small',48,8,C.text,0,0)
-            draw.SimpleText(t[3],'VoxRef.Tiny',48,24,C.soft,0,0)
+            drawIcon(t.icon,18,15,12,12,active and C.text or C.soft)
+            draw.SimpleText(t.name,'VoxRef.Small',48,8,C.text,0,0)
+            draw.SimpleText(t.desc,'VoxRef.Tiny',48,24,C.soft,0,0)
         end
-        b.DoClick=function() self.active=t[1]; self:BuildContent() end
+        b.DoClick=function()
+            if t.admin then
+                if vox.f4 and vox.f4.OpenAdminSettings then vox.f4.OpenAdminSettings(); self:Remove() end
+                return
+            end
+            self.active=t.id; self.activeTab=t; self:BuildContent()
+        end
     end
     s.PaintOver=function(_,w,h)
         draw.SimpleText('Online Players','VoxRef.Tiny',18,h-48,C.soft,0,0); draw.SimpleText(#player.GetAll()..' / 64','VoxRef.Tiny',w-18,h-48,C.text,2,0)
@@ -100,22 +125,31 @@ function PANEL:BuildContent()
     c.Paint=function(_,w,h) softCard(0,0,w,h,12,Color(5,15,34,225)) end
     local search=c:Add('DTextEntry'); self.search=search; search:SetPos(18,14); search:SetSize(math.max(c:GetWide()-36,220),30); search:SetText(''); search:SetPlaceholderText('Search the menu...')
     search.Paint=function(p,w,h) rr(0,0,w,h,7,Color(5,18,39,230)); outline(0,0,w,h,7,Color(37,65,110,120)); p:DrawTextEntryText(C.text,C.accent,C.text) end
-    c.PerformLayout=function(_,w,h) if IsValid(search) then search:SetPos(18,14); search:SetSize(w-36,30) end end
-    if self.active=='dashboard' then self:BuildDashboard(c) elseif self.active=='jobs' then self:BuildJobs(c) elseif self.active=='shop' then self:BuildShop(c) else self:BuildPlaceholder(c,string.upper(self.active)) end
+    c.PerformLayout=function(_,w,h)
+        if IsValid(search) then search:SetPos(18,14); search:SetSize(w-36,30) end
+        if IsValid(self.nativeContent) then self.nativeContent:SetPos(18,56); self.nativeContent:SetSize(w-36,h-74) end
+    end
+    local activeTab=self.activeTab
+    if self.active=='dashboard' then self:BuildDashboard(c) elseif activeTab and activeTab.class then self:BuildNativeTab(c, activeTab.class) else self:BuildPlaceholder(c,string.upper(self.active)) end
+end
+function PANEL:BuildNativeTab(c,class)
+    local panel=c:Add(class)
+    self.nativeContent=panel
+    panel:SetPos(18,56); panel:SetSize(math.max(c:GetWide()-36,260),math.max(c:GetTall()-74,260))
 end
 function PANEL:BuildDashboard(c)
     local lp=LocalPlayer(); local moneyVal=IsValid(lp) and (lp:getDarkRPVar('money') or 0) or 0
     draw.SimpleText('', 'VoxRef.Text',0,0,C.text)
     draw.SimpleText('DASHBOARD','VoxRef.Small',18,58,C.text,0,0)
-    addCard(c,18,78,150,66,'Wallet',money(moneyVal),'Bank Balance',C.green,WIMG_WALLET)
-    addCard(c,178,78,150,66,'Current Job',IsValid(lp) and (lp:getDarkRPVar('job') or 'Citizen') or 'Citizen','View Jobs →',C.accent,WIMG_JOB)
-    addCard(c,338,78,150,66,'Players Online',#player.GetAll()..' / 64','Join the community',C.accent,WIMG_PLAYERS)
-    addCard(c,498,78,150,66,'Server Time',os.date('%H:%M'),'Today',C.accent,WIMG_TIME)
-    self:ListPanel(c,18,158,300,132,'ANNOUNCEMENTS',{{'Welcome to Vox City','Make sure to read the rules','2h ago',WIMG_ALERT,C.green},{'Double XP Weekend','Enjoy 2x XP on all jobs','1d ago',WIMG_STAR,C.amber},{'Update v1.0.5','View changelog on Discord','2d ago',WIMG_PLAYERS,C.accent}},'VIEW ALL')
-    self:ListPanel(c,330,158,230,132,'POPULAR JOBS',{{'Police Officer','$75 / min','8/10',WIMG_JOB,C.accent},{'Medic','$85 / min','3/6',WIMG_WALLET,C.amber},{'SWAT','$95 / min','2/4',WIMG_SHIELD or WIMG_JOB,C.red}},'VIEW ALL JOBS')
-    self:ListPanel(c,572,158,180,132,'QUICK ACTIONS',{{'Laws of the Land','',nil,WIMG_ACTION,C.text},{'Wanted Players','',nil,WIMG_STAR,C.text},{'Report Player','',nil,WIMG_ALERT,C.text},{'Open Inventory','',nil,WIMG_WALLET,C.text}})
-    self:ListPanel(c,18,304,300,116,'STAFF ONLINE',{{'superadmin','Owner','●',WIMG_PLAYERS,C.green},{'Voxberg','Administrator','●',WIMG_PLAYERS,C.green}})
-    self:ListPanel(c,330,304,422,116,'WANTED PLAYERS',{{'John Wick','★★★★★','$5,000',WIMG_STAR,C.amber},{'Tony Montana','★★★★☆','$2,500',WIMG_STAR,C.amber}})
+    addCard(c,18,78,150,66,'Wallet',money(moneyVal),'Bank Balance',C.green,ICON.wallet)
+    addCard(c,178,78,150,66,'Current Job',IsValid(lp) and (lp:getDarkRPVar('job') or 'Citizen') or 'Citizen','View Jobs →',C.accent,ICON.jobs)
+    addCard(c,338,78,150,66,'Players Online',#player.GetAll()..' / 64','Join the community',C.accent,ICON.players)
+    addCard(c,498,78,150,66,'Server Time',os.date('%H:%M'),'Today',C.accent,ICON.time)
+    self:ListPanel(c,18,158,300,132,'ANNOUNCEMENTS',{{'Welcome to Vox City','Make sure to read the rules','2h ago',ICON.alert,C.green},{'Double XP Weekend','Enjoy 2x XP on all jobs','1d ago',ICON.wanted,C.amber},{'Update v1.0.5','View changelog on Discord','2d ago',ICON.players,C.accent}},'VIEW ALL')
+    self:ListPanel(c,330,158,230,132,'POPULAR JOBS',{{'Police Officer','$75 / min','8/10',ICON.jobs,C.accent},{'Medic','$85 / min','3/6',ICON.wallet,C.amber},{'SWAT','$95 / min','2/4',ICON.admin,C.red}},'VIEW ALL JOBS')
+    self:ListPanel(c,572,158,180,132,'QUICK ACTIONS',{{'Laws of the Land','',nil,ICON.action,C.text},{'Wanted Players','',nil,ICON.wanted,C.text},{'Report Player','',nil,ICON.alert,C.text},{'Open Inventory','',nil,ICON.inventory,C.text}})
+    self:ListPanel(c,18,304,300,116,'STAFF ONLINE',{{'superadmin','Owner','●',ICON.players,C.green},{'Voxberg','Administrator','●',ICON.players,C.green}})
+    self:ListPanel(c,330,304,422,116,'WANTED PLAYERS',{{'John Wick','★★★★★','$5,000',ICON.wanted,C.amber},{'Tony Montana','★★★★☆','$2,500',ICON.wanted,C.amber}})
 end
 function PANEL:ListPanel(parent,x,y,w,h,title,rows,footer)
     local p=parent:Add('Panel'); p:SetPos(x,y); p:SetSize(w,h); p.Paint=function(_,cw,ch) softCard(0,0,cw,ch,8,Color(8,22,48,218)); draw.SimpleText(title,'VoxRef.Tiny',12,9,C.text,0,0) end
