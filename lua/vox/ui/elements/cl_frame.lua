@@ -2,7 +2,8 @@ local PANEL = {}
 
 function PANEL:Init()
     self.divHeader = self:Add('vox.Frame.Header')
-    self.colorBG = vox.OffsetColor(vox:Config('colors.primary'), -5)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.colorBG = vox.OffsetColor(colors.primary or vox:Config('colors.primary'), -5)
 
     self:Combine(self.divHeader, 'SetTitle')
     self:SetTitle('Frame')
@@ -27,6 +28,8 @@ end
 
 function PANEL:Paint(w, h)
     local x, y = self:LocalToScreen(0, 0)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.colorBG = vox.OffsetColor(colors.primary or self.colorBG, -5)
 
     if (self.focused and self.focusMultiplier > 0) then
         DisableClipping(true)
