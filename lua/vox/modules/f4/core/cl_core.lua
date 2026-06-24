@@ -80,6 +80,10 @@ function vox.f4.OpenAdminSettings()
     local content = frame:Add('Panel')
     content:Dock(FILL)
     content:DockPadding(p, p, p, p)
+    content.Paint = function(_, w, h)
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        draw.RoundedBox(10, 0, 0, w, h, ColorAlpha(colors.primary or Color(5, 13, 30), 245))
+    end
 
     local sidebar = frame:Add('vox.Sidebar')
     sidebar:SetContainer(content)

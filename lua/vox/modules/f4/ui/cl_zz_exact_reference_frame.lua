@@ -71,7 +71,6 @@ function PANEL:Paint(w,h)
     glass(0,0,w,h,14,ColorAlpha(C.accent,135))
     draw.SimpleText('F4 MENU','VoxRef.Title',14,15,C.text,0,1)
     draw.SimpleText('(COMMAND CENTER)','VoxRef.Tiny',92,15,C.soft,0,1)
-    draw.SimpleText('⚙  ●  🔔','VoxRef.Text',w-42,15,C.text,2,1)
 end
 function PANEL:BuildSidebar()
     local s=self.sidebar
@@ -123,8 +122,8 @@ function PANEL:BuildContent()
     self.content:Clear()
     local c=self.content
     c.Paint=function(_,w,h) softCard(0,0,w,h,12,Color(5,15,34,225)) end
-    local search=c:Add('DTextEntry'); self.search=search; search:SetPos(18,14); search:SetSize(math.max(c:GetWide()-36,220),30); search:SetText(''); search:SetPlaceholderText('Search the menu...')
-    search.Paint=function(p,w,h) rr(0,0,w,h,7,Color(5,18,39,230)); outline(0,0,w,h,7,Color(37,65,110,120)); p:DrawTextEntryText(C.text,C.accent,C.text) end
+    local search=c:Add('DTextEntry'); self.search=search; search:SetPos(18,14); search:SetSize(math.max(c:GetWide()-36,220),30); search:SetText(''); search:SetPlaceholderText('Search the menu...'); if search.SetTextInset then search:SetTextInset(28,0) end
+    search.Paint=function(p,w,h) rr(0,0,w,h,7,Color(5,18,39,230)); outline(0,0,w,h,7,Color(37,65,110,120)); drawIcon(ICON.search,10,h*.5-6,12,12,C.soft); p:DrawTextEntryText(C.text,C.accent,C.text) end
     c.PerformLayout=function(_,w,h)
         if IsValid(search) then search:SetPos(18,14); search:SetSize(w-36,30) end
         if IsValid(self.nativeContent) then self.nativeContent:SetPos(18,56); self.nativeContent:SetSize(w-36,h-74) end
