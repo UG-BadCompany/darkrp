@@ -6,22 +6,35 @@ local COLOR_PURPLE = Color(142, 84, 255)
 local COLOR_TEXT = Color(238, 244, 255)
 local COLOR_MUTED = Color(145, 160, 178)
 
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return {
+        primary = colors.primary or COLOR_PRIMARY,
+        secondary = colors.secondary or COLOR_SECONDARY,
+        tertiary = colors.tertiary or COLOR_TERTIARY,
+        accent = colors.accent or COLOR_ACCENT,
+        text = colors.textPrimary or COLOR_TEXT,
+        muted = colors.textSecondary or COLOR_MUTED
+    }
+end
+
 local function money(v)
     return DarkRP and DarkRP.formatMoney and DarkRP.formatMoney(v or 0) or tostring(v or 0)
 end
 
 local function paintPremiumCard(panel, w, h, accent, title, desc, locked)
-    accent = accent or COLOR_ACCENT
+    local colors = getThemeColors()
+    accent = accent or colors.accent
     if vox.DrawVoxCard then
-        vox.DrawVoxCard(0, 0, w, h, { primary = COLOR_PRIMARY, secondary = COLOR_SECONDARY, accent = accent }, { hovered = panel:IsHovered(), accent = accent, radius = 12, bladeWidth = 6 })
+        vox.DrawVoxCard(0, 0, w, h, { primary = colors.primary, secondary = colors.secondary, accent = accent }, { hovered = panel:IsHovered(), accent = accent, radius = 10, bladeWidth = 4 })
     else
-        draw.RoundedBox(12, 0, 0, w, h, COLOR_SECONDARY)
+        draw.RoundedBox(10, 0, 0, w, h, colors.secondary)
     end
-    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(COLOR_PURPLE, panel:IsHovered() and 28 or 14))
-    surface.SetDrawColor(ColorAlpha(accent, panel:IsHovered() and 150 or 70))
+    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(accent, panel:IsHovered() and 20 or 8))
+    surface.SetDrawColor(ColorAlpha(accent, panel:IsHovered() and 130 or 55))
     surface.DrawLine(vox.ScaleWide(12), h - 2, w - vox.ScaleWide(14), h - 2)
-    draw.SimpleText(title, vox.Font('Comfortaa Bold@18'), vox.ScaleWide(18), vox.ScaleTall(15), locked and COLOR_MUTED or COLOR_TEXT, 0, 0)
-    draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(18), vox.ScaleTall(40), COLOR_MUTED, 0, 0)
+    draw.SimpleText(title, vox.Font('Comfortaa Bold@18'), vox.ScaleWide(18), vox.ScaleTall(15), locked and colors.muted or colors.text, 0, 0)
+    draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(18), vox.ScaleTall(40), colors.muted, 0, 0)
     if locked then
         vox.DrawAngledRect(w - vox.ScaleWide(86), vox.ScaleTall(14), vox.ScaleWide(66), vox.ScaleTall(24), 7, ColorAlpha(Color(255, 88, 88), 40))
         draw.SimpleText('LOCKED', vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(53), vox.ScaleTall(26), Color(255, 130, 130), 1, 1)
@@ -34,10 +47,11 @@ local function buildHeader(parent, title, subtitle)
     header:SetTall(vox.ScaleTall(76))
     header:DockMargin(0, 0, 0, vox.ScaleTall(12))
     header.Paint = function(_, w, h)
-        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(COLOR_PRIMARY, 245), secondary = COLOR_SECONDARY, accent = COLOR_ACCENT }, 14)
-        vox.DrawVoxBlade(vox.ScaleWide(16), vox.ScaleTall(14), vox.ScaleWide(7), h - vox.ScaleTall(28), COLOR_ACCENT)
-        draw.SimpleText(title, vox.Font('Comfortaa Bold@26'), vox.ScaleWide(34), vox.ScaleTall(18), COLOR_TEXT, 0, 0)
-        draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(36), vox.ScaleTall(48), COLOR_MUTED, 0, 0)
+        local colors = getThemeColors()
+        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary, 245), secondary = colors.secondary, accent = colors.accent }, 14)
+        vox.DrawVoxBlade(vox.ScaleWide(16), vox.ScaleTall(14), vox.ScaleWide(6), h - vox.ScaleTall(28), colors.accent)
+        draw.SimpleText(title, vox.Font('Comfortaa Bold@26'), vox.ScaleWide(34), vox.ScaleTall(18), colors.text, 0, 0)
+        draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(36), vox.ScaleTall(48), colors.muted, 0, 0)
     end
 end
 
@@ -60,7 +74,7 @@ function INV:Init()
         {'Pocket Cash', money(LocalPlayer():getDarkRPVar('money') or 0), COLOR_ACCENT},
         {'Weapon License', LocalPlayer():getDarkRPVar('HasGunlicense') and 'Active permit' or 'No permit', Color(92, 205, 255)},
         {'Identity Card', team.GetName(LocalPlayer():Team()), team.GetColor(LocalPlayer():Team())},
-        {'Shipment Slot', 'Server inventory hook ready', COLOR_PURPLE, true},
+        {'Shipment Slot', 'Server inventory hook ready', COLOR_ACCENT, true},
         {'Evidence Pouch', 'DarkRP pocket compatible', Color(255, 196, 82)},
         {'Quick Actions', 'Use dashboard actions for commands', Color(95, 255, 174)}
     }
@@ -80,7 +94,7 @@ function UP:Init()
     local grid = addGrid(self)
     for _, data in ipairs({
         {'Salary Boost', '+10% payday preview', COLOR_ACCENT},
-        {'Pocket Capacity', 'Extra DarkRP storage slots', COLOR_PURPLE, true},
+        {'Pocket Capacity', 'Extra DarkRP storage slots', COLOR_ACCENT, true},
         {'Crafting Speed', 'Faster roleplay interactions', Color(95, 255, 174)},
         {'Reputation', 'Community standing module', Color(255, 196, 82)},
         {'VIP Queue', 'Donation integration ready', Color(255, 225, 106), true},
@@ -102,7 +116,7 @@ function SET:Init()
     local rows = {
         {'HUD Style', 'Choose Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', COLOR_ACCENT},
         {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', Color(92, 205, 255)},
-        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and purple accents.', COLOR_PURPLE},
+        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', COLOR_ACCENT},
         {'Blur & Animations', 'Toggle glass blur, transitions, and reduce motion.', Color(95, 255, 174)},
         {'Compact Mode', 'Tighter cards for dense roleplay servers.', Color(255, 196, 82)},
         {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', Color(255, 225, 106)}

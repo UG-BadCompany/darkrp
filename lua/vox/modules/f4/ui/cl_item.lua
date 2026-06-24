@@ -6,6 +6,11 @@ local fontDesc = vox.Font('Comfortaa@16')
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
 
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or vox.OffsetColor(colorSecondary, 12), colors.accent or vox:Config('colors.accent')
+end
+
 local PANEL = {}
 
 function PANEL:Init()
@@ -119,11 +124,17 @@ function PANEL:PerformLayout(w, h)
 end
 
 function PANEL:Paint(w, h)
-    if vox.DrawVoxPanel then
-        vox.DrawVoxCard( 0, 0, w, h, { primary = self.colorBG, secondary = colorSecondary, accent = self.itemColor }, { hovered = self:IsHovered(), accent = self.itemColor, radius = 8 } )
+    local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
+    local accent = self.itemColor or themeAccent
+    local bg = self.colorBG or themeSecondary
+
+    if vox.DrawVoxCard then
+        vox.DrawVoxCard(0, 0, w, h, { primary = bg, secondary = themeTertiary, accent = accent }, { hovered = self:IsHovered(), accent = accent, radius = 8 })
+    elseif vox.DrawVoxPanel then
+        vox.DrawVoxPanel(0, 0, w, h, { primary = bg, secondary = themePrimary, accent = accent }, 8)
     else
         draw.RoundedBox(8, 0, 0, w, h, colorOutline)
-        draw.RoundedBox(8, 1, 1, w - 2, h - 2, self.colorBG)
+        draw.RoundedBox(8, 1, 1, w - 2, h - 2, bg)
     end
 
     if (self.gradientEnabled) then

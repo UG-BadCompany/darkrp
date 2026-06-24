@@ -13,6 +13,11 @@ end
 
 local L = function(...) return vox.lang:Get(...) end
 
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or vox:Config('colors.accent')
+end
+
 local PANEL = {}
 
 function PANEL:Init()
@@ -26,11 +31,12 @@ function PANEL:Init()
     self.toolbar:SetTall(vox.ScaleTall(80))
     self.toolbar:DockMargin(0, 0, 0, vox.ScaleTall(10))
     self.toolbar.Paint = function(panel, w, h)
+        local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
         if vox.DrawVoxPanel then
-            vox.DrawVoxPanel(0, 0, w, h, { primary = colorSecondary, secondary = colorTertiary, accent = vox:Config('colors.accent') }, 8)
-            vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(6), h - vox.ScaleTall(20), vox:Config('colors.accent'))
+            vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
+            vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(6), h - vox.ScaleTall(20), themeAccent)
         else
-            draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+            draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
         end
     end
     self.toolbar.PerformLayout = function(panel, w, h)
@@ -48,9 +54,10 @@ function PANEL:Init()
     self.navbar:SetKeepTabContent(true)
     -- self.navbar:SetRoundness(8)
     self.navbar.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorTertiary, 210), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(64), 0, vox.ScaleWide(64), h, vox.ScaleWide(12), ColorAlpha(vox:Config('colors.accent'), 30))
-        surface.SetDrawColor(ColorAlpha(vox:Config('colors.accent'), 90))
+        local _, _, themeTertiary, themeAccent = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeTertiary, 210), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(64), 0, vox.ScaleWide(64), h, vox.ScaleWide(12), ColorAlpha(themeAccent, 30))
+        surface.SetDrawColor(ColorAlpha(themeAccent, 90))
         surface.DrawRect(vox.ScaleWide(16), h - 1, w - vox.ScaleWide(32), 1)
     end
     self.navbar.OnTabSelected = function(panel, tab, content)
@@ -286,7 +293,8 @@ function PANEL:CreateCategory(container, name, members, color, purchaseFunc, ite
     pnlCategory.m_iTextMargin = vox.ScaleTall(10)
     pnlCategory.m_bSquareCorners = true
     pnlCategory.canvas.Paint = function(p, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorPrimary, false, false, true, true)
+        local themePrimary, themeSecondary = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, themePrimary, false, false, true, true)
     end
 
     local content = pnlCategory:Add('vox.Grid')
@@ -355,8 +363,9 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
     item:Import('click')
     item:Import('hovercolor')
     item:SetColorKey('colorBG')
-    item:SetColorIdle(colorSecondary)
-    item:SetColorHover(colorTertiary)
+    local _, themeSecondary, themeTertiary = getThemeColors()
+    item:SetColorIdle(themeSecondary)
+    item:SetColorHover(themeTertiary)
     item:AddHoverSound()
     item:AddClickEffect()
     item.DoClick = function()

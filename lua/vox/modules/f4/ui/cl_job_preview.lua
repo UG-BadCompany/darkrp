@@ -4,6 +4,11 @@ local colorAccent = vox:Config('colors.accent')
 local colorTertiary = vox:Config('colors.tertiary')
 local colorLine = Color(75, 75, 75)
 local colorBG = vox.OffsetColor(colorPrimary, -3)
+
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent
+end
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
 
@@ -392,25 +397,29 @@ function PANEL:Paint(w, h)
     local frame = vox.f4.frame
     if (not IsValid(frame)) then return end -- just in case
 
-    local realX, realY = frame.container:LocalToScreen(0, 0)
-    local realW, realH = frame.container:GetSize()
-    local padding = frame.containerPadding
+    local container = frame.container or frame.content or frame
+    local realX, realY = container:LocalToScreen(0, 0)
+    local realW, realH = container:GetSize()
+    local padding = frame.containerPadding or vox.ScaleTall(18)
 
     local divModel = self.divModel
     local Y = -padding
     local H = h + padding * 2
     local W = w + padding
 
+    local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
+    colorBG = vox.OffsetColor(themePrimary, -3)
+
     if (self.enabled) then
         vox.bshadows.BeginShadow()
-            surface.SetDrawColor(colorSecondary)
+            surface.SetDrawColor(themeSecondary)
             surface.DrawRect(x, y, w, h)
         vox.bshadows.EndShadow(1, 2, 2, nil, 90, 2, true)
     end
 
     DisableClipping(true)
         render.SetScissorRect(realX, realY, realX + realW, realY + realH, true)
-            vox.DrawVoxPanel(0, Y, W, H, { primary = colorSecondary, secondary = colorPrimary, accent = self.colorSlightGradient }, 8)
+            vox.DrawVoxPanel(0, Y, W, H, { primary = themeSecondary, secondary = themePrimary, accent = self.colorSlightGradient or themeAccent }, 8)
 
             local modelX = divModel:GetPos()
             vox.DrawAngledRect(modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, vox.ScaleWide(28), colorBG)
