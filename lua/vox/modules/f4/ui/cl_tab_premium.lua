@@ -24,116 +24,137 @@ local function money(v)
     return DarkRP and DarkRP.formatMoney and DarkRP.formatMoney(v or 0) or tostring(v or 0)
 end
 
-local function paintPremiumCard(panel, w, h, accent, title, desc, locked)
+local function paintCommandRow(panel, w, h, title, desc, state, action)
     local colors = getThemeColors()
-    accent = colors.accent
-    if vox.DrawVoxCard then
-        vox.DrawVoxCard(0, 0, w, h, { primary = colors.primary, secondary = colors.secondary, accent = accent }, { hovered = panel:IsHovered(), accent = accent, radius = 10, bladeWidth = 4 })
-    else
-        draw.RoundedBox(10, 0, 0, w, h, colors.secondary)
+    local hovered = panel:IsHovered()
+    vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
+    draw.RoundedBox(9, 1, 1, w - 2, h - 2, ColorAlpha(colors.primary, 82))
+    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colors.accent, hovered and 18 or 7))
+    vox.DrawVoxBlade(vox.ScaleWide(12), vox.ScaleTall(13), vox.ScaleWide(4), h - vox.ScaleTall(26), colors.accent)
+
+    draw.SimpleText(title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(28), vox.ScaleTall(14), colors.text, 0, 0)
+    draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(28), vox.ScaleTall(38), colors.muted, 0, 0)
+
+    if state then
+        local pillW = vox.ScaleWide(92)
+        draw.RoundedBox(7, w - pillW - vox.ScaleWide(16), vox.ScaleTall(15), pillW, vox.ScaleTall(24), ColorAlpha(colors.accent, hovered and 42 or 26))
+        draw.SimpleText(state, vox.Font('Comfortaa Bold@11'), w - pillW * .5 - vox.ScaleWide(16), vox.ScaleTall(27), colors.text, 1, 1)
     end
-    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colors.accent, panel:IsHovered() and 16 or 6))
-    surface.SetDrawColor(ColorAlpha(colors.accent, panel:IsHovered() and 130 or 55))
-    surface.DrawLine(vox.ScaleWide(12), h - 2, w - vox.ScaleWide(14), h - 2)
-    draw.SimpleText(title, vox.Font('Comfortaa Bold@18'), vox.ScaleWide(18), vox.ScaleTall(15), locked and colors.muted or colors.text, 0, 0)
-    draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(18), vox.ScaleTall(40), colors.muted, 0, 0)
-    if locked then
-        vox.DrawAngledRect(w - vox.ScaleWide(86), vox.ScaleTall(14), vox.ScaleWide(66), vox.ScaleTall(24), 7, ColorAlpha(colors.negative, 40))
-        draw.SimpleText('LOCKED', vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(53), vox.ScaleTall(26), colors.negative, 1, 1)
+
+    if action then
+        draw.SimpleText(action, vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(18), h - vox.ScaleTall(18), colors.accent, 2, 1)
     end
 end
 
 local function buildHeader(parent, title, subtitle)
     local header = parent:Add('Panel')
     header:Dock(TOP)
-    header:SetTall(vox.ScaleTall(76))
-    header:DockMargin(0, 0, 0, vox.ScaleTall(12))
+    header:SetTall(vox.ScaleTall(70))
+    header:DockMargin(0, 0, 0, vox.ScaleTall(10))
     header.Paint = function(_, w, h)
         local colors = getThemeColors()
-        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary, 245), secondary = colors.secondary, accent = colors.accent }, 14)
-        vox.DrawVoxBlade(vox.ScaleWide(16), vox.ScaleTall(14), vox.ScaleWide(6), h - vox.ScaleTall(28), colors.accent)
-        draw.SimpleText(title, vox.Font('Comfortaa Bold@26'), vox.ScaleWide(34), vox.ScaleTall(18), colors.text, 0, 0)
-        draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(36), vox.ScaleTall(48), colors.muted, 0, 0)
+        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary, 245), secondary = colors.secondary, accent = colors.accent }, 12)
+        vox.DrawVoxBlade(vox.ScaleWide(14), vox.ScaleTall(13), vox.ScaleWide(5), h - vox.ScaleTall(26), colors.accent)
+        draw.SimpleText(title, vox.Font('Comfortaa Bold@24'), vox.ScaleWide(32), vox.ScaleTall(15), colors.text, 0, 0)
+        draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(34), vox.ScaleTall(43), colors.muted, 0, 0)
     end
 end
 
-local function addGrid(parent)
+local function addRowList(parent)
     local scroll = parent:Add('vox.ScrollPanel')
     scroll:Dock(FILL)
-    local grid = scroll:Add('vox.Grid')
-    grid:Dock(TOP)
-    grid:SetColumnCount(3)
-    grid:SetSpace(vox.ScaleTall(10))
-    return grid
+    local list = scroll:Add('DIconLayout')
+    list:Dock(TOP)
+    list:SetSpaceY(vox.ScaleTall(8))
+    list:SetSpaceX(0)
+    list.PerformLayout = function(panel, w)
+        local y = 0
+        for _, child in ipairs(panel:GetChildren()) do
+            child:SetPos(0, y)
+            child:SetWide(w)
+            y = y + child:GetTall() + panel:GetSpaceY()
+        end
+        panel:SetTall(y)
+    end
+    return list
+end
+
+local function addRows(parent, rows, onClick)
+    local list = addRowList(parent)
+    for _, data in ipairs(rows) do
+        local row = list:Add('DButton')
+        row:SetText('')
+        row:SetTall(vox.ScaleTall(72))
+        row.Paint = function(panel, w, h) paintCommandRow(panel, w, h, data[1], data[2], data[3], data[4]) end
+        row.DoClick = onClick or function() end
+    end
 end
 
 local INV = {}
 function INV:Init()
-    local colors = getThemeColors()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Inventory', 'Command roleplay storage with clean item slots and restricted-state previews.')
-    local grid = addGrid(self)
-    local items = {
-        {'Pocket Cash', money(LocalPlayer():getDarkRPVar('money') or 0), colors.accent},
-        {'Weapon License', LocalPlayer():getDarkRPVar('HasGunlicense') and 'Active permit' or 'No permit', colors.accent},
-        {'Identity Card', team.GetName(LocalPlayer():Team()), team.GetColor(LocalPlayer():Team())},
-        {'Shipment Slot', 'Server inventory hook ready', colors.accent, true},
-        {'Evidence Pouch', 'DarkRP pocket compatible', colors.warning},
-        {'Quick Actions', 'Use dashboard actions for commands', colors.money}
-    }
-    for _, data in ipairs(items) do
-        local card = grid:Add('DButton')
-        card:SetText('')
-        card:SetTall(vox.ScaleTall(108))
-        card.Paint = function(panel, w, h) paintPremiumCard(panel, w, h, data[3], data[1], data[2], data[4]) end
-    end
+    buildHeader(self, 'Inventory', 'Compact command inventory with readable status rows and quick actions.')
+    addRows(self, {
+        {'Pocket Cash', money(LocalPlayer():getDarkRPVar('money') or 0), 'WALLET', 'DARKRP'},
+        {'Weapon License', LocalPlayer():getDarkRPVar('HasGunlicense') and 'Active permit' or 'No permit', 'PERMIT', 'DETAILS'},
+        {'Identity Card', team.GetName(LocalPlayer():Team()), 'ROLE', 'VIEW'},
+        {'Shipment Slot', 'Server inventory hook ready', 'LOCKED', 'COMING SOON'},
+        {'Evidence Pouch', 'DarkRP pocket compatible', 'READY', 'OPEN'},
+        {'Quick Actions', 'Use dashboard actions for commands', 'TOOLS', 'RUN'}
+    })
 end
 vox.gui.Register('vox.f4.Inventory', INV)
 
 local UP = {}
 function UP:Init()
-    local colors = getThemeColors()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Player Upgrades', 'Readable progression cards for perks, VIP boosts, and server-specific upgrades.')
-    local grid = addGrid(self)
-    for _, data in ipairs({
-        {'Salary Boost', '+10% payday preview', colors.accent},
-        {'Pocket Capacity', 'Extra DarkRP storage slots', colors.accent, true},
-        {'Crafting Speed', 'Faster roleplay interactions', colors.money},
-        {'Reputation', 'Community standing module', colors.warning},
-        {'VIP Queue', 'Donation integration ready', colors.warning, true},
-        {'Cosmetic Badge', 'Scoreboard rank flair', colors.accent}
-    }) do
-        local card = grid:Add('DButton')
-        card:SetText('')
-        card:SetTall(vox.ScaleTall(108))
-        card.Paint = function(panel, w, h) paintPremiumCard(panel, w, h, data[3], data[1], data[2], data[4]) end
-    end
+    buildHeader(self, 'Player Upgrades', 'Compact progression rows for perks, boosts, and server-specific unlocks.')
+    addRows(self, {
+        {'Salary Boost', '+10% payday preview', 'ACTIVE', 'CONFIGURE'},
+        {'Pocket Capacity', 'Extra DarkRP storage slots', 'LOCKED', 'UPGRADE'},
+        {'Crafting Speed', 'Faster roleplay interactions', 'READY', 'VIEW'},
+        {'Reputation', 'Community standing module', 'TRACKED', 'OPEN'},
+        {'VIP Queue', 'Donation integration ready', 'LOCKED', 'LEARN'},
+        {'Cosmetic Badge', 'Scoreboard rank flair', 'EQUIPPED', 'CHANGE'}
+    })
 end
 vox.gui.Register('vox.f4.Upgrades', UP)
 
 local SET = {}
 function SET:Init()
-    local colors = getThemeColors()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Vox Settings', 'Live preview cards for HUD, F4, scoreboard rows, notifications, and accessibility.')
-    local grid = addGrid(self)
-    local rows = {
-        {'HUD Style', 'Choose Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', colors.accent},
-        {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', colors.accent},
-        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', colors.accent},
-        {'Blur & Animations', 'Toggle glass blur, transitions, and reduce motion.', colors.money},
-        {'Compact Mode', 'Tighter cards for dense roleplay servers.', colors.warning},
-        {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', colors.warning}
-    }
-    for _, data in ipairs(rows) do
-        local card = grid:Add('DButton')
-        card:SetText('')
-        card:SetTall(vox.ScaleTall(108))
-        card.Paint = function(panel, w, h) paintPremiumCard(panel, w, h, data[3], data[1], data[2]) end
-        card.DoClick = function()
-            if vox.hud and vox.hud.OpenSettings then vox.hud.OpenSettings() end
+    buildHeader(self, 'Vox Settings', 'Compact settings panel for HUD, F4, scoreboard, notifications, and accessibility.')
+    local body = self:Add('Panel')
+    body:Dock(FILL)
+    local nav = body:Add('Panel')
+    nav:Dock(LEFT)
+    nav:SetWide(vox.ScaleWide(150))
+    nav:DockMargin(0, 0, vox.ScaleWide(10), 0)
+    nav.Paint = function(_, w, h)
+        local colors = getThemeColors()
+        vox.DrawVoxPanel(0, 0, w, h, { primary = colors.primary, secondary = colors.secondary, accent = colors.accent }, 10)
+        draw.SimpleText('SETTINGS', vox.Font('Comfortaa Bold@13'), vox.ScaleWide(14), vox.ScaleTall(14), colors.text, 0, 0)
+    end
+    local sections = {'HUD', 'F4 Menu', 'Scoreboard', 'Notifications', 'Accessibility'}
+    for index, name in ipairs(sections) do
+        local item = nav:Add('DButton')
+        item:Dock(TOP)
+        item:DockMargin(vox.ScaleWide(10), index == 1 and vox.ScaleTall(44) or 0, vox.ScaleWide(10), vox.ScaleTall(6))
+        item:SetTall(vox.ScaleTall(32))
+        item:SetText('')
+        item.Paint = function(panel, w, h)
+            local colors = getThemeColors()
+            draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(colors.accent, panel:IsHovered() and 34 or 16))
+            draw.SimpleText(name, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(10), h * .5, colors.text, 0, 1)
         end
     end
+    addRows(body, {
+        {'HUD Style', 'Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', 'DROPDOWN', 'EDIT'},
+        {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', 'SLIDER', 'TUNE'},
+        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', 'SELECT', 'CHANGE'},
+        {'Blur & Animations', 'Glass blur, transitions, and reduced-motion preferences.', 'TOGGLES', 'UPDATE'},
+        {'Compact Mode', 'Tighter rows for dense roleplay servers.', 'TOGGLE', 'SWITCH'},
+        {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', 'PREVIEW', 'OPEN'}
+    }, function() if vox.hud and vox.hud.OpenSettings then vox.hud.OpenSettings() end end)
 end
 vox.gui.Register('vox.f4.Settings', SET)

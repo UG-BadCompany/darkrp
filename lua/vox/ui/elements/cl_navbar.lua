@@ -1,7 +1,8 @@
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorGray = Color(197, 197, 197)
-local colorGradient = vox.LerpColor(.5, colorAccent, colorSecondary)
+local fallbackNavbarColors = {
+    secondary = Color(12, 32, 62),
+    accent = Color(70, 135, 255),
+    textSecondary = Color(197, 197, 197)
+}
 
 do
     local PANEL = {}
@@ -28,8 +29,8 @@ do
 
     function PANEL:Paint(w, h)
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        local accent = colors.accent or colorAccent
-        local textIdle = colors.textSecondary or colorGray
+        local accent = colors.accent or fallbackNavbarColors.accent
+        local textIdle = colors.textSecondary or fallbackNavbarColors.textSecondary
         local x0, y0 = w * .5, h * .5
         local textColor = self:IsHovered() and (colors.textPrimary or color_white) or textIdle
         local animActiveFraction = self.animActiveFraction
@@ -241,8 +242,8 @@ do
 
     function PANEL:PaintOver(w, h)
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        local accent = colors.accent or colorAccent
-        local secondary = colors.secondary or colorSecondary
+        local accent = colors.accent or fallbackNavbarColors.accent
+        local secondary = colors.secondary or fallbackNavbarColors.secondary
         local gradient = vox.LerpColor(.5, accent, secondary)
         local current = self.animLineCurrent
         if (current <= 0) then return end
