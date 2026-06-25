@@ -24,6 +24,9 @@ local function palette()
     }
     return C
 end
+
+local CV_DISCORD_SERVER = CreateClientConVar('cl_vox_f4_announcement_discord_server_id', '', true, false, 'Discord server ID used by the F4 announcements feed.')
+local CV_DISCORD_CHANNEL = CreateClientConVar('cl_vox_f4_announcement_discord_channel_id', '', true, false, 'Discord channel ID used by the F4 announcements feed.')
 local ICON = {
     dashboard = Material('vox_f4menu/dashboard.png', 'smooth mips'),
     jobs = Material('vox_f4menu/jobs.png', 'smooth mips'),
@@ -146,6 +149,7 @@ function PANEL:BuildContent()
     search.Paint=function(p,w,h) palette(); rr(0,0,w,h,7,ColorAlpha(C.panel,230)); outline(0,0,w,h,7,ColorAlpha(C.accent,p:IsHovered() and 110 or 65)); drawIcon(ICON.search,10,h*.5-6,12,12,C.soft); p:DrawTextEntryText(C.text,C.accent,C.text) end
     c.PerformLayout=function(_,w,h)
         if IsValid(search) then search:SetPos(18,14); search:SetSize(w-36,30) end
+        if IsValid(self.dashboardContent) then self.dashboardContent:SetPos(18,56); self.dashboardContent:SetSize(w-36,h-74) end
         if IsValid(self.nativeContent) then self.nativeContent:SetPos(18,56); self.nativeContent:SetSize(w-36,h-74) end
     end
     local activeTab=self.activeTab
@@ -156,25 +160,250 @@ function PANEL:BuildNativeTab(c,class)
     self.nativeContent=panel
     panel:SetPos(18,56); panel:SetSize(math.max(c:GetWide()-36,260),math.max(c:GetTall()-74,260))
 end
-function PANEL:BuildDashboard(c)
-    local lp=LocalPlayer(); local moneyVal=IsValid(lp) and (lp:getDarkRPVar('money') or 0) or 0
-    draw.SimpleText('', 'VoxRef.Text',0,0,C.text)
-    draw.SimpleText('DASHBOARD','VoxRef.Small',18,58,C.text,0,0)
-    addCard(c,18,78,150,66,'Wallet',money(moneyVal),'Bank Balance',C.green,ICON.wallet)
-    addCard(c,178,78,150,66,'Current Job',IsValid(lp) and (lp:getDarkRPVar('job') or 'Citizen') or 'Citizen','View Jobs →',C.accent,ICON.jobs)
-    addCard(c,338,78,150,66,'Players Online',#player.GetAll()..' / 64','Join the community',C.accent,ICON.players)
-    addCard(c,498,78,150,66,'Server Time',os.date('%H:%M'),'Today',C.accent,ICON.time)
-    self:ListPanel(c,18,158,300,132,'ANNOUNCEMENTS',{{'Welcome to Vox City','Make sure to read the rules','2h ago',ICON.alert,C.green},{'Double XP Weekend','Enjoy 2x XP on all jobs','1d ago',ICON.wanted,C.amber},{'Update v1.0.5','View changelog on Discord','2d ago',ICON.players,C.accent}},'VIEW ALL')
-    self:ListPanel(c,330,158,230,132,'POPULAR JOBS',{{'Police Officer','$75 / min','8/10',ICON.jobs,C.accent},{'Medic','$85 / min','3/6',ICON.wallet,C.amber},{'SWAT','$95 / min','2/4',ICON.admin,C.red}},'VIEW ALL JOBS')
-    self:ListPanel(c,572,158,180,132,'QUICK ACTIONS',{{'Laws of the Land','',nil,ICON.action,C.text},{'Wanted Players','',nil,ICON.wanted,C.text},{'Report Player','',nil,ICON.alert,C.text},{'Open Inventory','',nil,ICON.inventory,C.text}})
-    self:ListPanel(c,18,304,300,116,'STAFF ONLINE',{{'superadmin','Owner','●',ICON.players,C.green},{'Voxberg','Administrator','●',ICON.players,C.green}})
-    self:ListPanel(c,330,304,422,116,'WANTED PLAYERS',{{'John Wick','★★★★★','$5,000',ICON.wanted,C.amber},{'Tony Montana','★★★★☆','$2,500',ICON.wanted,C.amber}})
+local function getJobName(ply)
+    if not IsValid(ply) then return 'Citizen' end
+    return ply:getDarkRPVar('job') or team.GetName(ply:Team()) or 'Citizen'
 end
+
+function PANEL:GetDashboardAnnouncements()
+    local serverID = (vox.f4.GetOptionValue and vox.f4:GetOptionValue('announcement_discord_server_id')) or CV_DISCORD_SERVER:GetString()
+    local channelID = (vox.f4.GetOptionValue and vox.f4:GetOptionValue('announcement_discord_channel_id')) or CV_DISCORD_CHANNEL:GetString()
+    serverID = tostring(serverID or '')
+    channelID = tostring(channelID or '')
+
+    if serverID ~= '' and channelID ~= '' then
+        return {{
+            title = 'Discord feed configured',
+            desc = 'Server ' .. serverID .. ' / Channel ' .. channelID,
+            meta = 'READY',
+            icon = ICON.alert,
+            color = C.green
+        }}
+    end
+
+    return {{
+        title = 'Discord announcements not configured',
+        desc = 'Set server and channel IDs in client convars.',
+        meta = 'SETUP',
+        icon = ICON.alert,
+        color = C.amber
+    }, {
+        title = 'Server ID',
+        desc = 'cl_vox_f4_announcement_discord_server_id',
+        meta = serverID ~= '' and 'SET' or 'EMPTY',
+        icon = ICON.players,
+        color = serverID ~= '' and C.green or C.soft
+    }, {
+        title = 'Channel ID',
+        desc = 'cl_vox_f4_announcement_discord_channel_id',
+        meta = channelID ~= '' and 'SET' or 'EMPTY',
+        icon = ICON.action,
+        color = channelID ~= '' and C.green or C.soft
+    }}
+end
+
+function PANEL:GetPopularJobs(limit)
+    local jobs = {}
+    for _, job in pairs(RPExtraTeams or {}) do
+        local teamID = job.team
+        local count = teamID and team.NumPlayers(teamID) or 0
+        if count > 0 or #jobs < (limit or 3) then
+            table.insert(jobs, { job = job, count = count })
+        end
+    end
+
+    table.sort(jobs, function(a, b)
+        if a.count == b.count then return tostring(a.job.name) < tostring(b.job.name) end
+        return a.count > b.count
+    end)
+
+    local rows = {}
+    for index = 1, math.min(limit or 3, #jobs) do
+        local data = jobs[index]
+        local job = data.job
+        local max = job.max == 0 and '∞' or tostring(job.max or 0)
+        rows[#rows + 1] = {
+            title = job.name or 'Unknown Job',
+            desc = money(job.salary or 0) .. ' / min',
+            meta = data.count .. ' / ' .. max,
+            icon = ICON.jobs,
+            color = C.accent,
+            click = function()
+                self.active = 'jobs'
+                self.activeTab = self.tabs[2]
+                self:BuildContent()
+            end
+        }
+    end
+
+    if #rows == 0 then
+        rows[1] = { title = 'No jobs available', desc = 'DarkRP jobs have not loaded yet', meta = 'WAIT', icon = ICON.jobs, color = C.soft }
+    end
+
+    return rows
+end
+
+function PANEL:GetStaffRows()
+    local rows = {}
+    for _, ply in ipairs(player.GetAll()) do
+        if vox.f4.IsAdmin and vox.f4.IsAdmin(ply) then
+            rows[#rows + 1] = {
+                title = ply:Nick(),
+                desc = ply:GetUserGroup() or 'staff',
+                meta = '●',
+                icon = ICON.players,
+                color = C.green
+            }
+        end
+    end
+
+    if #rows == 0 then
+        rows[1] = { title = 'No staff online', desc = 'Staff list updates automatically', meta = '', icon = ICON.players, color = C.soft }
+    end
+
+    return rows
+end
+
+function PANEL:GetWantedRows()
+    local rows = {}
+    for _, ply in ipairs(player.GetAll()) do
+        if ply:getDarkRPVar('wanted') then
+            rows[#rows + 1] = {
+                title = ply:Nick(),
+                desc = ply:getDarkRPVar('wantedReason') or 'Wanted by Civil Protection',
+                meta = 'WANTED',
+                icon = ICON.wanted,
+                color = C.red
+            }
+        end
+    end
+
+    if #rows == 0 then
+        rows[1] = { title = 'No wanted players', desc = 'Everyone is clear right now', meta = 'CLEAR', icon = ICON.wanted, color = C.green }
+    end
+
+    return rows
+end
+
+function PANEL:GetQuickActions()
+    return {{
+        title = 'Laws of the Land',
+        desc = 'Open DarkRP laws',
+        icon = ICON.action,
+        color = C.accent,
+        click = function() RunConsoleCommand('say', '/laws') end
+    }, {
+        title = 'Wanted Players',
+        desc = 'Jump to wanted list',
+        icon = ICON.wanted,
+        color = C.red,
+        click = function() if IsValid(self.wantedPanel) then self.wantedPanel:RequestFocus() end end
+    }, {
+        title = 'Report Player',
+        desc = 'Open staff chat prompt',
+        icon = ICON.alert,
+        color = C.amber,
+        click = function() RunConsoleCommand('say', '@ ') end
+    }, {
+        title = 'Open Inventory',
+        desc = 'View roleplay items',
+        icon = ICON.inventory,
+        color = C.accent,
+        click = function()
+            self.active = 'inventory'
+            self.activeTab = self.tabs[4]
+            self:BuildContent()
+        end
+    }}
+end
+
+function PANEL:BuildDashboard(c)
+    self.dashboardContent = c:Add('Panel')
+    self.dashboardContent:SetPos(18,56)
+    self.dashboardContent:SetSize(math.max(c:GetWide()-36,260), math.max(c:GetTall()-74,260))
+    self.dashboardContent.PerformLayout = function(panel, w, h)
+        if panel._lastW == w and panel._lastH == h then return end
+        panel._lastW = w
+        panel._lastH = h
+        self:RebuildDashboard(panel, w, h)
+    end
+end
+
+function PANEL:RebuildDashboard(parent, w, h)
+    parent:Clear()
+    palette()
+
+    local lp = LocalPlayer()
+    local moneyVal = IsValid(lp) and (lp:getDarkRPVar('money') or 0) or 0
+    local job = getJobName(lp)
+    local players = player.GetAll()
+    local maxPlayers = game.MaxPlayers and game.MaxPlayers() or 64
+    local gap = 12
+    local topH = 66
+    local cardW = math.floor((w - gap * 3) / 4)
+    local bodyY = topH + gap + 4
+    local bodyH = h - bodyY
+    local colW = math.floor((w - gap * 2) / 3)
+    local bottomY = bodyY + math.floor(bodyH * .52) + gap
+    local bottomH = math.max(96, h - bottomY)
+
+    local jobCard = addCard(parent, cardW + gap, 0, cardW, topH, 'Current Job', job, 'View Jobs →', C.accent, ICON.jobs)
+    jobCard:SetMouseInputEnabled(true)
+    jobCard.OnMouseReleased = function()
+        self.active = 'jobs'
+        self.activeTab = self.tabs[2]
+        self:BuildContent()
+    end
+
+    addCard(parent, 0, 0, cardW, topH, 'Wallet', money(moneyVal), 'Bank Balance', C.green, ICON.wallet)
+    addCard(parent, (cardW + gap) * 2, 0, cardW, topH, 'Players Online', #players .. ' / ' .. maxPlayers, 'Join the community', C.accent, ICON.players)
+    addCard(parent, (cardW + gap) * 3, 0, cardW, topH, 'Server Time', os.date('%H:%M'), os.date('%A'), C.accent, ICON.time)
+
+    local announcementH = math.floor(bodyH * .52)
+    self:ListPanel(parent, 0, bodyY, colW, announcementH, 'ANNOUNCEMENTS', self:GetDashboardAnnouncements(), {
+        text = 'CONFIGURE DISCORD IDS',
+        click = function()
+            self.active = 'settings'
+            self.activeTab = self.tabs[6]
+            self:BuildContent()
+        end
+    })
+    self:ListPanel(parent, colW + gap, bodyY, colW, announcementH, 'POPULAR JOBS', self:GetPopularJobs(4), {
+        text = 'VIEW ALL JOBS',
+        click = function()
+            self.active = 'jobs'
+            self.activeTab = self.tabs[2]
+            self:BuildContent()
+        end
+    })
+    self:ListPanel(parent, (colW + gap) * 2, bodyY, w - (colW + gap) * 2, announcementH, 'QUICK ACTIONS', self:GetQuickActions())
+    self:ListPanel(parent, 0, bottomY, colW, bottomH, 'STAFF ONLINE', self:GetStaffRows())
+    self.wantedPanel = self:ListPanel(parent, colW + gap, bottomY, w - colW - gap, bottomH, 'WANTED PLAYERS', self:GetWantedRows())
+end
+
 function PANEL:ListPanel(parent,x,y,w,h,title,rows,footer)
     local p=parent:Add('Panel'); p:SetPos(x,y); p:SetSize(w,h); p.Paint=function(_,cw,ch) softCard(0,0,cw,ch,8,ColorAlpha(C.card,218)); draw.SimpleText(title,'VoxRef.Tiny',12,9,C.text,0,0) end
     local yy=28
-    for _,r in ipairs(rows) do local row=p:Add('Panel'); row:SetPos(10,yy); row:SetSize(w-20,23); yy=yy+26; row.Paint=function(_,rw,rh) rr(0,0,rw,rh,5,ColorAlpha(C.card2,210)); outline(0,0,rw,rh,5,ColorAlpha(C.accent,35)); if r[4] then iconBubble(r[4],6,4,15,r[5] or C.accent) end; draw.SimpleText(r[1],'VoxRef.Tiny',r[4] and 28 or 12,4,C.text,0,0); draw.SimpleText(r[2] or '','VoxRef.Tiny',r[4] and 28 or 12,14,C.soft,0,0); if r[3] then draw.SimpleText(r[3],'VoxRef.Tiny',rw-12,9,(r[3]:find('%$') or r[3]=='●') and C.green or C.soft,2,1) end end end
-    if footer then local b=p:Add('Panel'); b:SetPos(10,h-25); b:SetSize(w-20,18); b.Paint=function(_,bw,bh) vox.DrawVoxBadge(0,0,bw,bh,footer,{accent=C.accent,textPrimary=C.text},{alpha=34,font='VoxRef.Tiny',cut=5}) end end
+    local rowH = 24
+    local footerH = footer and 20 or 0
+    local maxRows = math.max(1, math.floor((h - yy - footerH - 8) / (rowH + 4)))
+    for index,r in ipairs(rows or {}) do
+        if index > maxRows then break end
+        local row=p:Add(r.click and 'DButton' or 'Panel'); row:SetPos(10,yy); row:SetSize(w-20,rowH); if row.SetText then row:SetText('') end; yy=yy+rowH+4
+        if r.click then row.DoClick = r.click end
+        row.Paint=function(panel,rw,rh)
+            rr(0,0,rw,rh,5,ColorAlpha(C.card2,panel:IsHovered() and 235 or 210)); outline(0,0,rw,rh,5,ColorAlpha(r.color or C.accent,panel:IsHovered() and 100 or 35))
+            if r.icon then iconBubble(r.icon,6,4,16,r.color or C.accent) end
+            draw.SimpleText(r.title or r[1] or '', 'VoxRef.Tiny', r.icon and 30 or 12, 4, C.text, 0, 0)
+            draw.SimpleText(r.desc or r[2] or '', 'VoxRef.Tiny', r.icon and 30 or 12, 14, C.soft, 0, 0)
+            if r.meta or r[3] then draw.SimpleText(r.meta or r[3], 'VoxRef.Tiny', rw-10, rh*.5, (r.meta == 'WANTED') and C.red or (r.color or C.green), 2, 1) end
+        end
+    end
+    if footer then
+        local b=p:Add('DButton'); b:SetText(''); b:SetPos(10,h-25); b:SetSize(w-20,18); b.DoClick=footer.click
+        b.Paint=function(panel,bw,bh) rr(0,0,bw,bh,5,ColorAlpha(C.accent,panel:IsHovered() and 70 or 38)); outline(0,0,bw,bh,5,ColorAlpha(C.accent,120)); draw.SimpleText(footer.text or footer,'VoxRef.Tiny',bw*.5,bh*.5,C.text,1,1) end
+    end
+    return p
 end
 function PANEL:BuildJobs(c)
     local scroll=c:Add('DScrollPanel'); scroll:SetPos(18,76); scroll:SetSize(c:GetWide()-36,c:GetTall()-92)
