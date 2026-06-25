@@ -48,7 +48,7 @@ function PANEL:Init()
         local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
         if vox.DrawVoxPanel then
             vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
-            vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(6), h - vox.ScaleTall(20), themeAccent)
+            draw.RoundedBox(3, 0, vox.ScaleTall(10), vox.ScaleWide(6), h - vox.ScaleTall(20), themeAccent)
         else
             draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
         end
@@ -70,7 +70,7 @@ function PANEL:Init()
     self.navbar.Paint = function(panel, w, h)
         local _, _, themeTertiary, themeAccent = getThemeColors()
         draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeTertiary, 210), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(64), 0, vox.ScaleWide(64), h, vox.ScaleWide(12), ColorAlpha(themeAccent, 30))
+        draw.RoundedBoxEx(8, w - vox.ScaleWide(64), 0, vox.ScaleWide(64), h, ColorAlpha(themeAccent, 18), false, true, false, false)
         surface.SetDrawColor(ColorAlpha(themeAccent, 90))
         surface.DrawRect(vox.ScaleWide(16), h - 1, w - vox.ScaleWide(32), 1)
     end
