@@ -4,8 +4,14 @@ local colorTertiary = vox:Config('colors.tertiary')
 local colorGray = Color(159, 159, 159)
 local font0 = vox.Font('Montserrat@14')
 local oldScrollValue = 0
+local matSearch = Material('vox_f4menu/search.png', 'smooth mips')
 
 local L = function(...) return vox.lang:Get(...) end
+
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or vox:Config('colors.accent')
+end
 
 local PANEL = {}
 
@@ -32,7 +38,13 @@ function PANEL:Init()
     self.toolbar:DockPadding(toolbarPadding, toolbarPadding, toolbarPadding * 2, toolbarPadding)
     self.toolbar:DockMargin(0, 0, 0, vox.ScaleTall(10))
     self.toolbar.Paint = function(panel, w, h)
-        draw.RoundedBox(8, 0, 0, w, h, colorSecondary)
+        local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
+        if vox.DrawVoxPanel then
+            vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
+            vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(5), h - vox.ScaleTall(16), themeAccent)
+        else
+            draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
+        end
     end
     self.toolbar.PerformLayout = function(panel, w, h)
         self.favToggler:SetWide(self.favToggler:GetContentWidth())
@@ -41,7 +53,8 @@ function PANEL:Init()
     self.favToggler = self.toolbar:Add('vox.TogglerLabel')
     self.favToggler:Dock(RIGHT)
     self.favToggler:SetText(L('f4_show_favorite'))
-    self.favToggler:SetBackgroundColor(vox.OffsetColor(colorTertiary, 10))
+    local _, _, themeTertiary = getThemeColors()
+    self.favToggler:SetBackgroundColor(themeTertiary)
     self.favToggler:Font('Comfortaa Bold@18')
     self.favToggler:SetTextMargin(vox.ScaleTall(10))
     self.favToggler:SetChecked(cvShowFavorite:GetBool(), true)
@@ -52,7 +65,7 @@ function PANEL:Init()
 
     self.search = self.toolbar:Add('vox.TextEntry')
     self.search:SetPlaceholderText(vox.lang:Get('f4_search_text'))
-    self.search:SetPlaceholderIcon('https://i.imgur.com/Nk3IUJT.png', 'smooth mips')
+    self.search:SetPlaceholderMaterial(matSearch)
     self.search:Dock(LEFT)
     self.search:SetWide(vox.ScaleWide(150))
     self.search:SetUpdateOnType(true)
@@ -90,8 +103,9 @@ function PANEL:Init()
         local frame = vox.f4.frame
         if (not IsValid(frame)) then return end -- just in case
 
-        local realW, realH = frame.container:GetSize()
-        local padding = frame.containerPadding
+        local container = frame.container or frame.content or frame
+        local realW, realH = container:GetSize()
+        local padding = frame.containerPadding or vox.ScaleTall(18)
 
         if (panel.blur > 0) then
             vox.DrawBlurExpensive(panel, panel.blur)
@@ -276,7 +290,8 @@ function PANEL:CreateCategory(name, members, color)
     pnlCategory.m_bSquareCorners = true
     pnlCategory:SetExpanded(true)
     pnlCategory.canvas.Paint = function(p, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorPrimary, false, false, true, true)
+        local themePrimary, themeSecondary = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, themePrimary, false, false, true, true)
     end
 
     if (color) then
@@ -316,13 +331,14 @@ function PANEL:CreateMember(member, content, reason)
     item:SetDesc(salary)
     item:SetDescLabel(L('f4_salary'))
     if (reason) then
-        item:SetDescColor(Color(221, 107, 107))
+        local _, _, _, themeAccent = getThemeColors()
+        item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().negative or Color(255, 88, 104)) or Color(255, 88, 104))
         item:SetDesc(reason)
         item:SetDescLabel('')
     elseif (member.salary == 0) then
         item:SetDescColor(colorGray)
     else
-        item:SetDescColor(Color(91, 195, 70))
+        item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().money or Color(35, 225, 120)) or Color(35, 225, 120))
     end
 
     item:PositionCamera('face')
@@ -330,8 +346,9 @@ function PANEL:CreateMember(member, content, reason)
     item:Import('click')
     item:Import('hovercolor')
     item:SetColorKey('colorBG')
-    item:SetColorIdle(colorSecondary)
-    item:SetColorHover(colorTertiary)
+    local _, themeSecondary, themeTertiary = getThemeColors()
+    item:SetColorIdle(themeSecondary)
+    item:SetColorHover(themeTertiary)
     item:AddHoverSound()
     item:AddClickEffect()
     item.DoClick = function()
@@ -345,7 +362,8 @@ function PANEL:CreateMember(member, content, reason)
     limit:SetMouseInputEnabled(false)
     limit.text = inf and '∞' or ''
     limit.Paint = function(panel, w, h)
-        vox.DrawOutlinedCircle(w * .5, h * .5, math.floor(h * .5), 6, colorPrimary)
+        local themePrimary = getThemeColors()
+        vox.DrawOutlinedCircle(w * .5, h * .5, math.floor(h * .5), 6, themePrimary)
 
         if (panel.fraction and panel.fraction > 0) then
             vox.DrawWithPolyMask(panel.mask, function()
@@ -381,9 +399,3 @@ function PANEL:CreateMember(member, content, reason)
 end
 
 vox.gui.Register('vox.f4.Jobs', PANEL)
-
--- Vox local preview helper
--- vox.gui.Test('vox.f4.Frame', .6, .65, function(panel)
---     panel:MakePopup()
---     panel:ChooseTab(2)
--- end)

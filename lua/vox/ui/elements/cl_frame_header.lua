@@ -2,7 +2,8 @@ local PANEL = {}
 local CLOSE_BUTTON = Material('vox_framework/close.png', 'smooth')
 
 function PANEL:Init()
-    self.colorBG = vox:Config('colors.secondary')
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.colorBG = colors.secondary or vox:Config('colors.secondary')
 
     self.lblText = self:Add('vox.Label')
     self.lblText:CenterText()
@@ -28,6 +29,8 @@ function PANEL:PerformLayout(w, h)
 end
 
 function PANEL:Paint(w, h)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.colorBG = colors.secondary or self.colorBG
     draw.RoundedBoxEx(8, 0, 0, w, h, self.colorBG, true, true)
 end
 
