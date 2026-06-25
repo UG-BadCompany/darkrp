@@ -3,6 +3,11 @@ local colorSecondary = vox:Config('colors.secondary')
 local colorTertiary = vox:Config('colors.tertiary')
 local colorAccent = vox:Config('colors.accent')
 
+local function getTogglerColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent
+end
+
 do
     local PANEL = {}
 
@@ -21,7 +26,8 @@ do
 
         self.stateFraction = 0
 
-        self:SetBackgroundColor(colorSecondary)
+        local _, secondary = getTogglerColors()
+        self:SetBackgroundColor(secondary)
     end
 
     function PANEL:Paint(w, h)

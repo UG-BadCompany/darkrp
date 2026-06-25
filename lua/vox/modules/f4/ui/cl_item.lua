@@ -15,10 +15,11 @@ local PANEL = {}
 
 function PANEL:Init()
     self.padding = vox.ScaleTall(7.5)
-    self.itemColor = color_white
-    self.itemColorBG = colorPrimary
-    self.colorBG = colorSecondary
-    self.colorBGGradient = Color(57, 57, 57, 25)
+    local themePrimary, themeSecondary, _, themeAccent = getThemeColors()
+    self.itemColor = themeAccent
+    self.itemColorBG = themePrimary
+    self.colorBG = themeSecondary
+    self.colorBGGradient = ColorAlpha(themeAccent, 25)
     self.gradientEnabled = vox.f4:GetOptionValue('colored_items')
 
     self.iconContainer = self:Add('Panel')
@@ -94,8 +95,9 @@ end
 function PANEL:SetColor(color, bgFraction)
     self.itemColor = color
     if (bgFraction) then
-        self.colorBGGradient = vox.LerpColor(.05, colorSecondary, self.itemColor)
-        self.itemColorBG = vox.LerpColor(bgFraction, colorSecondary, vox.CopyColor(self.itemColor))
+        local _, themeSecondary = getThemeColors()
+        self.colorBGGradient = vox.LerpColor(.05, themeSecondary, self.itemColor)
+        self.itemColorBG = vox.LerpColor(bgFraction, themeSecondary, vox.CopyColor(self.itemColor))
     end
 end
 
@@ -200,9 +202,9 @@ function PANEL:AddFavoriteButton()
         local targetColor = state and colorFavoriteIconActive or colorFavoriteIconIdle
 
         if (state) then
-            panel:SetWebImage('favorite_fill', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_fill.png', 'smooth mips')
         else
-            panel:SetWebImage('favorite_outline', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_outline.png', 'smooth mips')
         end
 
         vox.anim.Create(panel, .33, {
@@ -232,8 +234,3 @@ function PANEL:AddFavoriteButton()
 end
 
 vox.gui.Register('vox.f4.Item', PANEL)
-
--- vox.gui.Test('vox.f4.Frame', .65, .65, function(panel)
---     panel:MakePopup()
---     panel:ChooseTab(3)
--- end)

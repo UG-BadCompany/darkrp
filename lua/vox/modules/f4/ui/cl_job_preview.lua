@@ -7,7 +7,7 @@ local colorBG = vox.OffsetColor(colorPrimary, -3)
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.money or Color(35, 225, 120)
 end
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
@@ -125,7 +125,8 @@ function PANEL:Init()
 
     self.lblSalary = self.divInfo:Add('vox.Label')
     self.lblSalary:Font('Comfortaa Bold@16')
-    self.lblSalary:SetTextColor(Color(161, 161, 161))
+    local _, _, _, _, themeMoney = getThemeColors()
+    self.lblSalary:SetTextColor(themeMoney or Color(35, 225, 120))
     self.lblSalary:Dock(TOP)
     self.lblSalary:DockMargin(0, 0, 0, vox.ScaleTall(20))
 
@@ -186,9 +187,9 @@ function PANEL:Init()
         local targetColor = state and colorFavoriteIconActive or colorFavoriteIconIdle
 
         if (state) then
-            panel:SetWebImage('favorite_fill', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_fill.png', 'smooth mips')
         else
-            panel:SetWebImage('favorite_outline', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_outline.png', 'smooth mips')
         end
 
         vox.anim.Create(panel, .33, {
@@ -281,7 +282,8 @@ function PANEL:SetupJob(job)
 
     self.lblSalary:SetText(L('f4_salary') .. ': ' .. DarkRP.formatMoney(job.salary))
 
-    self.colorSlightGradient = vox.LerpColor(.1, colorSecondary, job.color)
+    local _, themeSecondary = getThemeColors()
+    self.colorSlightGradient = vox.LerpColor(.1, themeSecondary, job.color)
 
     self.iconModel:SetModel(model)
     self.iconModel:SetCamPos(Vector(50, 0, 50))
@@ -304,7 +306,8 @@ function PANEL:SetupJob(job)
             button.Paint = function(panel, w, h)
                 local child = panel:GetChild(0)
 
-                vox.DrawCircle(w * .5, h * .5, h * .5, colorSecondary)
+                local _, themeSecondary = getThemeColors()
+                vox.DrawCircle(w * .5, h * .5, h * .5, themeSecondary)
 
                 if (IsValid(child)) then
                     vox.DrawWithPolyMask(panel.mask, function()
@@ -369,8 +372,9 @@ function PANEL:SetupJob(job)
             panel:SetContentAlignment(5)
             panel:SetFont(vox.Font('Comfortaa Bold@16'))
             panel.Paint = function(this, w, h)
-                draw.RoundedBox(8, 0, 0, w, h, colorPrimary)
-                draw.RoundedBox(8, 1, 1, w - 2, h - 2, colorTertiary)
+                local themePrimary, _, themeTertiary = getThemeColors()
+                draw.RoundedBox(8, 0, 0, w, h, themePrimary)
+                draw.RoundedBox(8, 1, 1, w - 2, h - 2, themeTertiary)
             end
         end
     end

@@ -2,7 +2,6 @@ local COLOR_PRIMARY = vox:Config('colors.primary')
 local COLOR_SECONDARY = vox:Config('colors.secondary')
 local COLOR_TERTIARY = vox:Config('colors.tertiary')
 local COLOR_ACCENT = vox:Config('colors.accent')
-local COLOR_PURPLE = Color(142, 84, 255)
 local COLOR_TEXT = Color(238, 244, 255)
 local COLOR_MUTED = Color(145, 160, 178)
 
@@ -13,6 +12,9 @@ local function getThemeColors()
         secondary = colors.secondary or COLOR_SECONDARY,
         tertiary = colors.tertiary or COLOR_TERTIARY,
         accent = colors.accent or COLOR_ACCENT,
+        money = colors.money or Color(35, 225, 120),
+        negative = colors.negative or Color(255, 75, 95),
+        warning = colors.warning or Color(255, 190, 65),
         text = colors.textPrimary or COLOR_TEXT,
         muted = colors.textSecondary or COLOR_MUTED
     }
@@ -36,8 +38,8 @@ local function paintPremiumCard(panel, w, h, accent, title, desc, locked)
     draw.SimpleText(title, vox.Font('Comfortaa Bold@18'), vox.ScaleWide(18), vox.ScaleTall(15), locked and colors.muted or colors.text, 0, 0)
     draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(18), vox.ScaleTall(40), colors.muted, 0, 0)
     if locked then
-        vox.DrawAngledRect(w - vox.ScaleWide(86), vox.ScaleTall(14), vox.ScaleWide(66), vox.ScaleTall(24), 7, ColorAlpha(Color(255, 88, 88), 40))
-        draw.SimpleText('LOCKED', vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(53), vox.ScaleTall(26), Color(255, 130, 130), 1, 1)
+        vox.DrawAngledRect(w - vox.ScaleWide(86), vox.ScaleTall(14), vox.ScaleWide(66), vox.ScaleTall(24), 7, ColorAlpha(colors.negative, 40))
+        draw.SimpleText('LOCKED', vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(53), vox.ScaleTall(26), colors.negative, 1, 1)
     end
 end
 
@@ -67,16 +69,17 @@ end
 
 local INV = {}
 function INV:Init()
+    local colors = getThemeColors()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Inventory', 'Premium roleplay storage with clean item slots and restricted-state previews.')
+    buildHeader(self, 'Inventory', 'Command roleplay storage with clean item slots and restricted-state previews.')
     local grid = addGrid(self)
     local items = {
         {'Pocket Cash', money(LocalPlayer():getDarkRPVar('money') or 0), COLOR_ACCENT},
-        {'Weapon License', LocalPlayer():getDarkRPVar('HasGunlicense') and 'Active permit' or 'No permit', Color(92, 205, 255)},
+        {'Weapon License', LocalPlayer():getDarkRPVar('HasGunlicense') and 'Active permit' or 'No permit', colors.accent},
         {'Identity Card', team.GetName(LocalPlayer():Team()), team.GetColor(LocalPlayer():Team())},
         {'Shipment Slot', 'Server inventory hook ready', COLOR_ACCENT, true},
-        {'Evidence Pouch', 'DarkRP pocket compatible', Color(255, 196, 82)},
-        {'Quick Actions', 'Use dashboard actions for commands', Color(95, 255, 174)}
+        {'Evidence Pouch', 'DarkRP pocket compatible', colors.warning},
+        {'Quick Actions', 'Use dashboard actions for commands', colors.money}
     }
     for _, data in ipairs(items) do
         local card = grid:Add('DButton')
@@ -89,16 +92,17 @@ vox.gui.Register('vox.f4.Inventory', INV)
 
 local UP = {}
 function UP:Init()
+    local colors = getThemeColors()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
     buildHeader(self, 'Player Upgrades', 'Readable progression cards for perks, VIP boosts, and server-specific upgrades.')
     local grid = addGrid(self)
     for _, data in ipairs({
         {'Salary Boost', '+10% payday preview', COLOR_ACCENT},
         {'Pocket Capacity', 'Extra DarkRP storage slots', COLOR_ACCENT, true},
-        {'Crafting Speed', 'Faster roleplay interactions', Color(95, 255, 174)},
-        {'Reputation', 'Community standing module', Color(255, 196, 82)},
-        {'VIP Queue', 'Donation integration ready', Color(255, 225, 106), true},
-        {'Cosmetic Badge', 'Scoreboard rank flair', Color(92, 205, 255)}
+        {'Crafting Speed', 'Faster roleplay interactions', colors.money},
+        {'Reputation', 'Community standing module', colors.warning},
+        {'VIP Queue', 'Donation integration ready', colors.warning, true},
+        {'Cosmetic Badge', 'Scoreboard rank flair', colors.accent}
     }) do
         local card = grid:Add('DButton')
         card:SetText('')
@@ -110,16 +114,17 @@ vox.gui.Register('vox.f4.Upgrades', UP)
 
 local SET = {}
 function SET:Init()
+    local colors = getThemeColors()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
     buildHeader(self, 'Vox Settings', 'Live preview cards for HUD, F4, scoreboard rows, notifications, and accessibility.')
     local grid = addGrid(self)
     local rows = {
         {'HUD Style', 'Choose Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', COLOR_ACCENT},
-        {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', Color(92, 205, 255)},
+        {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', colors.accent},
         {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', COLOR_ACCENT},
-        {'Blur & Animations', 'Toggle glass blur, transitions, and reduce motion.', Color(95, 255, 174)},
-        {'Compact Mode', 'Tighter cards for dense roleplay servers.', Color(255, 196, 82)},
-        {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', Color(255, 225, 106)}
+        {'Blur & Animations', 'Toggle glass blur, transitions, and reduce motion.', colors.money},
+        {'Compact Mode', 'Tighter cards for dense roleplay servers.', colors.warning},
+        {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', colors.warning}
     }
     for _, data in ipairs(rows) do
         local card = grid:Add('DButton')

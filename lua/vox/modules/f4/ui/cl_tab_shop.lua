@@ -2,11 +2,17 @@ local colorPrimary = vox:Config('colors.primary')
 local colorSecondary = vox:Config('colors.secondary')
 local colorTertiary = vox:Config('colors.tertiary')
 local colorLine = Color(75, 75, 75)
-local colorCanAfford = Color(121, 255, 141)
-local colorCannotAfford = Color(253, 120, 120)
 local oldScrollValues = {}
 local convars = {}
 local itemTypes = {'entities', 'weapons', 'shipments', 'ammo'}
+local matSearch = Material('vox_f4menu/search.png', 'smooth mips')
+local CATEGORY_COLORS = {
+    entities = Color(70, 135, 255),
+    weapons = Color(255, 75, 95),
+    shipments = Color(255, 190, 65),
+    ammo = Color(255, 210, 90),
+    food = Color(35, 225, 120)
+}
 for _, itemType in ipairs(itemTypes) do
     convars[itemType] = CreateClientConVar('cl_vox_f4_show_favorite_' .. itemType, '1', true, false)
 end
@@ -82,13 +88,14 @@ function PANEL:Init()
     self.favToggler = self.topRow:Add('vox.TogglerLabel')
     self.favToggler:Dock(RIGHT)
     self.favToggler:SetText(L('f4_show_favorite'))
-    self.favToggler:SetBackgroundColor(vox.OffsetColor(colorTertiary, 10))
+    local _, _, themeTertiary = getThemeColors()
+    self.favToggler:SetBackgroundColor(themeTertiary)
     self.favToggler:Font('Comfortaa Bold@18')
     self.favToggler:SetTextMargin(vox.ScaleTall(10))
 
     self.search = self.topRow:Add('vox.TextEntry')
     self.search:SetPlaceholderText(vox.lang:Get('f4_search_text'))
-    self.search:SetPlaceholderIcon('https://i.imgur.com/Nk3IUJT.png', 'smooth mips')
+    self.search:SetPlaceholderMaterial(matSearch)
     self.search:Dock(LEFT)
     self.search:SetWide(vox.ScaleWide(150))
     self.search:SetUpdateOnType(true)
@@ -125,19 +132,19 @@ function PANEL:Init()
 
     self.enabledFirst = false
     self.categories = {}
-    self:AddItemCategory('entities', L('f4_entities_u'), 'https://i.imgur.com/JnNGizM.png', Color(141, 208, 255), 'canBuyCustomEntity', function(item)
+    self:AddItemCategory('entities', L('f4_entities_u'), nil, CATEGORY_COLORS.entities, 'canBuyCustomEntity', function(item)
         RunConsoleCommand('darkrp', item.cmd)
     end)
 
-    self:AddItemCategory('weapons', L('f4_weapons_u'), 'https://i.imgur.com/IJQlezA.png', Color(255, 73, 73), 'canBuyCustomWeapon', function(item)
+    self:AddItemCategory('weapons', L('f4_weapons_u'), nil, CATEGORY_COLORS.weapons, 'canBuyCustomWeapon', function(item)
         RunConsoleCommand('darkrp', 'buy', item.name)
     end)
 
-    self:AddItemCategory('shipments', L('f4_shipments_u'), 'https://i.imgur.com/9uyTLgB.png', Color(255, 173, 67), 'canBuyCustomShipment', function(item)
+    self:AddItemCategory('shipments', L('f4_shipments_u'), nil, CATEGORY_COLORS.shipments, 'canBuyCustomShipment', function(item)
         RunConsoleCommand('darkrp', 'buyshipment', item.name)
     end)
 
-    self:AddItemCategory('ammo', L('f4_ammo_u'), 'https://i.imgur.com/oRqB4Cl.png', Color(255, 246, 141), 'canBuyCustomAmmo', function(item)
+    self:AddItemCategory('ammo', L('f4_ammo_u'), nil, CATEGORY_COLORS.ammo, 'canBuyCustomAmmo', function(item)
         RunConsoleCommand('darkrp', 'buyammo', item.id)
     end)
 
@@ -147,7 +154,7 @@ function PANEL:Init()
             self:AddItemCategory({{
                 name = L('f4_food_u'),
                 members = food,
-            }}, L('f4_food_u'), 'https://i.imgur.com/sJWsDi6.png', Color(171, 255, 141), nil, function(item)
+            }}, L('f4_food_u'), nil, CATEGORY_COLORS.food, nil, function(item)
                 RunConsoleCommand('darkrp', 'buyfood', item.name)
             end)
         end
@@ -323,10 +330,11 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
     item:SetTall(vox.ScaleTall(55))
     item:SetModel(model)
     item:SetName(member.name)
-    item:SetColor(color or Color(200, 200, 200), .1)
+    local _, _, _, themeAccent = getThemeColors()
+    item:SetColor(color or themeAccent, .1)
     item:SetDesc(DarkRP.formatMoney(price))
     item:SetDescLabel(L('f4_price'))
-    item:SetDescColor(Color(69, 192, 87))
+    item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().money or Color(35, 225, 120)) or Color(35, 225, 120))
     item.objectIdentifier = (member.ent or member.entity or member.name)
     if (not member.energy) then
         item:AddFavoriteButton()
@@ -335,7 +343,8 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
         if ((panel.nextThink or 0) > CurTime()) then return end
         local balance = LocalPlayer():getDarkRPVar('money') or 0
         panel.nextThink = CurTime() + .33
-        panel:SetDescColor(balance >= price and colorCanAfford or colorCannotAfford)
+        local uiColors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        panel:SetDescColor(balance >= price and (uiColors.money or Color(35, 225, 120)) or (uiColors.negative or Color(255, 88, 104)))
     end
     item.OnFavoriteStateSwitched = function()
         local navbar = self.navbar
@@ -355,7 +364,7 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
     end
 
     if (reason) then
-        item:SetDescColor(Color(221, 107, 107))
+        item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().negative or Color(255, 88, 104)) or Color(255, 88, 104))
         item:SetDesc(reason)
         item:SetDescLabel('')
     end
@@ -378,8 +387,3 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
 end
 
 vox.gui.Register('vox.f4.Shop', PANEL)
-
--- vox.gui.Test('vox.f4.Frame', .65, .65, function(panel)
---     panel:MakePopup()
---     panel:ChooseTab(3)
--- end)
