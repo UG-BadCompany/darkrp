@@ -8,7 +8,7 @@ local colorFavoriteIconActive = Color(255, 241, 93)
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or vox.OffsetColor(colorSecondary, 12), colors.accent or vox:Config('colors.accent')
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or vox.OffsetColor(colorSecondary, 12), Color(70, 135, 255)
 end
 
 local PANEL = {}
@@ -96,8 +96,8 @@ function PANEL:SetColor(color, bgFraction)
     self.itemColor = color
     if (bgFraction) then
         local _, themeSecondary = getThemeColors()
-        self.colorBGGradient = vox.LerpColor(.05, themeSecondary, self.itemColor)
-        self.itemColorBG = vox.LerpColor(bgFraction, themeSecondary, vox.CopyColor(self.itemColor))
+        self.colorBGGradient = ColorAlpha(self.itemColor, 14)
+        self.itemColorBG = vox.LerpColor(math.min(bgFraction or .08, .1), themeSecondary, vox.CopyColor(self.itemColor))
     end
 end
 

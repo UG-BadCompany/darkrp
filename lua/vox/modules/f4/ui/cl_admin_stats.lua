@@ -6,7 +6,7 @@ local colorLine = Color(75, 75, 75)
 local L = function(...) return vox.lang:Get(...) end
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or Color(70,135,255)
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, Color(70, 135, 255)
 end
 
 do
@@ -171,7 +171,8 @@ do
             local panel = scrollPanel:Add('vox.f4.Item')
             panel:SetName(name)
             panel:SetModel(model)
-            panel:SetColor(color, .1)
+            local _, _, _, themeAccent = getThemeColors()
+            panel:SetColor(themeAccent, .08)
             panel:SetDesc(L('f4_loading') .. '...')
             panel:SetDescLabel(label or L('f4_purchases'))
             panel:SetDescColor(color_white)

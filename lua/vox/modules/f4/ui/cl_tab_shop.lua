@@ -8,9 +8,9 @@ local itemTypes = {'entities', 'weapons', 'shipments', 'ammo'}
 local matSearch = Material('vox_f4menu/search.png', 'smooth mips')
 local CATEGORY_COLORS = {
     entities = Color(70, 135, 255),
-    weapons = Color(255, 75, 95),
-    shipments = Color(255, 190, 65),
-    ammo = Color(255, 210, 90),
+    weapons = Color(70, 135, 255),
+    shipments = Color(70, 135, 255),
+    ammo = Color(70, 135, 255),
     food = Color(35, 225, 120)
 }
 for _, itemType in ipairs(itemTypes) do
@@ -21,7 +21,7 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or vox:Config('colors.accent')
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, Color(70, 135, 255)
 end
 
 local PANEL = {}

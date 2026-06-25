@@ -11,10 +11,10 @@ local function getThemeColors()
         primary = colors.primary or COLOR_PRIMARY,
         secondary = colors.secondary or COLOR_SECONDARY,
         tertiary = colors.tertiary or COLOR_TERTIARY,
-        accent = colors.accent or COLOR_ACCENT,
+        accent = Color(70, 135, 255),
         money = colors.money or Color(35, 225, 120),
         negative = colors.negative or Color(255, 75, 95),
-        warning = colors.warning or Color(255, 190, 65),
+        warning = Color(88, 166, 255),
         text = colors.textPrimary or COLOR_TEXT,
         muted = colors.textSecondary or COLOR_MUTED
     }
@@ -26,14 +26,14 @@ end
 
 local function paintPremiumCard(panel, w, h, accent, title, desc, locked)
     local colors = getThemeColors()
-    accent = accent or colors.accent
+    accent = colors.accent
     if vox.DrawVoxCard then
         vox.DrawVoxCard(0, 0, w, h, { primary = colors.primary, secondary = colors.secondary, accent = accent }, { hovered = panel:IsHovered(), accent = accent, radius = 10, bladeWidth = 4 })
     else
         draw.RoundedBox(10, 0, 0, w, h, colors.secondary)
     end
-    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(accent, panel:IsHovered() and 20 or 8))
-    surface.SetDrawColor(ColorAlpha(accent, panel:IsHovered() and 130 or 55))
+    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colors.accent, panel:IsHovered() and 16 or 6))
+    surface.SetDrawColor(ColorAlpha(colors.accent, panel:IsHovered() and 130 or 55))
     surface.DrawLine(vox.ScaleWide(12), h - 2, w - vox.ScaleWide(14), h - 2)
     draw.SimpleText(title, vox.Font('Comfortaa Bold@18'), vox.ScaleWide(18), vox.ScaleTall(15), locked and colors.muted or colors.text, 0, 0)
     draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(18), vox.ScaleTall(40), colors.muted, 0, 0)
@@ -74,10 +74,10 @@ function INV:Init()
     buildHeader(self, 'Inventory', 'Command roleplay storage with clean item slots and restricted-state previews.')
     local grid = addGrid(self)
     local items = {
-        {'Pocket Cash', money(LocalPlayer():getDarkRPVar('money') or 0), COLOR_ACCENT},
+        {'Pocket Cash', money(LocalPlayer():getDarkRPVar('money') or 0), colors.accent},
         {'Weapon License', LocalPlayer():getDarkRPVar('HasGunlicense') and 'Active permit' or 'No permit', colors.accent},
         {'Identity Card', team.GetName(LocalPlayer():Team()), team.GetColor(LocalPlayer():Team())},
-        {'Shipment Slot', 'Server inventory hook ready', COLOR_ACCENT, true},
+        {'Shipment Slot', 'Server inventory hook ready', colors.accent, true},
         {'Evidence Pouch', 'DarkRP pocket compatible', colors.warning},
         {'Quick Actions', 'Use dashboard actions for commands', colors.money}
     }
@@ -97,8 +97,8 @@ function UP:Init()
     buildHeader(self, 'Player Upgrades', 'Readable progression cards for perks, VIP boosts, and server-specific upgrades.')
     local grid = addGrid(self)
     for _, data in ipairs({
-        {'Salary Boost', '+10% payday preview', COLOR_ACCENT},
-        {'Pocket Capacity', 'Extra DarkRP storage slots', COLOR_ACCENT, true},
+        {'Salary Boost', '+10% payday preview', colors.accent},
+        {'Pocket Capacity', 'Extra DarkRP storage slots', colors.accent, true},
         {'Crafting Speed', 'Faster roleplay interactions', colors.money},
         {'Reputation', 'Community standing module', colors.warning},
         {'VIP Queue', 'Donation integration ready', colors.warning, true},
@@ -119,9 +119,9 @@ function SET:Init()
     buildHeader(self, 'Vox Settings', 'Live preview cards for HUD, F4, scoreboard rows, notifications, and accessibility.')
     local grid = addGrid(self)
     local rows = {
-        {'HUD Style', 'Choose Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', COLOR_ACCENT},
+        {'HUD Style', 'Choose Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', colors.accent},
         {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', colors.accent},
-        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', COLOR_ACCENT},
+        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', colors.accent},
         {'Blur & Animations', 'Toggle glass blur, transitions, and reduce motion.', colors.money},
         {'Compact Mode', 'Tighter cards for dense roleplay servers.', colors.warning},
         {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', colors.warning}

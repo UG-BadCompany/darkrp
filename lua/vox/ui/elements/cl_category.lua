@@ -3,6 +3,7 @@ local colorPrimary = vox:Config('colors.primary')
 local colorSecondary = vox:Config('colors.secondary')
 local colorAccent = vox:Config('colors.accent')
 local colorTertiary = vox:Config('colors.tertiary')
+local COMMAND_ACCENT = Color(70, 135, 255)
 
 local font0 = vox.Font('Comfortaa Bold@16')
 
@@ -27,7 +28,7 @@ function PANEL:Init()
     self.button:Import('hovercolor')
     self.button:SetColorKey('backgroundColor')
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    self.button:SetColorIdle(vox.ColorBetween(colors.secondary or colorSecondary, colors.primary or colorPrimary))
+    self.button:SetColorIdle(colors.secondary or colorSecondary)
     self.button:SetColorHover(colors.tertiary or colorTertiary)
     self.button.textColor = color_white
     self.button.Paint = function(p, w, h)
@@ -43,7 +44,7 @@ function PANEL:Init()
         local sz = math.floor(h * .5)
 
         if (self.wimage) then
-            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, uiColors.accent or colorAccent)
+            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, COMMAND_ACCENT)
 
             x = h
         end
@@ -84,7 +85,7 @@ function PANEL:SetExpanded(bBool)
         self.button:SetColorIdle(colors.secondary or colorSecondary)
     else
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        self.button:SetColorIdle(vox.ColorBetween(colors.secondary or colorSecondary, colors.primary or colorPrimary))
+        self.button:SetColorIdle(colors.secondary or colorSecondary)
     end
 
     self.m_bExpanded = bBool

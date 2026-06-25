@@ -10,7 +10,7 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or vox:Config('colors.accent')
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, Color(70, 135, 255)
 end
 
 local PANEL = {}
@@ -327,7 +327,8 @@ function PANEL:CreateMember(member, content, reason)
     item:SetTall(vox.ScaleTall(55))
     item:SetModel(model)
     item:SetName(member.name)
-    item:SetColor(color, .25)
+    local _, _, _, themeAccent = getThemeColors()
+    item:SetColor(themeAccent, .08)
     item:SetDesc(salary)
     item:SetDescLabel(L('f4_salary'))
     if (reason) then
@@ -367,7 +368,7 @@ function PANEL:CreateMember(member, content, reason)
 
         if (panel.fraction and panel.fraction > 0) then
             vox.DrawWithPolyMask(panel.mask, function()
-                vox.DrawOutlinedCircle(w * .5, h * .5, math.floor(h * .5), 6, color)
+                vox.DrawOutlinedCircle(w * .5, h * .5, math.floor(h * .5), 6, themeAccent or color)
             end)
         end
 
