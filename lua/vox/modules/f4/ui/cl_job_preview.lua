@@ -282,8 +282,8 @@ function PANEL:SetupJob(job)
 
     self.lblSalary:SetText(L('f4_salary') .. ': ' .. DarkRP.formatMoney(job.salary))
 
-    local _, themeSecondary = getThemeColors()
-    self.colorSlightGradient = vox.LerpColor(.1, themeSecondary, job.color)
+    local _, themeSecondary, _, themeAccent = getThemeColors()
+    self.colorSlightGradient = vox.LerpColor(.18, themeSecondary, themeAccent)
 
     self.iconModel:SetModel(model)
     self.iconModel:SetCamPos(Vector(50, 0, 50))
@@ -427,7 +427,7 @@ function PANEL:Paint(w, h)
 
             local modelX = divModel:GetPos()
             vox.DrawAngledRect(modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, vox.ScaleWide(28), colorBG)
-            vox.DrawVoxBlade(modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), self.colorSlightGradient)
+            vox.DrawVoxBlade(modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), themeAccent)
             vox.DrawAngledRect(0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), vox.ScaleWide(18), ColorAlpha(self.colorSlightGradient, 38))
             vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorSlightGradient, 85))
 

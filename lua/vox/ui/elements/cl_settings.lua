@@ -1,9 +1,11 @@
 local PANEL = {}
 
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorNegative = vox:Config('colors.negative')
+local fallbackSettingsColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    accent = Color(70, 135, 255),
+    negative = Color(255, 75, 95)
+}
 
 local font0 = vox.Font('Comfortaa Bold@16')
 local font3 = vox.Font('Comfortaa@14')
@@ -14,13 +16,13 @@ local function getSettingsColors()
     local theme = vox.hud and vox.hud.GetCurrentTheme and vox.hud:GetCurrentTheme()
     local colors = theme and theme.colors
     if not colors then
-        return colorPrimary, colorSecondary, colorAccent, colorNegative
+        return fallbackSettingsColors.primary, fallbackSettingsColors.secondary, fallbackSettingsColors.accent, fallbackSettingsColors.negative
     end
 
-    return colors.primary or colorPrimary,
-        colors.secondary or colorSecondary,
-        colors.accent or colorAccent,
-        colors.negative or colorNegative
+    return colors.primary or fallbackSettingsColors.primary,
+        colors.secondary or fallbackSettingsColors.secondary,
+        colors.accent or fallbackSettingsColors.accent,
+        colors.negative or fallbackSettingsColors.negative
 end
 
 function PANEL:Init()
@@ -116,6 +118,7 @@ end
 
 function PANEL:GetChanges(doNotify)
     local changes = {}
+    local _, _, _, negative = getSettingsColors()
 
     for _, option in ipairs(self.options) do
         local id = option.id
@@ -143,11 +146,11 @@ function PANEL:GetChanges(doNotify)
             local textError = isstring(err) and err or translate(err, arg1)
 
             field._oldDesc = field._oldDesc or field.lblDesc:GetText()
-            field.lblDesc:SetTextColor(colorNegative)
+            field.lblDesc:SetTextColor(negative)
             field.lblDesc:SetText(textError)
 
             if (IsValid(entry)) then
-                entry:Highlight(colorNegative)
+                entry:Highlight(negative)
             end
 
             if (doNotify) then
