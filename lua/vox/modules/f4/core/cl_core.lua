@@ -1,9 +1,6 @@
 vox.f4.tabs = vox.f4.tabs or {}
 vox.f4.actions = vox.f4.actions or {}
 
-vox.wimg.Register('favorite_fill', 'https://i.imgur.com/wviPFMQ.png')
-vox.wimg.Register('favorite_outline', 'https://i.imgur.com/FCXcBsu.png')
-
 function vox.f4:RegisterTab(id, data)
     vox.AssertType(id, 'string', 'RegisterTab', 1)
     vox.AssertType(data, 'table', 'RegisterTab', 2)
@@ -80,6 +77,14 @@ function vox.f4.OpenAdminSettings()
     local content = frame:Add('Panel')
     content:Dock(FILL)
     content:DockPadding(p, p, p, p)
+    content.Paint = function(_, w, h)
+        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+        if vox.DrawVoxPanel then
+            vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary or Color(5, 13, 30), 245), secondary = colors.secondary, accent = colors.accent }, 10)
+        else
+            draw.RoundedBox(10, 0, 0, w, h, ColorAlpha(colors.primary or Color(5, 13, 30), 245))
+        end
+    end
 
     local sidebar = frame:Add('vox.Sidebar')
     sidebar:SetContainer(content)
@@ -89,7 +94,7 @@ function vox.f4.OpenAdminSettings()
     sidebar:AddTab({
         name = vox.lang:Get('addon_settings_u'),
         desc = vox.lang:Get('addon_settings_desc'),
-        icon = 'https://i.imgur.com/ECLKU9s.png',
+        mat = Material('vox_f4menu/settings.png', 'smooth mips'),
         class = 'vox.Configuration',
         onSelected = function(panel)
             panel:LoadAddonSettings('f4')
@@ -100,14 +105,14 @@ function vox.f4.OpenAdminSettings()
     sidebar:AddTab({
         name = vox.lang:Get('addon_stats_u'),
         desc = vox.lang:Get('addon_stats_desc'),
-        icon = 'https://i.imgur.com/L6jCQe0.png',
+        mat = Material('vox_f4menu/stats.png', 'smooth mips'),
         class = 'vox.f4.AdminStats'
     })
 
     sidebar:AddTab({
         name = vox.lang:Get('addon_return_u'),
         desc = vox.lang:Get('addon_return_desc'),
-        icon = 'https://i.imgur.com/gCI6kX5.png',
+        mat = Material('vox_f4menu/dashboard.png', 'smooth mips'),
         onClick = function()
             vox.f4.OpenFrame()
             frame:Remove()

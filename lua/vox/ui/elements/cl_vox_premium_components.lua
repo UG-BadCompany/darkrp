@@ -1,6 +1,6 @@
--- Vox Premium Design System: reusable glass/dashboard controls for every module.
+-- Vox dashboard glass design system: reusable command-center controls for every module.
 vox = vox or {}
-vox.premium = vox.premium or {}
+vox.premium = vox.premium or {} -- Backwards-compatible storage for existing renderer callers.
 
 local function safeColor(c, fallback)
     if (istable and istable(c) and c.r and c.g and c.b) then return c end
@@ -70,7 +70,7 @@ register('VoxSidebar','vox.Sidebar',{}); register('VoxDropdown','vox.Combo',{});
 -- Backwards-compatible aliases used by older module code.
 register('VoxGlassPanel','VoxGlassFrame',{}); register('VoxCard','VoxDashboardCard',{}); register('VoxButton','VoxActionButton',{}); register('VoxFrame','VoxRootFrame',{})
 
--- Final premium renderer overrides: every legacy Vox panel/card/row/badge now inherits the glass dashboard style.
+-- Final dashboard renderer overrides: older Vox panel/card/row/badge calls inherit the command-center glass style.
 function vox.DrawVoxPanel( x, y, w, h, colors, radius )
     colors = colors or {}
     vox.DrawVoxGlass( x, y, w, h, { radius = radius or 18, accent = colors.accent, base = colors.primary, alpha = 236 } )

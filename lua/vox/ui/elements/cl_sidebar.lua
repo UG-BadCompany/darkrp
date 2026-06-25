@@ -4,6 +4,11 @@ local colorTertiary = vox:Config('colors.tertiary')
 local colorGray = Color(141, 141, 141)
 local colorDark = Color(30, 30, 30)
 
+local function getSidebarColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.textSecondary or colorGray
+end
+
 local PANEL = {}
 
 AccessorFunc(PANEL, 'm_iRoundness', 'Roundness')
@@ -14,7 +19,8 @@ function PANEL:Init()
     self.curLineThickness = 0
     self.animFraction = 0
     self.textColor = Color(255, 255, 255)
-    self.subtextColor = vox.CopyColor(colorGray)
+    local _, _, _, muted = getSidebarColors()
+    self.subtextColor = vox.CopyColor(muted)
     self.m_iRoundness = 8
     self.m_bHiddenLabels = false
 
@@ -22,9 +28,10 @@ function PANEL:Init()
     self:Import('hovercolor')
     self:SetTall(vox.ScaleTall(40))
     self:SetColorKey('color')
-    self:SetColorIdle(vox.OffsetColor(vox:Config('colors.secondary'), 0))
-    self:SetColorHover(colorTertiary)
-    self:SetColorPressed(vox:Config('colors.quaternary'))
+    local secondary, tertiary = getSidebarColors()
+    self:SetColorIdle(secondary)
+    self:SetColorHover(tertiary)
+    self:SetColorPressed(vox.OffsetColor(tertiary, 8))
 
     self.divIcon = self:Add('vox.Image')
     self.divIcon:SetImageSize(20, 20)
@@ -71,10 +78,11 @@ end
 local colorGradient = vox.OffsetColor(colorAccent, -75)
 function PANEL:Paint(w, h)
     local inset = 0
-    local accent = ( self.data and self.data.iconColor ) or colorAccent
+    local _, tertiary, themeAccent = getSidebarColors()
+    local accent = ( self.data and self.data.iconColor ) or themeAccent
 
     if vox.DrawVoxPanel then
-        vox.DrawVoxPanel( inset, inset, w - inset * 2, h - inset * 2, { primary = self.color, secondary = colorTertiary, accent = accent }, self.m_iRoundness )
+        vox.DrawVoxPanel( inset, inset, w - inset * 2, h - inset * 2, { primary = self.color, secondary = tertiary, accent = accent }, self.m_iRoundness )
         if vox.DrawVoxBlade then vox.DrawVoxBlade( 0, vox.ScaleTall( 7 ), vox.ScaleWide( 5 ), h - vox.ScaleTall( 14 ), accent ) end
         vox.DrawAngledRect( w - vox.ScaleWide( 34 ), 0, vox.ScaleWide( 34 ), h, vox.ScaleWide( 9 ), ColorAlpha( accent, self.state and 70 or 24 ) )
     else
@@ -83,10 +91,10 @@ function PANEL:Paint(w, h)
 
     if (self.state) then
         if (self.m_Roundness == 0) then
-            vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colorGradient, self.animFraction * 255))
+            vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(vox.OffsetColor(accent, -75), self.animFraction * 255))
         else
             vox.DrawWithPolyMask(self.mask, function()
-                vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colorGradient, self.animFraction * 255))
+                vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(vox.OffsetColor(accent, -75), self.animFraction * 255))
             end)
         end
     end
@@ -192,11 +200,12 @@ function PANEL:Init(arguments)
 end
 
 function PANEL:Paint(w, h)
+    local secondary, tertiary, accent = getSidebarColors()
     if vox.DrawVoxPanel then
-        vox.DrawVoxPanel(0, 0, w, h, { primary = colorSecondary, secondary = colorTertiary, accent = colorAccent }, 8)
-        vox.DrawVoxScanlines( vox.ScaleWide( 10 ), vox.ScaleTall( 10 ), w - vox.ScaleWide( 20 ), h - vox.ScaleTall( 20 ), ColorAlpha( colorAccent, 8 ), vox.ScaleTall( 8 ) )
+        vox.DrawVoxPanel(0, 0, w, h, { primary = secondary, secondary = tertiary, accent = accent }, 8)
+        vox.DrawVoxScanlines( vox.ScaleWide( 10 ), vox.ScaleTall( 10 ), w - vox.ScaleWide( 20 ), h - vox.ScaleTall( 20 ), ColorAlpha( accent, 8 ), vox.ScaleTall( 8 ) )
     else
-        draw.RoundedBoxEx(8, 0, 0, w, h, colorSecondary, nil, nil, true)
+        draw.RoundedBoxEx(8, 0, 0, w, h, secondary, nil, nil, true)
     end
 end
 

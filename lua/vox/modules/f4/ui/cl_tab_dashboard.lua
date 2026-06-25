@@ -9,6 +9,11 @@ local fontTitle = vox.Font('Comfortaa Bold@16')
 
 local L = function(...) return vox.lang:Get(...) end
 
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.money or Color(35, 225, 120), colors.negative or Color(255, 75, 95)
+end
+
 local PANEL = {}
 
 local formatMoney do
@@ -36,8 +41,9 @@ local formatMoney do
 end
 
 local function drawShadowBG(panel, w, h, color)
-    vox.DrawVoxPanel(0, 0, w, h, { primary = color, secondary = colorSecondary, accent = colorAccent }, 8)
-    vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(7), h - vox.ScaleTall(20), colorAccent)
+    local themePrimary, themeSecondary, _, themeAccent = getThemeColors()
+    vox.DrawVoxPanel(0, 0, w, h, { primary = color or themePrimary, secondary = themeSecondary, accent = themeAccent }, 8)
+    vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(7), h - vox.ScaleTall(20), themeAccent)
 end
 
 function PANEL:Init()
@@ -63,7 +69,7 @@ function PANEL:Init()
 
     self.divActions = self.divBody:Add('Panel')
     self.divActions.Paint = function(panel, w, h)
-        drawShadowBG(panel, w, h, colorPrimary)
+        drawShadowBG(panel, w, h)
     end
 
     self.lblActions = self.divActions:Add('vox.Label')
@@ -75,8 +81,9 @@ function PANEL:Init()
     self.lblActions:CenterText()
     self.lblActions:SetTall(self.smallHeaderHeight)
     self.lblActions.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorSecondary, 220), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(colorAccent, 45))
+        local _, themeSecondary, _, themeAccent = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeSecondary, 220), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(themeAccent, 45))
     end
 
     self.listActions = self.divActions:Add('vox.ScrollPanel')
@@ -86,7 +93,7 @@ function PANEL:Init()
     self.divAdmins = self.divBody:Add('Panel')
     self.divAdmins:SetVisible(not vox.f4:GetOptionValue('hide_admins'))
     self.divAdmins.Paint = function(panel, w, h)
-        drawShadowBG(panel, w, h, colorPrimary)
+        drawShadowBG(panel, w, h)
     end
 
     self.lblAdmins = self.divAdmins:Add('vox.Label')
@@ -98,8 +105,9 @@ function PANEL:Init()
     self.lblAdmins:CenterText()
     self.lblAdmins:SetTall(self.smallHeaderHeight)
     self.lblAdmins.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorSecondary, 220), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(colorAccent, 45))
+        local _, themeSecondary, _, themeAccent = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeSecondary, 220), true, true)
+        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(themeAccent, 45))
     end
 
     self.listAdmins = self.divAdmins:Add('vox.ScrollPanel')
@@ -241,9 +249,10 @@ function PANEL:InitStats()
         end
     end
 
-    self:AddStat(L('f4_playersonline_u'), playerOnline .. ' / ' .. playerMax, (playerOnline / playerMax), Color(255, 238, 108))
-    self:AddStat(L('f4_totalmoney_u'), formatMoney(totalMoney), (clientMoney / totalMoney), Color(36, 129, 50), Color(179, 255, 170))
-    self:AddStat(L('f4_staffonline_u'), staffOnline, (staffOnline > 0 and 1 or 0), Color(160, 61, 231))
+    local _, _, _, themeAccent, themeMoney = getThemeColors()
+    self:AddStat(L('f4_playersonline_u'), playerOnline .. ' / ' .. playerMax, (playerOnline / playerMax), themeAccent)
+    self:AddStat(L('f4_totalmoney_u'), formatMoney(totalMoney), (clientMoney / totalMoney), themeMoney, ColorAlpha(themeMoney, 170))
+    self:AddStat(L('f4_staffonline_u'), staffOnline, (staffOnline > 0 and 1 or 0), themeAccent)
 end
 
 function PANEL:AddStat(name, info, fraction, color, color2)
@@ -253,8 +262,9 @@ function PANEL:AddStat(name, info, fraction, color, color2)
 
     local panel = self.divStats:Add('Panel')
     panel.Paint = function(this, w, h)
-        drawShadowBG(this, w, h, colorPrimary)
-        draw.SimpleText('VOX', vox.Font('Comfortaa Bold@14'), vox.ScaleWide(16), h - vox.ScaleTall(16), ColorAlpha(colorAccent, 105), 0, 1)
+        local themePrimary, _, _, themeAccent = getThemeColors()
+        drawShadowBG(this, w, h, themePrimary)
+        draw.SimpleText('VOX', vox.Font('Comfortaa Bold@14'), vox.ScaleWide(16), h - vox.ScaleTall(16), ColorAlpha(themeAccent, 105), 0, 1)
     end
 
     local lblTitle = panel:Add('vox.Label')
@@ -266,7 +276,8 @@ function PANEL:AddStat(name, info, fraction, color, color2)
     lblTitle:DockMargin(0, 0, 0, padding)
     lblTitle:SizeToContentsY(10)
     lblTitle.Paint = function(panel, w, h)
-        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(colorSecondary, 225), true, true)
+        local _, themeSecondary = getThemeColors()
+        draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeSecondary, 225), true, true)
         vox.DrawAngledRect(w - vox.ScaleWide(54), 0, vox.ScaleWide(54), h, vox.ScaleWide(12), ColorAlpha(color, 55))
     end
 
@@ -297,9 +308,3 @@ function PANEL:AddStat(name, info, fraction, color, color2)
 end
 
 vox.gui.Register('vox.f4.Dashboard', PANEL)
-
--- Vox local preview helper
--- vox.gui.Test('vox.f4.Frame', .6, .65, function(panel)
---     panel:MakePopup()
---     panel:ChooseTab(1)
--- end)
