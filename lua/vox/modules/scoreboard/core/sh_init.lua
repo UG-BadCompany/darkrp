@@ -37,7 +37,7 @@ vox.scoreboard:RegisterOption('font_size', {
 
 vox.scoreboard:RegisterOption('compact_mode', {
     title = 'Compact Mode',
-    desc = 'Uses slimmer premium scoreboard rows',
+    desc = 'Uses slimmer command-center scoreboard rows',
     category = 'Appearance',
     cami = 'vox_scoreboard_edit',
     type = 'bool',

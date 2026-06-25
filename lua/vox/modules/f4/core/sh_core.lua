@@ -15,7 +15,7 @@ vox.f4:RegisterOption('title', {
 
 vox.f4:RegisterOption('scale', {
     title = 'F4 Scale',
-    desc = 'Controls the premium dashboard frame scale',
+    desc = 'Controls the command center frame scale',
     category = 'Appearance',
     cami = 'vox_f4_edit',
     type = 'int',
@@ -26,7 +26,7 @@ vox.f4:RegisterOption('scale', {
 
 vox.f4:RegisterOption('animations', {
     title = 'Animations',
-    desc = 'Enables smooth premium dashboard transitions',
+    desc = 'Enables smooth command center transitions',
     category = 'Appearance',
     cami = 'vox_f4_edit',
     type = 'bool',

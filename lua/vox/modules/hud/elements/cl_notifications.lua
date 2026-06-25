@@ -21,7 +21,7 @@ local NOTIFICATION_TYPES = {
         wimg = vox.wimg.Simple( 'https://i.imgur.com/vAjbKzK.png', 'smooth mips' )
     },
     [ NOTIFY_CLEANUP ] = {
-        colorKey = 'secondaryAccent',
+        colorKey = 'accent',
         wimg = vox.wimg.Simple( 'https://i.imgur.com/V3TyKJ9.png', 'smooth mips' )
     },
 }

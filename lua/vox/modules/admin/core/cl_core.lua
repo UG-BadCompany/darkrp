@@ -39,7 +39,7 @@ function vox.admin.Open()
     frame:MakePopup()
     frame:SetTitle( 'Vox Admin' )
 
-    local p = vox.PremiumPalette and vox.PremiumPalette() or {}
+    local p = vox.CommandPalette and vox.CommandPalette() or {}
     local accent = p.accent or Color( 0, 188, 255 )
     local muted = p.muted or Color( 150, 164, 188 )
     local text = p.text or color_white

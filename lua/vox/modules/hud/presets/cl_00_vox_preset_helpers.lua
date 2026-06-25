@@ -18,7 +18,7 @@ end
 
 function helpers.GetThemeData( client )
     local colors, theme = (vox.GetThemeColors and vox.GetThemeColors()) or {}, nil
-    colors = colors or (vox.PremiumPalette and vox.PremiumPalette()) or {}
+    colors = colors or (vox.CommandPalette and vox.CommandPalette()) or {}
     colors.textPrimary = colors.textPrimary or colors.text or color_white
     colors.textSecondary = colors.textSecondary or colors.muted or Color( 145, 160, 184 )
     colors.accent = colors.accent or Color( 0, 188, 255 )

@@ -166,7 +166,7 @@ vox.hud:RegisterOption( 'hud_scale', {
 
 vox.hud:RegisterOption( 'font_size', {
     title = 'Font Size',
-    desc = 'Adjusts premium UI readability preference',
+    desc = 'Adjusts command-center UI readability preference',
     category = 'appearance',
     cami = 'vox_hud_edit',
     type = 'int',
@@ -186,7 +186,7 @@ vox.hud:RegisterOption( 'compact_mode', {
 
 vox.hud:RegisterOption( 'blur_enabled', {
     title = 'Blur On/Off',
-    desc = 'Enables glass blur on premium Vox panels where supported',
+    desc = 'Enables glass blur on command-center Vox panels where supported',
     category = 'appearance',
     cami = 'vox_hud_edit',
     type = 'bool',

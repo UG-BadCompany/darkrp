@@ -35,7 +35,15 @@ local scale do
 end
 
 function vox.hud.GetScale()
-    return ( CONVAR:GetInt() / 100 )
+    if ( vox.hud.GetOptionValue and vox.inconfig and vox.inconfig.options ) then
+        local option = vox.inconfig.options[ 'hud_hud_scale' ]
+        local serverScale = option and vox.hud:GetOptionValue( 'hud_scale' )
+        if ( serverScale ~= nil and serverScale ~= option.default ) then
+            return serverScale / 100
+        end
+    end
+
+    return CONVAR:GetInt() / 100
 end
 
 function vox.hud.StartScaling( contextID )
@@ -74,6 +82,13 @@ cvars.AddChangeCallback( 'cl_vox_hud_scale', function( _, _, new )
     vox.hud.ResetScaleCache()
     vox.hud.BuildFonts()
 end, 'vox.hud.Update' )
+
+hook.Add( 'vox.inconfig.Updated', 'vox.hud.UpdateServerScale', function( id )
+    if ( id == 'hud_hud_scale' or id == 'hud_font_size' ) then
+        vox.hud.ResetScaleCache()
+        vox.hud.BuildFonts()
+    end
+end )
 
 hook.Add( 'OnScreenSizeChanged', 'vox.hud.ResetScaleCache', function()
     vox.hud.ResetScaleCache()

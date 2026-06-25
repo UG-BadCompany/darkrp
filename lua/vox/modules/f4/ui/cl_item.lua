@@ -6,14 +6,20 @@ local fontDesc = vox.Font('Comfortaa@16')
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
 
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or vox.OffsetColor(colorSecondary, 12), Color(70, 135, 255)
+end
+
 local PANEL = {}
 
 function PANEL:Init()
     self.padding = vox.ScaleTall(7.5)
-    self.itemColor = color_white
-    self.itemColorBG = colorPrimary
-    self.colorBG = colorSecondary
-    self.colorBGGradient = Color(57, 57, 57, 25)
+    local themePrimary, themeSecondary, _, themeAccent = getThemeColors()
+    self.itemColor = themeAccent
+    self.itemColorBG = themePrimary
+    self.colorBG = themeSecondary
+    self.colorBGGradient = ColorAlpha(themeAccent, 25)
     self.gradientEnabled = vox.f4:GetOptionValue('colored_items')
 
     self.iconContainer = self:Add('Panel')
@@ -89,8 +95,9 @@ end
 function PANEL:SetColor(color, bgFraction)
     self.itemColor = color
     if (bgFraction) then
-        self.colorBGGradient = vox.LerpColor(.05, colorSecondary, self.itemColor)
-        self.itemColorBG = vox.LerpColor(bgFraction, colorSecondary, vox.CopyColor(self.itemColor))
+        local _, themeSecondary = getThemeColors()
+        self.colorBGGradient = ColorAlpha(self.itemColor, 14)
+        self.itemColorBG = vox.LerpColor(math.min(bgFraction or .08, .1), themeSecondary, vox.CopyColor(self.itemColor))
     end
 end
 
@@ -119,11 +126,17 @@ function PANEL:PerformLayout(w, h)
 end
 
 function PANEL:Paint(w, h)
-    if vox.DrawVoxPanel then
-        vox.DrawVoxCard( 0, 0, w, h, { primary = self.colorBG, secondary = colorSecondary, accent = self.itemColor }, { hovered = self:IsHovered(), accent = self.itemColor, radius = 8 } )
+    local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
+    local accent = self.itemColor or themeAccent
+    local bg = self.colorBG or themeSecondary
+
+    if vox.DrawVoxCard then
+        vox.DrawVoxCard(0, 0, w, h, { primary = bg, secondary = themeTertiary, accent = accent }, { hovered = self:IsHovered(), accent = accent, radius = 8 })
+    elseif vox.DrawVoxPanel then
+        vox.DrawVoxPanel(0, 0, w, h, { primary = bg, secondary = themePrimary, accent = accent }, 8)
     else
         draw.RoundedBox(8, 0, 0, w, h, colorOutline)
-        draw.RoundedBox(8, 1, 1, w - 2, h - 2, self.colorBG)
+        draw.RoundedBox(8, 1, 1, w - 2, h - 2, bg)
     end
 
     if (self.gradientEnabled) then
@@ -189,9 +202,9 @@ function PANEL:AddFavoriteButton()
         local targetColor = state and colorFavoriteIconActive or colorFavoriteIconIdle
 
         if (state) then
-            panel:SetWebImage('favorite_fill', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_fill.png', 'smooth mips')
         else
-            panel:SetWebImage('favorite_outline', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_outline.png', 'smooth mips')
         end
 
         vox.anim.Create(panel, .33, {
@@ -221,8 +234,3 @@ function PANEL:AddFavoriteButton()
 end
 
 vox.gui.Register('vox.f4.Item', PANEL)
-
--- vox.gui.Test('vox.f4.Frame', .65, .65, function(panel)
---     panel:MakePopup()
---     panel:ChooseTab(3)
--- end)

@@ -4,6 +4,11 @@ local colorAccent = vox:Config('colors.accent')
 local colorTertiary = vox:Config('colors.tertiary')
 local colorLine = Color(75, 75, 75)
 local colorBG = vox.OffsetColor(colorPrimary, -3)
+
+local function getThemeColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.money or Color(35, 225, 120)
+end
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
 
@@ -73,7 +78,7 @@ end
 local PANEL = {}
 
 function PANEL:Init()
-    self.colorSlightGradient = colorTertiary
+    self.colorCommandAccent = colorAccent
 
     self.divInfo = self:Add('Panel')
 
@@ -120,7 +125,8 @@ function PANEL:Init()
 
     self.lblSalary = self.divInfo:Add('vox.Label')
     self.lblSalary:Font('Comfortaa Bold@16')
-    self.lblSalary:SetTextColor(Color(161, 161, 161))
+    local _, _, _, _, themeMoney = getThemeColors()
+    self.lblSalary:SetTextColor(themeMoney or Color(35, 225, 120))
     self.lblSalary:Dock(TOP)
     self.lblSalary:DockMargin(0, 0, 0, vox.ScaleTall(20))
 
@@ -181,9 +187,9 @@ function PANEL:Init()
         local targetColor = state and colorFavoriteIconActive or colorFavoriteIconIdle
 
         if (state) then
-            panel:SetWebImage('favorite_fill', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_fill.png', 'smooth mips')
         else
-            panel:SetWebImage('favorite_outline', 'smooth mips')
+            panel:SetImage('vox_f4menu/favorite_outline.png', 'smooth mips')
         end
 
         vox.anim.Create(panel, .33, {
@@ -276,7 +282,8 @@ function PANEL:SetupJob(job)
 
     self.lblSalary:SetText(L('f4_salary') .. ': ' .. DarkRP.formatMoney(job.salary))
 
-    self.colorSlightGradient = vox.LerpColor(.1, colorSecondary, job.color)
+    local _, themeSecondary, _, themeAccent = getThemeColors()
+    self.colorCommandAccent = themeAccent
 
     self.iconModel:SetModel(model)
     self.iconModel:SetCamPos(Vector(50, 0, 50))
@@ -299,7 +306,8 @@ function PANEL:SetupJob(job)
             button.Paint = function(panel, w, h)
                 local child = panel:GetChild(0)
 
-                vox.DrawCircle(w * .5, h * .5, h * .5, colorSecondary)
+                local _, themeSecondary = getThemeColors()
+                vox.DrawCircle(w * .5, h * .5, h * .5, themeSecondary)
 
                 if (IsValid(child)) then
                     vox.DrawWithPolyMask(panel.mask, function()
@@ -364,8 +372,9 @@ function PANEL:SetupJob(job)
             panel:SetContentAlignment(5)
             panel:SetFont(vox.Font('Comfortaa Bold@16'))
             panel.Paint = function(this, w, h)
-                draw.RoundedBox(8, 0, 0, w, h, colorPrimary)
-                draw.RoundedBox(8, 1, 1, w - 2, h - 2, colorTertiary)
+                local themePrimary, _, themeTertiary = getThemeColors()
+                draw.RoundedBox(8, 0, 0, w, h, themePrimary)
+                draw.RoundedBox(8, 1, 1, w - 2, h - 2, themeTertiary)
             end
         end
     end
@@ -392,33 +401,37 @@ function PANEL:Paint(w, h)
     local frame = vox.f4.frame
     if (not IsValid(frame)) then return end -- just in case
 
-    local realX, realY = frame.container:LocalToScreen(0, 0)
-    local realW, realH = frame.container:GetSize()
-    local padding = frame.containerPadding
+    local container = frame.container or frame.content or frame
+    local realX, realY = container:LocalToScreen(0, 0)
+    local realW, realH = container:GetSize()
+    local padding = frame.containerPadding or vox.ScaleTall(18)
 
     local divModel = self.divModel
     local Y = -padding
     local H = h + padding * 2
     local W = w + padding
 
+    local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
+    colorBG = vox.OffsetColor(themePrimary, -3)
+
     if (self.enabled) then
         vox.bshadows.BeginShadow()
-            surface.SetDrawColor(colorSecondary)
+            surface.SetDrawColor(themeSecondary)
             surface.DrawRect(x, y, w, h)
         vox.bshadows.EndShadow(1, 2, 2, nil, 90, 2, true)
     end
 
     DisableClipping(true)
         render.SetScissorRect(realX, realY, realX + realW, realY + realH, true)
-            vox.DrawVoxPanel(0, Y, W, H, { primary = colorSecondary, secondary = colorPrimary, accent = self.colorSlightGradient }, 8)
+            vox.DrawVoxPanel(0, Y, W, H, { primary = themeSecondary, secondary = themePrimary, accent = self.colorCommandAccent or themeAccent }, 8)
 
             local modelX = divModel:GetPos()
             vox.DrawAngledRect(modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, vox.ScaleWide(28), colorBG)
-            vox.DrawVoxBlade(modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), self.colorSlightGradient)
-            vox.DrawAngledRect(0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), vox.ScaleWide(18), ColorAlpha(self.colorSlightGradient, 38))
-            vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorSlightGradient, 85))
+            vox.DrawVoxBlade(modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), self.colorCommandAccent)
+            vox.DrawAngledRect(0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), vox.ScaleWide(18), ColorAlpha(self.colorCommandAccent, 38))
+            vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorCommandAccent, 85))
 
-            surface.SetDrawColor(ColorAlpha(self.colorSlightGradient, 105))
+            surface.SetDrawColor(ColorAlpha(self.colorCommandAccent, 105))
             surface.DrawLine(vox.ScaleWide(18), Y + vox.ScaleTall(10), self.divInfo:GetWide() - vox.ScaleWide(30), Y + vox.ScaleTall(10))
             surface.DrawLine(modelX + vox.ScaleWide(20), Y + H - vox.ScaleTall(12), W - vox.ScaleWide(18), Y + H - vox.ScaleTall(12))
         render.SetScissorRect(0, 0, 0, 0, false)

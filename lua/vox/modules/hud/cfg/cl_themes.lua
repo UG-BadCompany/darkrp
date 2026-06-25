@@ -1,4 +1,4 @@
--- Vox UI premium theme presets. All HUD elements should consume these tokens.
+-- Vox UI command-center theme presets. All HUD elements should consume these tokens.
 local function voxTheme(primary, secondary, tertiary, accent, extras)
     extras = extras or {}
     local colors = {
@@ -7,7 +7,6 @@ local function voxTheme(primary, secondary, tertiary, accent, extras)
             tertiary = tertiary,
             quaternary = Color(8, 11, 16),
             accent = accent,
-            secondaryAccent = Color(142, 84, 255),
             border = Color(46, 62, 88),
             glow = ColorAlpha and ColorAlpha(accent, 70) or accent,
             textPrimary = Color(246, 248, 255),
