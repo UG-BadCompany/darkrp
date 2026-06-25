@@ -4,12 +4,15 @@ AccessorFunc(PANEL, 'm_bDeleteSelf', 'DeleteSelf')
 AccessorFunc(PANEL, 'm_iMinimumWidth', 'MinimumWidth')
 
 local MAT_WING = Material('vox_framework/wing.png', 'smooth mips')
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
+local fallbackMenuColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62)
+}
 
 function PANEL:Init()
-    self.backgroundColor = colorPrimary
-    self.outlineColor = colorSecondary
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    self.backgroundColor = colors.primary or fallbackMenuColors.primary
+    self.outlineColor = colors.secondary or fallbackMenuColors.secondary
     self.options = {}
     self.submenus = {}
 

@@ -1,9 +1,9 @@
 local MAT_ARROW = Material('vox_framework/wing.png', 'smooth mips')
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorTertiary = vox:Config('colors.tertiary')
-local COMMAND_ACCENT = Color(70, 135, 255)
+local fallbackCategoryColors = {
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255)
+}
 
 local font0 = vox.Font('Comfortaa Bold@16')
 
@@ -28,12 +28,12 @@ function PANEL:Init()
     self.button:Import('hovercolor')
     self.button:SetColorKey('backgroundColor')
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    self.button:SetColorIdle(colors.secondary or colorSecondary)
-    self.button:SetColorHover(colors.tertiary or colorTertiary)
+    self.button:SetColorIdle(colors.secondary or fallbackCategoryColors.secondary)
+    self.button:SetColorHover(colors.tertiary or fallbackCategoryColors.tertiary)
     self.button.textColor = color_white
     self.button.Paint = function(p, w, h)
         local uiColors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        p:SetColorHover(uiColors.tertiary or colorTertiary)
+        p:SetColorHover(uiColors.tertiary or fallbackCategoryColors.tertiary)
         if (self.m_bSquareCorners and self.canvas:GetTall() > 0) then
             draw.RoundedBoxEx(8, 0, 0, w, h, p.backgroundColor, true, true)
         else
@@ -44,7 +44,7 @@ function PANEL:Init()
         local sz = math.floor(h * .5)
 
         if (self.wimage) then
-            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, COMMAND_ACCENT)
+            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, fallbackCategoryColors.accent)
 
             x = h
         end
@@ -82,10 +82,10 @@ end
 function PANEL:SetExpanded(bBool)
     if (bBool) then
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        self.button:SetColorIdle(colors.secondary or colorSecondary)
+        self.button:SetColorIdle(colors.secondary or fallbackCategoryColors.secondary)
     else
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        self.button:SetColorIdle(colors.secondary or colorSecondary)
+        self.button:SetColorIdle(colors.secondary or fallbackCategoryColors.secondary)
     end
 
     self.m_bExpanded = bBool

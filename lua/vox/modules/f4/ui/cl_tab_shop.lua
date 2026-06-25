@@ -1,7 +1,9 @@
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorTertiary = vox:Config('colors.tertiary')
-local colorLine = Color(75, 75, 75)
+local fallbackShopTabColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255)
+}
 local oldScrollValues = {}
 local convars = {}
 local itemTypes = {'entities', 'weapons', 'shipments', 'ammo'}
@@ -11,7 +13,7 @@ local CATEGORY_COLORS = {
     weapons = Color(70, 135, 255),
     shipments = Color(70, 135, 255),
     ammo = Color(70, 135, 255),
-    food = Color(35, 225, 120)
+    food = Color(70, 135, 255)
 }
 for _, itemType in ipairs(itemTypes) do
     convars[itemType] = CreateClientConVar('cl_vox_f4_show_favorite_' .. itemType, '1', true, false)
@@ -21,7 +23,13 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, Color(70, 135, 255)
+    return colors.primary or fallbackShopTabColors.primary, colors.secondary or fallbackShopTabColors.secondary, colors.tertiary or fallbackShopTabColors.tertiary, colors.accent or fallbackShopTabColors.accent
+end
+
+
+local function getThemeColorValue(key, fallback)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors[key] or fallback
 end
 
 local PANEL = {}
@@ -309,7 +317,7 @@ function PANEL:CreateCategory(container, name, members, color, purchaseFunc, ite
     content:SetTall(0)
     content:SetSpaceX(vox.ScaleTall(5))
     content:SetSpaceY(content:GetSpaceX())
-    content:SetColumnCount(vox.f4:GetOptionValue('item_columns'))
+    content:SetColumnCount(1)
     content.category = pnlCategory
     content.parentContainer = container
 
@@ -327,14 +335,14 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
     local price = itemType == 'weapons' and member.pricesep or member.price
 
     local item = content:Add('vox.f4.Item')
-    item:SetTall(vox.ScaleTall(55))
+    item:SetTall(vox.ScaleTall(48))
     item:SetModel(model)
     item:SetName(member.name)
     local _, _, _, themeAccent = getThemeColors()
-    item:SetColor(color or themeAccent, .1)
+    item:SetColor(themeAccent, .08)
     item:SetDesc(DarkRP.formatMoney(price))
     item:SetDescLabel(L('f4_price'))
-    item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().money or Color(35, 225, 120)) or Color(35, 225, 120))
+    item:SetDescColor(getThemeColorValue('money', Color(35, 225, 120)))
     item.objectIdentifier = (member.ent or member.entity or member.name)
     if (not member.energy) then
         item:AddFavoriteButton()
@@ -364,7 +372,7 @@ function PANEL:CreateMember(member, content, color, purchaseFunc, reason, itemTy
     end
 
     if (reason) then
-        item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().negative or Color(255, 88, 104)) or Color(255, 88, 104))
+        item:SetDescColor(getThemeColorValue('negative', Color(255, 88, 104)))
         item:SetDesc(reason)
         item:SetDescLabel('')
     end

@@ -1,9 +1,10 @@
 local PANEL = {}
 
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorBG = colorPrimary
+local fallbackTextEntryColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    accent = Color(70, 135, 255)
+}
 
 AccessorFunc(PANEL, 'm_PlaceholderText', 'PlaceholderText')
 AccessorFunc(PANEL, 'm_colPlaceholderColor', 'PlaceholderColor')
@@ -37,9 +38,9 @@ local DISPATCH = {
 
 function PANEL:Init()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    local primary = colors.primary or colorBG
-    local secondary = colors.secondary or colorSecondary
-    local accent = colors.accent or colorAccent
+    local primary = colors.primary or fallbackTextEntryColors.primary
+    local secondary = colors.secondary or fallbackTextEntryColors.secondary
+    local accent = colors.accent or fallbackTextEntryColors.accent
 
     self:SetTextSpace(vox.ScaleWide(10))
     self:SetTall(vox.ScaleTall(30))
@@ -55,7 +56,7 @@ function PANEL:Init()
     self.textEntry:SetDrawLanguageID(false)
     self.textEntry.Paint = function(panel, w, h)
         local uiColors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        panel:DrawTextEntryText(panel:GetTextColor(), uiColors.accent or colorAccent, panel:GetTextColor())
+        panel:DrawTextEntryText(panel:GetTextColor(), uiColors.accent or fallbackTextEntryColors.accent, panel:GetTextColor())
     end
 
     for _, name in ipairs(MUTATORS) do
@@ -99,7 +100,7 @@ end
 function PANEL:OnDisabled()
     local offset = -5
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    local primary = colors.primary or colorBG
+    local primary = colors.primary or fallbackTextEntryColors.primary
     self.voxAnims = {}
     self:SetColorIdle(vox.OffsetColor(primary, offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
@@ -108,7 +109,7 @@ end
 function PANEL:OnEnabled()
     local offset = 0
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    local primary = colors.primary or colorBG
+    local primary = colors.primary or fallbackTextEntryColors.primary
     self.voxAnims = {}
     self:SetColorIdle(vox.OffsetColor(primary, offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))

@@ -1,10 +1,17 @@
 local PANEL = {}
 
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
+local fallbackComboColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    accent = Color(70, 135, 255)
+}
 local colorGray = Color(125, 125, 125)
 local MAT_ARROW = Material('vox_framework/tick.png', 'smooth mips')
+
+local function getComboPrimary()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or fallbackComboColors.primary
+end
 
 AccessorFunc(PANEL, 'm_CurrentOptionText', 'CurrentOptionText')
 AccessorFunc(PANEL, 'm_Font', 'Font')
@@ -14,9 +21,9 @@ AccessorFunc(PANEL, 'm_bHideOptionIcon', 'HideOptionIcon')
 
 function PANEL:Init()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    local primary = colors.primary or colorPrimary
-    local secondary = colors.secondary or colorSecondary
-    local accent = colors.accent or colorAccent
+    local primary = colors.primary or fallbackComboColors.primary
+    local secondary = colors.secondary or fallbackComboColors.secondary
+    local accent = colors.accent or fallbackComboColors.accent
 
     self:Import('click')
     self:Import('hovercolor')
@@ -227,14 +234,14 @@ end
 function PANEL:OnDisabled()
     local offset = -5
     self.voxAnims = nil
-    self:SetColorIdle(vox.OffsetColor(colorPrimary, offset))
+    self:SetColorIdle(vox.OffsetColor(getComboPrimary(), offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
 end
 
 function PANEL:OnEnabled()
     local offset = 0
     self.voxAnims = nil
-    self:SetColorIdle(vox.OffsetColor(colorPrimary, offset))
+    self:SetColorIdle(vox.OffsetColor(getComboPrimary(), offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
 end
 

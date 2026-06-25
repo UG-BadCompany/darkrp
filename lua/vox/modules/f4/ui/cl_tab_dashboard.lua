@@ -1,8 +1,12 @@
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorGradient = vox.OffsetColor(colorAccent, -50)
-local colorTertiary = vox:Config('colors.tertiary')
+local fallbackDashboardColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255),
+    money = Color(35, 225, 120),
+    negative = Color(255, 75, 95)
+}
+local colorGradient = vox.OffsetColor(fallbackDashboardColors.accent, -50)
 local colorCircleGray = Color(69, 69, 69)
 local colorLabel = color_white
 local fontTitle = vox.Font('Comfortaa Bold@16')
@@ -11,7 +15,7 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.money or Color(35, 225, 120), colors.negative or Color(255, 75, 95)
+    return colors.primary or fallbackDashboardColors.primary, colors.secondary or fallbackDashboardColors.secondary, colors.tertiary or fallbackDashboardColors.tertiary, colors.accent or fallbackDashboardColors.accent, colors.money or fallbackDashboardColors.money, colors.negative or fallbackDashboardColors.negative
 end
 
 local PANEL = {}
@@ -195,7 +199,8 @@ function PANEL:InitAdmins()
             panel:SetTall(vox.ScaleTall(45))
             panel:DockPadding(padding, padding, padding, padding)
             panel.Paint = function(panel, w, h)
-                draw.RoundedBox(8, 0, 0, w, h, colorTertiary)
+                local _, _, themeTertiary = getThemeColors()
+                draw.RoundedBox(8, 0, 0, w, h, themeTertiary)
             end
 
             local height = panel:GetTall() - padding * 2
@@ -217,7 +222,8 @@ function PANEL:InitAdmins()
             lblName:SetText(ply:Name())
 
             if (client == ply) then
-                lblName:SetTextColor(colorAccent)
+                local _, _, _, themeAccent = getThemeColors()
+                lblName:SetTextColor(themeAccent)
             end
 
             local lblRank = panel:Add('vox.Label')

@@ -1,6 +1,9 @@
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorTertiary = vox:Config('colors.tertiary')
+local fallbackJobTabColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255)
+}
 local colorGray = Color(159, 159, 159)
 local font0 = vox.Font('Montserrat@14')
 local oldScrollValue = 0
@@ -10,7 +13,13 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, Color(70, 135, 255)
+    return colors.primary or fallbackJobTabColors.primary, colors.secondary or fallbackJobTabColors.secondary, colors.tertiary or fallbackJobTabColors.tertiary, colors.accent or fallbackJobTabColors.accent
+end
+
+
+local function getThemeColorValue(key, fallback)
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors[key] or fallback
 end
 
 local PANEL = {}
@@ -303,7 +312,7 @@ function PANEL:CreateCategory(name, members, color)
     content:SetTall(0)
     content:SetSpaceX(vox.ScaleTall(5))
     content:SetSpaceY(content:GetSpaceX())
-    content:SetColumnCount(vox.f4:GetOptionValue('job_columns'))
+    content:SetColumnCount(1)
     content.category = pnlCategory
 
     for _, member in ipairs(members) do
@@ -320,11 +329,10 @@ function PANEL:CreateMember(member, content, reason)
     local max = member.max
     local inf = max == 0
     local index = member.team
-    local color = vox.f4.ConvertJobColor(member.color)
     local salary = DarkRP.formatMoney(member.salary)
 
     local item = content:Add('vox.f4.Item')
-    item:SetTall(vox.ScaleTall(55))
+    item:SetTall(vox.ScaleTall(48))
     item:SetModel(model)
     item:SetName(member.name)
     local _, _, _, themeAccent = getThemeColors()
@@ -333,13 +341,13 @@ function PANEL:CreateMember(member, content, reason)
     item:SetDescLabel(L('f4_salary'))
     if (reason) then
         local _, _, _, themeAccent = getThemeColors()
-        item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().negative or Color(255, 88, 104)) or Color(255, 88, 104))
+        item:SetDescColor(getThemeColorValue('negative', Color(255, 88, 104)))
         item:SetDesc(reason)
         item:SetDescLabel('')
     elseif (member.salary == 0) then
         item:SetDescColor(colorGray)
     else
-        item:SetDescColor(vox.GetUIThemeColors and (vox.GetUIThemeColors().money or Color(35, 225, 120)) or Color(35, 225, 120))
+        item:SetDescColor(getThemeColorValue('money', Color(35, 225, 120)))
     end
 
     item:PositionCamera('face')
@@ -368,7 +376,7 @@ function PANEL:CreateMember(member, content, reason)
 
         if (panel.fraction and panel.fraction > 0) then
             vox.DrawWithPolyMask(panel.mask, function()
-                vox.DrawOutlinedCircle(w * .5, h * .5, math.floor(h * .5), 6, themeAccent or color)
+                vox.DrawOutlinedCircle(w * .5, h * .5, math.floor(h * .5), 6, themeAccent)
             end)
         end
 

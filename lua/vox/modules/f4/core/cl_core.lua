@@ -103,8 +103,8 @@ function vox.f4.OpenAdminSettings()
     })
 
     sidebar:AddTab({
-        name = vox.lang:Get('addon_stats_u'),
-        desc = vox.lang:Get('addon_stats_desc'),
+        name = 'ADMIN PANEL',
+        desc = 'Player management and moderation tools',
         mat = Material('vox_f4menu/stats.png', 'smooth mips'),
         class = 'vox.f4.AdminStats'
     })
