@@ -1,11 +1,29 @@
 -- Vox UI exact reference F4 remake
-surface.CreateFont('VoxRef.Title', {font='Tahoma', size=18, weight=800, extended=true})
-surface.CreateFont('VoxRef.Text', {font='Tahoma', size=14, weight=500, extended=true})
-surface.CreateFont('VoxRef.Small', {font='Tahoma', size=12, weight=500, extended=true})
-surface.CreateFont('VoxRef.Tiny', {font='Tahoma', size=10, weight=600, extended=true})
-surface.CreateFont('VoxRef.CardTitle', {font='Tahoma', size=20, weight=900, extended=true})
+surface.CreateFont('VoxRef.Title', {font='Comfortaa', size=18, weight=800, extended=true})
+surface.CreateFont('VoxRef.Text', {font='Comfortaa', size=14, weight=500, extended=true})
+surface.CreateFont('VoxRef.Small', {font='Comfortaa', size=12, weight=700, extended=true})
+surface.CreateFont('VoxRef.Tiny', {font='Comfortaa', size=10, weight=600, extended=true})
+surface.CreateFont('VoxRef.CardTitle', {font='Comfortaa', size=20, weight=900, extended=true})
 
-local C={bg=Color(5,13,30,246),panel=Color(8,21,44,238),card=Color(12,28,58,232),card2=Color(15,36,70,232),border=Color(54,91,145,110),accent=Color(70,135,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
+local FALLBACK={bg=Color(5,13,30,246),panel=Color(8,21,44,238),card=Color(12,28,58,232),card2=Color(15,36,70,232),border=Color(54,91,145,110),accent=Color(70,135,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
+local C=FALLBACK
+local function palette()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    C = {
+        bg = colors.primary or FALLBACK.bg,
+        panel = colors.secondary or FALLBACK.panel,
+        card = colors.secondary or FALLBACK.card,
+        card2 = colors.tertiary or FALLBACK.card2,
+        border = ColorAlpha(colors.accent or FALLBACK.accent, 110),
+        accent = colors.accent or FALLBACK.accent,
+        green = colors.money or colors.positive or FALLBACK.green,
+        red = colors.negative or FALLBACK.red,
+        amber = colors.warning or FALLBACK.amber,
+        text = colors.textPrimary or colors.text or FALLBACK.text,
+        soft = colors.textSecondary or colors.muted or FALLBACK.soft
+    }
+    return C
+end
 local ICON = {
     dashboard = Material('vox_f4menu/dashboard.png', 'smooth mips'),
     jobs = Material('vox_f4menu/jobs.png', 'smooth mips'),
@@ -24,8 +42,8 @@ local ICON = {
 }
 local function rr(x,y,w,h,r,col) draw.RoundedBox(r or 8,x,y,w,h,col) end
 local function outline(x,y,w,h,r,col) surface.SetDrawColor(col or C.border); surface.DrawOutlinedRect(x,y,w,h,1) end
-local function glass(x,y,w,h,r,accent) rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,Color(8,21,44,225)); outline(x,y,w,h,r,accent or C.border) end
-local function softCard(x,y,w,h,r,col) rr(x,y,w,h,r or 8,col or C.card); outline(x,y,w,h,r,ColorAlpha(C.border,70)) end
+local function glass(x,y,w,h,r,accent) palette(); if vox.DrawVoxPanel then vox.DrawVoxPanel(x,y,w,h,{primary=C.bg,secondary=C.panel,tertiary=C.card2,accent=accent or C.accent},r or 10) else rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,C.panel); outline(x,y,w,h,r,accent or C.border) end end
+local function softCard(x,y,w,h,r,col) palette(); if vox.DrawVoxPanel then vox.DrawVoxPanel(x,y,w,h,{primary=col or C.card,secondary=C.panel,tertiary=C.card2,accent=C.accent},r or 8) else rr(x,y,w,h,r or 8,col or C.card); outline(x,y,w,h,r,ColorAlpha(C.border,70)) end end
 local function matIcon(txt,x,y,col) draw.SimpleText(txt,'VoxRef.Title',x,y,col or C.text,1,1) end
 local function money(v) if DarkRP and DarkRP.formatMoney then return DarkRP.formatMoney(v or 0) end return '$'..string.Comma(v or 0) end
 local function drawIcon(icon,x,y,w,h,col)
@@ -71,16 +89,19 @@ function PANEL:PerformLayout(w,h)
     self.closeButton:SetPos(w-34,4); self.closeButton:SetSize(28,24)
 end
 function PANEL:Paint(w,h)
+    palette()
     glass(0,0,w,h,14,ColorAlpha(C.accent,135))
+    vox.DrawVoxScanlines(14,32,w-28,h-44,ColorAlpha(C.accent,8),8)
+    vox.DrawVoxCornerTicks(8,8,w-16,h-16,ColorAlpha(C.accent,115),18)
     draw.SimpleText('F4 MENU','VoxRef.Title',14,15,C.text,0,1)
     draw.SimpleText('(COMMAND CENTER)','VoxRef.Tiny',92,15,C.soft,0,1)
 end
 function PANEL:BuildSidebar()
     local s=self.sidebar
-    s.Paint=function(_,w,h) softCard(0,0,w,h,12,Color(5,17,38,225)) end
+    s.Paint=function(_,w,h) palette(); softCard(0,0,w,h,12,ColorAlpha(C.bg,225)); vox.DrawVoxScanlines(12,12,w-24,h-24,ColorAlpha(C.accent,7),8) end
     local profile=s:Add('Panel'); profile:SetPos(10,12); profile:SetSize(200,64)
     profile.Paint=function(_,w,h)
-        rr(0,0,w,h,10,Color(8,22,48,170))
+        vox.DrawVoxPanel(0,0,w,h,{primary=ColorAlpha(C.panel,210),secondary=C.card2,accent=C.accent},10)
         local lp=LocalPlayer()
         draw.SimpleText(IsValid(lp) and lp:Name() or 'Player','VoxRef.Small',64,14,C.text,0,0)
         draw.SimpleText(IsValid(lp) and (lp:getDarkRPVar('job') or team.GetName(lp:Team())) or 'Citizen','VoxRef.Tiny',64,34,C.green,0,0)
@@ -92,9 +113,9 @@ function PANEL:BuildSidebar()
         local b=s:Add('DButton'); b:SetText(''); b:SetPos(12,y); b:SetSize(196,42); y=y+48
         b.Paint=function(p,w,h)
             local active=self.active==t.id
-            rr(0,0,w,h,7, active and Color(30,80,150,215) or Color(10,31,58,180))
-            if active then rr(0,0,4,h,3,C.accent) end
-            if p:IsHovered() then outline(0,0,w,h,7,ColorAlpha(C.accent,80)) end
+            rr(0,0,w,h,7, active and ColorAlpha(C.card2,225) or ColorAlpha(C.panel,175))
+            if active then draw.RoundedBox(3,0,6,4,h-12,C.accent) end
+            if p:IsHovered() or active then outline(0,0,w,h,7,ColorAlpha(C.accent,80)) end
             drawIcon(t.icon,18,15,12,12,active and C.text or C.soft)
             draw.SimpleText(t.name,'VoxRef.Small',48,8,C.text,0,0)
             draw.SimpleText(t.desc,'VoxRef.Tiny',48,24,C.soft,0,0)
@@ -110,7 +131,7 @@ function PANEL:BuildSidebar()
 end
 local function addCard(parent,x,y,w,h,title,value,sub,col,icon)
     local p=parent:Add('Panel'); p:SetPos(x,y); p:SetSize(w,h); p.Paint=function(_,cw,ch)
-        softCard(0,0,cw,ch,8,Color(10,27,57,224))
+        softCard(0,0,cw,ch,8,ColorAlpha(C.card,224))
         if icon then iconBubble(icon,10,9,18,col or C.accent) end
         draw.SimpleText(string.upper(title),'VoxRef.Tiny',icon and 34 or 14,10,C.soft,0,0)
         draw.SimpleText(value,'VoxRef.CardTitle',14,31,C.text,0,0)
@@ -120,9 +141,9 @@ end
 function PANEL:BuildContent()
     self.content:Clear()
     local c=self.content
-    c.Paint=function(_,w,h) softCard(0,0,w,h,12,Color(5,15,34,225)) end
+    c.Paint=function(_,w,h) palette(); softCard(0,0,w,h,12,ColorAlpha(C.bg,225)); vox.DrawVoxCornerTicks(8,8,w-16,h-16,ColorAlpha(C.accent,80),16) end
     local search=c:Add('DTextEntry'); self.search=search; search:SetPos(18,14); search:SetSize(math.max(c:GetWide()-36,220),30); search:SetText(''); search:SetPlaceholderText('Search the menu...'); if search.SetTextInset then search:SetTextInset(28,0) end
-    search.Paint=function(p,w,h) rr(0,0,w,h,7,Color(5,18,39,230)); outline(0,0,w,h,7,Color(37,65,110,120)); drawIcon(ICON.search,10,h*.5-6,12,12,C.soft); p:DrawTextEntryText(C.text,C.accent,C.text) end
+    search.Paint=function(p,w,h) palette(); rr(0,0,w,h,7,ColorAlpha(C.panel,230)); outline(0,0,w,h,7,ColorAlpha(C.accent,p:IsHovered() and 110 or 65)); drawIcon(ICON.search,10,h*.5-6,12,12,C.soft); p:DrawTextEntryText(C.text,C.accent,C.text) end
     c.PerformLayout=function(_,w,h)
         if IsValid(search) then search:SetPos(18,14); search:SetSize(w-36,30) end
         if IsValid(self.nativeContent) then self.nativeContent:SetPos(18,56); self.nativeContent:SetSize(w-36,h-74) end
@@ -150,10 +171,10 @@ function PANEL:BuildDashboard(c)
     self:ListPanel(c,330,304,422,116,'WANTED PLAYERS',{{'John Wick','★★★★★','$5,000',ICON.wanted,C.amber},{'Tony Montana','★★★★☆','$2,500',ICON.wanted,C.amber}})
 end
 function PANEL:ListPanel(parent,x,y,w,h,title,rows,footer)
-    local p=parent:Add('Panel'); p:SetPos(x,y); p:SetSize(w,h); p.Paint=function(_,cw,ch) softCard(0,0,cw,ch,8,Color(8,22,48,218)); draw.SimpleText(title,'VoxRef.Tiny',12,9,C.text,0,0) end
+    local p=parent:Add('Panel'); p:SetPos(x,y); p:SetSize(w,h); p.Paint=function(_,cw,ch) softCard(0,0,cw,ch,8,ColorAlpha(C.card,218)); draw.SimpleText(title,'VoxRef.Tiny',12,9,C.text,0,0) end
     local yy=28
-    for _,r in ipairs(rows) do local row=p:Add('Panel'); row:SetPos(10,yy); row:SetSize(w-20,23); yy=yy+26; row.Paint=function(_,rw,rh) rr(0,0,rw,rh,5,Color(13,35,68,210)); if r[4] then iconBubble(r[4],6,4,15,r[5] or C.accent) end; draw.SimpleText(r[1],'VoxRef.Tiny',r[4] and 28 or 12,4,C.text,0,0); draw.SimpleText(r[2] or '','VoxRef.Tiny',r[4] and 28 or 12,14,C.soft,0,0); if r[3] then draw.SimpleText(r[3],'VoxRef.Tiny',rw-12,9,(r[3]:find('%$') or r[3]=='●') and C.green or C.soft,2,1) end end end
-    if footer then local b=p:Add('Panel'); b:SetPos(10,h-25); b:SetSize(w-20,18); b.Paint=function(_,bw,bh) rr(0,0,bw,bh,5,Color(14,40,76,210)); draw.SimpleText(footer,'VoxRef.Tiny',bw*.5,bh*.5,C.accent,1,1) end end
+    for _,r in ipairs(rows) do local row=p:Add('Panel'); row:SetPos(10,yy); row:SetSize(w-20,23); yy=yy+26; row.Paint=function(_,rw,rh) rr(0,0,rw,rh,5,ColorAlpha(C.card2,210)); outline(0,0,rw,rh,5,ColorAlpha(C.accent,35)); if r[4] then iconBubble(r[4],6,4,15,r[5] or C.accent) end; draw.SimpleText(r[1],'VoxRef.Tiny',r[4] and 28 or 12,4,C.text,0,0); draw.SimpleText(r[2] or '','VoxRef.Tiny',r[4] and 28 or 12,14,C.soft,0,0); if r[3] then draw.SimpleText(r[3],'VoxRef.Tiny',rw-12,9,(r[3]:find('%$') or r[3]=='●') and C.green or C.soft,2,1) end end end
+    if footer then local b=p:Add('Panel'); b:SetPos(10,h-25); b:SetSize(w-20,18); b.Paint=function(_,bw,bh) vox.DrawVoxBadge(0,0,bw,bh,footer,{accent=C.accent,textPrimary=C.text},{alpha=34,font='VoxRef.Tiny',cut=5}) end end
 end
 function PANEL:BuildJobs(c)
     local scroll=c:Add('DScrollPanel'); scroll:SetPos(18,76); scroll:SetSize(c:GetWide()-36,c:GetTall()-92)
