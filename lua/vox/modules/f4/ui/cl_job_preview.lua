@@ -429,9 +429,9 @@ function PANEL:Paint(w, h)
             vox.DrawVoxPanel(0, Y, W, H, { primary = themeSecondary, secondary = themePrimary, accent = self.colorSlightGradient or themeAccent }, 8)
 
             local modelX = divModel:GetPos()
-            vox.DrawAngledRect(modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, vox.ScaleWide(28), colorBG)
-            vox.DrawVoxBlade(modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), themeAccent)
-            vox.DrawAngledRect(0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), vox.ScaleWide(18), ColorAlpha(self.colorSlightGradient, 38))
+            draw.RoundedBox(10, modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, colorBG)
+            draw.RoundedBox(4, modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), themeAccent)
+            draw.RoundedBoxEx(8, 0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), ColorAlpha(self.colorSlightGradient, 38), false, true, false, true)
             vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorSlightGradient, 85))
 
             surface.SetDrawColor(ColorAlpha(self.colorSlightGradient, 105))

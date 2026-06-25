@@ -47,7 +47,7 @@ end
 local function drawShadowBG(panel, w, h, color)
     local themePrimary, themeSecondary, _, themeAccent = getThemeColors()
     vox.DrawVoxPanel(0, 0, w, h, { primary = color or themePrimary, secondary = themeSecondary, accent = themeAccent }, 8)
-    vox.DrawVoxBlade(0, vox.ScaleTall(10), vox.ScaleWide(7), h - vox.ScaleTall(20), themeAccent)
+    draw.RoundedBox(3, 0, vox.ScaleTall(10), vox.ScaleWide(7), h - vox.ScaleTall(20), themeAccent)
 end
 
 function PANEL:Init()
@@ -87,7 +87,7 @@ function PANEL:Init()
     self.lblActions.Paint = function(panel, w, h)
         local _, themeSecondary, _, themeAccent = getThemeColors()
         draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeSecondary, 220), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(themeAccent, 45))
+        draw.RoundedBoxEx(8, w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, ColorAlpha(themeAccent, 28), false, true, false, false)
     end
 
     self.listActions = self.divActions:Add('vox.ScrollPanel')
@@ -111,7 +111,7 @@ function PANEL:Init()
     self.lblAdmins.Paint = function(panel, w, h)
         local _, themeSecondary, _, themeAccent = getThemeColors()
         draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeSecondary, 220), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, vox.ScaleWide(10), ColorAlpha(themeAccent, 45))
+        draw.RoundedBoxEx(8, w - vox.ScaleWide(48), 0, vox.ScaleWide(48), h, ColorAlpha(themeAccent, 28), false, true, false, false)
     end
 
     self.listAdmins = self.divAdmins:Add('vox.ScrollPanel')
@@ -284,7 +284,7 @@ function PANEL:AddStat(name, info, fraction, color, color2)
     lblTitle.Paint = function(panel, w, h)
         local _, themeSecondary = getThemeColors()
         draw.RoundedBoxEx(8, 0, 0, w, h, ColorAlpha(themeSecondary, 225), true, true)
-        vox.DrawAngledRect(w - vox.ScaleWide(54), 0, vox.ScaleWide(54), h, vox.ScaleWide(12), ColorAlpha(color, 55))
+        draw.RoundedBoxEx(8, w - vox.ScaleWide(54), 0, vox.ScaleWide(54), h, ColorAlpha(color, 35), false, true, false, false)
     end
 
     local content = panel:Add('Panel')

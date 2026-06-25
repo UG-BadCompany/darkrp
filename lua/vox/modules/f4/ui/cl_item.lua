@@ -136,8 +136,10 @@ function PANEL:Paint(w, h)
 
     if vox.DrawVoxPanel then
         vox.DrawVoxPanel(0, 0, w, h, { primary = bg, secondary = themePrimary, accent = themeAccent }, 8)
-        if (self:IsHovered() and vox.DrawVoxRow) then
-            vox.DrawVoxRow(0, 0, w, h, { secondary = themeTertiary, accent = themeAccent }, { hovered = true, radius = 8, alpha = 38 })
+        if (self:IsHovered()) then
+            draw.RoundedBox(8, 1, 1, w - 2, h - 2, ColorAlpha(themeAccent, 18))
+            surface.SetDrawColor(ColorAlpha(themeAccent, 105))
+            surface.DrawOutlinedRect(1, 1, w - 2, h - 2, 1)
         end
     else
         draw.RoundedBox(8, 0, 0, w, h, colorOutline)
