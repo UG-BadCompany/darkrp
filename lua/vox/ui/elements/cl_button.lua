@@ -7,7 +7,12 @@ AccessorFunc(PANEL, 'm_colGradient', 'GradientColor')
 AccessorFunc(PANEL, 'm_iGradientDirection', 'GradientDirection')
 AccessorFunc(PANEL, 'm_bMasking', 'Masking')
 
-local colorAccent = vox:Config('colors.accent')
+local fallbackButtonColors = { accent = Color(70, 135, 255) }
+
+local function getButtonAccent()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.accent or fallbackButtonColors.accent
+end
 
 function PANEL:Init()
     self:Import('click')
@@ -28,7 +33,7 @@ function PANEL:Init()
     end
 
     self:SetColorKey('backgroundColor')
-    self:SetColorIdle(colorAccent)
+    self:SetColorIdle(getButtonAccent())
     -- self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -80))
     self:SetColorHover(vox.ColorEditHSV(self:GetColorIdle(), nil, nil, .66))
     self:SetGradientDirection(RIGHT)

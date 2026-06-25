@@ -161,9 +161,9 @@ function PANEL:BuildJobs(c)
     for k,v in pairs(teams) do local cat=(v.category or 'Other'); if not cats[cat] then cats[cat]={} end table.insert(cats[cat],v) end
     for cat,list in pairs(cats) do
         local head=scroll:Add('Panel'); head:SetPos(0,y); head:SetSize(scroll:GetWide()-20,38); head.Paint=function(_,w,h) rr(0,0,w,h,8,Color(3,12,25,238)); draw.SimpleText(string.upper(cat),'VoxRef.Text',14,19,C.text,0,1); draw.SimpleText('⌄','VoxRef.Title',w-18,19,C.text,1,1) end; y=y+46
-        local x=0; for _,job in ipairs(list) do local card=scroll:Add('DButton'); card:SetText(''); card:SetPos(x,y); card:SetSize((scroll:GetWide()-36)/2,70); x=x+card:GetWide()+16; if x+card:GetWide()>scroll:GetWide() then x=0; y=y+82 end
-            card.Paint=function(p,w,h) glass(0,0,w,h,6,C.accent); rr(10,12,46,46,23,Color(20,40,70)); draw.SimpleText(string.sub(job.name or '?',1,1),'VoxRef.Title',33,35,C.text,1,1); draw.SimpleText(job.name or 'Job','VoxRef.Title',70,15,C.text,0,0); draw.SimpleText('Salary: '..money(job.salary or 0),'VoxRef.Text',70,40,C.green,0,0); draw.SimpleText((team.NumPlayers(job.team or 0) or 0)..' / '..(job.max == 0 and '∞' or job.max or 0),'VoxRef.Text',w-20,35,C.text,2,1) end
-        end; y=y+90
+        for _,job in ipairs(list) do local card=scroll:Add('DButton'); card:SetText(''); card:SetPos(0,y); card:SetSize(scroll:GetWide()-20,50); y=y+58
+            card.Paint=function(p,w,h) glass(0,0,w,h,6,C.accent); rr(10,10,30,30,6,Color(20,40,70)); draw.SimpleText(string.sub(job.name or '?',1,1),'VoxRef.Text',25,25,C.text,1,1); draw.SimpleText(job.name or 'Job','VoxRef.Text',52,10,C.text,0,0); draw.SimpleText('Salary: '..money(job.salary or 0),'VoxRef.Tiny',52,29,C.green,0,0); draw.SimpleText((team.NumPlayers(job.team or 0) or 0)..' / '..(job.max == 0 and '∞' or job.max or 0),'VoxRef.Text',w-20,25,C.text,2,1) end
+        end; y=y+10
     end
 end
 function PANEL:BuildShop(c) self:ListPanel(c,18,86,350,240,'SHOP',{{'Entities','Browse entities'},{'Weapons','Browse weapons'},{'Shipments','Restricted shipments'},{'Ammo','Purchase ammo'},{'Food','Purchase food'}}) end

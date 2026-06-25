@@ -1,303 +1,121 @@
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorTertiary = vox:Config('colors.tertiary')
-local colorLine = Color(75, 75, 75)
+local fallbackAdminColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255),
+    money = Color(35, 225, 120),
+    negative = Color(255, 75, 95),
+    text = Color(238, 244, 255),
+    muted = Color(145, 160, 178)
+}
 
 local L = function(...) return vox.lang:Get(...) end
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, Color(70, 135, 255)
+    return colors.primary or fallbackAdminColors.primary, colors.secondary or fallbackAdminColors.secondary, colors.tertiary or fallbackAdminColors.tertiary, colors.accent or fallbackAdminColors.accent
 end
 
 do
     local PANEL = {}
 
     function PANEL:Init()
-        local toolbarPadding = vox.ScaleTall(5)
+        self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
 
-        self.container = self:Add('Panel')
-        self.container:Dock(FILL)
-
-        self.toolbar = self:Add('DPanel')
-        self.toolbar:Dock(TOP)
-        self.toolbar:SetTall(vox.ScaleTall(80))
-        self.toolbar:DockMargin(0, 0, 0, vox.ScaleTall(10))
-        self.toolbar.Paint = function(panel, w, h)
-            local _, secondary = getThemeColors()
-            draw.RoundedBox(8, 0, 0, w, h, secondary)
-        end
-        self.toolbar.PerformLayout = function(panel, w, h)
-            self.topRow:SetTall(h / 2)
+        self.nav = self:Add('Panel')
+        self.nav:Dock(LEFT)
+        self.nav:SetWide(vox.ScaleWide(172))
+        self.nav:DockMargin(0, 0, vox.ScaleWide(12), 0)
+        self.nav.Paint = function(_, w, h)
+            local primary, secondary, _, accent = getThemeColors()
+            vox.DrawVoxPanel(0, 0, w, h, { primary = primary, secondary = secondary, accent = accent }, 10)
+            draw.SimpleText('ADMIN PANEL', vox.Font('Comfortaa Bold@14'), vox.ScaleWide(14), vox.ScaleTall(16), fallbackAdminColors.text, 0, 0)
         end
 
-        self.topRow = self.toolbar:Add('Panel')
-        self.topRow:Dock(BOTTOM)
-        self.topRow:DockPadding(toolbarPadding, toolbarPadding, toolbarPadding, toolbarPadding)
-
-        self.combo = self.topRow:Add('vox.ComboBox')
-        self.combo:Dock(LEFT)
-        self.combo:SetWide(vox.ScaleWide(200))
-        self.combo:AddOption('Today')
-        self.combo:AddOption('Week')
-        self.combo:AddOption('Month')
-        self.combo:ChooseOptionID(1)
-        self.combo.OnSelect = function(panel, index)
-            local tab = self.navbar:GetActiveTab()
-            if (IsValid(tab)) then
-                local content = tab.content
-                if (IsValid(content)) then
-                    content.timeSelected = index
-                    content:RequestData()
-                end
+        local navItems = {'Player Management', 'Player Actions', 'Player Info', 'Bans', 'Logs', 'Reports', 'Commands', 'Settings'}
+        for index, label in ipairs(navItems) do
+            local btn = self.nav:Add('DButton')
+            btn:Dock(TOP)
+            btn:DockMargin(vox.ScaleWide(10), index == 1 and vox.ScaleTall(48) or 0, vox.ScaleWide(10), vox.ScaleTall(6))
+            btn:SetTall(vox.ScaleTall(30))
+            btn:SetText('')
+            btn.Paint = function(panel, w, h)
+                local _, _, _, accent = getThemeColors()
+                draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(accent, panel:IsHovered() and 38 or (index == 1 and 30 or 12)))
+                draw.SimpleText(label, vox.Font('Comfortaa Bold@11'), vox.ScaleWide(10), h * .5, fallbackAdminColors.text, 0, 1)
             end
         end
 
-        self.navbar = self.toolbar:Add('vox.Navbar')
-        self.navbar:Dock(FILL)
-        self.navbar:SetContainer(self.container)
-        self.navbar:SetKeepTabContent(true)
-        self.navbar.Paint = function(panel, w, h)
-            local _, _, tertiary, accent = getThemeColors()
-            draw.RoundedBoxEx(8, 0, 0, w, h, tertiary, true, true)
-            surface.SetDrawColor(ColorAlpha(accent, 90))
-            surface.DrawRect(0, h - 1, w, 1)
+        self.content = self:Add('Panel')
+        self.content:Dock(FILL)
+        self:BuildPlayerManagement()
+    end
+
+    function PANEL:AddAdminBlock(parent, title)
+        local block = parent:Add('Panel')
+        block.Paint = function(_, w, h)
+            local primary, secondary, _, accent = getThemeColors()
+            vox.DrawVoxPanel(0, 0, w, h, { primary = primary, secondary = secondary, accent = accent }, 10)
+            draw.SimpleText(title, vox.Font('Comfortaa Bold@15'), vox.ScaleWide(14), vox.ScaleTall(12), fallbackAdminColors.text, 0, 0)
+            surface.SetDrawColor(ColorAlpha(accent, 80))
+            surface.DrawRect(vox.ScaleWide(14), vox.ScaleTall(36), w - vox.ScaleWide(28), 1)
         end
-        self.navbar.OnTabSelected = function(panel, tab, content)
-            content.timeSelected = self.combo.current
-            content:RequestData()
+        return block
+    end
+
+    function PANEL:BuildPlayerManagement()
+        local content = self.content
+        content:Clear()
+
+        local header = self:AddAdminBlock(content, 'Player Management')
+        header:Dock(TOP)
+        header:SetTall(vox.ScaleTall(72))
+        header:DockMargin(0, 0, 0, vox.ScaleTall(10))
+        header.PaintOver = function(_, w, h)
+            draw.SimpleText('Online staff tools, player status, and moderation shortcuts.', vox.Font('Comfortaa@13'), vox.ScaleWide(14), vox.ScaleTall(46), fallbackAdminColors.muted, 0, 0)
+            draw.SimpleText(#player.GetAll() .. ' ONLINE', vox.Font('Comfortaa Bold@12'), w - vox.ScaleWide(16), vox.ScaleTall(22), fallbackAdminColors.accent, 2, 1)
         end
 
-        self.navbar:AddTab({
-            name = L('f4_jobs_u'),
-            class = 'vox.f4.AdminStatsBase',
-            onBuild = function(content)
-                content:SetObjectType('job')
-                content:LoadObjects(RPExtraTeams, 'command', L('f4_switches'))
+        local actions = self:AddAdminBlock(content, 'Player Actions')
+        actions:Dock(RIGHT)
+        actions:SetWide(vox.ScaleWide(230))
+        actions:DockMargin(vox.ScaleWide(10), 0, 0, 0)
+        local actionRows = {'Kick Player', 'Warn Player', 'Bring / Goto', 'Freeze Player', 'Open Reports'}
+        for index, label in ipairs(actionRows) do
+            local row = actions:Add('DButton')
+            row:Dock(TOP)
+            row:DockMargin(vox.ScaleWide(12), index == 1 and vox.ScaleTall(48) or 0, vox.ScaleWide(12), vox.ScaleTall(7))
+            row:SetTall(vox.ScaleTall(34))
+            row:SetText('')
+            row.Paint = function(panel, w, h)
+                local _, secondary, _, accent = getThemeColors()
+                draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(secondary, 230))
+                draw.SimpleText(label, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(12), h * .5, fallbackAdminColors.text, 0, 1)
+                draw.SimpleText('›', vox.Font('Comfortaa Bold@18'), w - vox.ScaleWide(12), h * .5, accent, 2, 1)
             end
-        })
+        end
 
-        self.navbar:AddTab({
-            name = L('f4_entities_u'),
-            class = 'vox.f4.AdminStatsBase',
-            onBuild = function(content)
-                content:SetObjectType('entity')
-                content:LoadObjects(DarkRPEntities, 'ent')
+        local list = self:AddAdminBlock(content, 'Players')
+        list:Dock(FILL)
+        local scroll = list:Add('vox.ScrollPanel')
+        scroll:Dock(FILL)
+        scroll:DockMargin(vox.ScaleWide(12), vox.ScaleTall(48), vox.ScaleWide(12), vox.ScaleTall(12))
+
+        for _, ply in ipairs(player.GetAll()) do
+            local row = scroll:Add('Panel')
+            row:Dock(TOP)
+            row:DockMargin(0, 0, 0, vox.ScaleTall(7))
+            row:SetTall(vox.ScaleTall(44))
+            row.Paint = function(_, w, h)
+                local _, secondary, _, accent = getThemeColors()
+                draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(secondary, 235))
+                draw.RoundedBox(6, vox.ScaleWide(10), vox.ScaleTall(9), vox.ScaleTall(26), vox.ScaleTall(26), ColorAlpha(accent, 35))
+                draw.SimpleText(string.sub(ply:Nick() or '?', 1, 1), vox.Font('Comfortaa Bold@14'), vox.ScaleWide(23), h * .5, fallbackAdminColors.text, 1, 1)
+                draw.SimpleText(ply:Nick(), vox.Font('Comfortaa Bold@13'), vox.ScaleWide(46), vox.ScaleTall(10), fallbackAdminColors.text, 0, 0)
+                draw.SimpleText(team.GetName(ply:Team()) or 'Unknown', vox.Font('Comfortaa@11'), vox.ScaleWide(46), vox.ScaleTall(25), fallbackAdminColors.muted, 0, 0)
+                draw.SimpleText(ply:IsAdmin() and 'STAFF' or 'PLAYER', vox.Font('Comfortaa Bold@10'), w - vox.ScaleWide(14), h * .5, ply:IsAdmin() and fallbackAdminColors.accent or fallbackAdminColors.muted, 2, 1)
             end
-        })
-
-        self.navbar:AddTab({
-            name = L('f4_weapons_u'),
-            class = 'vox.f4.AdminStatsBase',
-            onBuild = function(content)
-                local guns = {}
-                for _, shipment in ipairs(CustomShipments) do
-                    if (shipment.separate) then
-                        table.insert(guns, shipment)
-                    end
-                end
-
-                content:SetObjectType('gun')
-                content:LoadObjects(guns, 'entity')
-            end
-        })
-
-        self.navbar:AddTab({
-            name = L('f4_shipments_u'),
-            class = 'vox.f4.AdminStatsBase',
-            onBuild = function(content)
-                local shipments = {}
-                for _, shipment in ipairs(CustomShipments) do
-                    if (not shipment.noship) then
-                        table.insert(shipments, shipment)
-                    end
-                end
-
-                content:SetObjectType('shipment')
-                content:LoadObjects(shipments, 'entity')
-            end
-        })
-
-        self.navbar:ChooseTab(1)
+        end
     end
 
     vox.gui.Register('vox.f4.AdminStats', PANEL)
 end
-
-do
-    local PANEL = {}
-    local fontTitle = vox.Font('Comfortaa Bold@16')
-    local colorLabel = color_white
-
-    AccessorFunc(PANEL, 'm_ObjectType', 'ObjectType')
-
-    function PANEL:Init()
-        self.cache = {}
-        self.objects = {}
-        self.smallHeaderHeight = vox.ScaleTall(25)
-
-        self:InitBlock('List', L('f4_mostpopular_u'), 'vox.ScrollPanel')
-        self:InitBlock('Graph', L('f4_chart_u'), 'vox.PieChart')
-
-        local phraseLoading = L('f4_loading_u')
-        local phraseEmpty = L('f4_empty_u')
-
-        self.divGraph.content:SetDonut(true)
-        self.divGraph.content.loading = true
-        self.divGraph.content.PostDrawChart = function(panel, w, h)
-            if (panel.loading) then
-                draw.SimpleText(phraseLoading, fontTitle, w * .5, h * .5, color_white, 1, 1)
-            elseif (#panel.m_Data == 0) then
-                draw.SimpleText(phraseEmpty, fontTitle, w * .5, h * .5, color_white, 1, 1)
-            end
-        end
-
-        hook.Add('vox.f4.StatsReceived', self, function(panel, data)
-            if (data.objectType == panel:GetObjectType()) then
-                panel:LoadData(data.result)
-                panel.cache[panel.timeSelected] = data.result
-            end
-        end)
-    end
-
-    function PANEL:LoadObjects(items, key, label)
-        local objectType = self:GetObjectType() or ''
-        local scrollPanel = self.divList.content
-        for _, item in ipairs(items) do
-            local name = item.name
-            local model = istable(item.model) and item.model[1] or item.model
-            local color = item.color or color_white
-            local id = item[key]
-
-            local panel = scrollPanel:Add('vox.f4.Item')
-            panel:SetName(name)
-            panel:SetModel(model)
-            local _, _, _, themeAccent = getThemeColors()
-            panel:SetColor(themeAccent, .08)
-            panel:SetDesc(L('f4_loading') .. '...')
-            panel:SetDescLabel(label or L('f4_purchases'))
-            panel:SetDescColor(color_white)
-            panel:SetTall(vox.ScaleTall(50))
-
-            if (objectType == 'job') then
-                panel:PositionCamera('face')
-                panel.uniqueColor = true
-            else
-                panel:PositionCamera('center')
-            end
-
-            self.objects[id] = panel
-        end
-    end
-
-    function PANEL:PerformLayout(w, h)
-        local margin = vox.ScaleTall(10)
-
-        self.divList:Dock(LEFT)
-        self.divList:SetWide(w / 2)
-        self.divList:DockMargin(0, 0, vox.ScaleWide(10), 0)
-        self.divList.content:DockMargin(margin, 0, margin, margin)
-
-        self.divGraph:Dock(TOP)
-        self.divGraph:SetTall(h / 2)
-        self.divGraph.content:DockMargin(margin, 0, margin, margin)
-    end
-
-    function PANEL:InitBlock(id, title, class)
-        local block = self:Add('Panel')
-        block.Paint = function(panel, w, h)
-            local primary, secondary, _, accent = getThemeColors()
-            if vox.DrawVoxPanel then
-                vox.DrawVoxPanel(0, 0, w, h, { primary = primary, secondary = secondary, accent = accent }, 8)
-            else
-                draw.RoundedBox(8, 0, 0, w, h, primary)
-            end
-        end
-
-        local header = block:Add('vox.Label')
-        header:SetText(title)
-        header:SetFont(fontTitle)
-        header:SetTextColor(colorLabel)
-        header:Dock(TOP)
-        header:DockMargin(0, 0, 0, vox.ScaleTall(10))
-        header:CenterText()
-        header:SetTall(self.smallHeaderHeight)
-        header.Paint = function(panel, w, h)
-            local _, secondary, _, accent = getThemeColors()
-            draw.RoundedBoxEx(8, 0, 0, w, h, secondary, true, true)
-            surface.SetDrawColor(ColorAlpha(accent, 90))
-            surface.DrawRect(vox.ScaleWide(12), h - 1, w - vox.ScaleWide(24), 1)
-        end
-
-        local content = block:Add(class or 'Panel')
-        content:Dock(FILL)
-
-        block.content = content
-
-        self['div' .. id] = block
-    end
-
-    function PANEL:RequestData()
-        local timeSelected = self.timeSelected
-        if (not self.cache[timeSelected]) then
-            net.Start('vox.f4:RequestStats')
-                net.WriteString(self:GetObjectType())
-                net.WriteUInt(self.timeSelected - 1, 2)
-            net.SendToServer()
-        else
-            self:LoadData(self.cache[timeSelected])
-        end
-    end
-
-    function PANEL:LoadData(result)
-        local records = #result
-        local graph = self.divGraph.content
-        local angle = math.Round(360 / records)
-
-        table.sort(result, function(a, b)
-            return a.amount > b.amount
-        end)
-
-        for _, item in pairs(self.objects) do
-            item.found = false
-        end
-
-        graph:SetData({})
-        for index, record in ipairs(result) do
-            local id = record.objectID
-            local item = self.objects[id]
-            if (IsValid(item)) then
-                item:SetZPos(index)
-                item:SetDesc(record.amount)
-                item.found = true
-
-                if (index < 6) then
-                    local uniqueColor = vox.ColorEditHSV(color_white, angle * (index - 1), .6)
-                    if (item.uniqueColor) then
-                        graph:AddRecord(item:GetName(), tonumber(record.amount), item.itemColor)
-                    else
-                        graph:AddRecord(item:GetName(), tonumber(record.amount), uniqueColor)
-                    end
-                end
-            end
-        end
-
-        for _, item in pairs(self.objects) do
-            if (not item.found) then
-                item:SetZPos(records + 1)
-                item:SetDesc(0)
-            end
-        end
-
-        graph.loading = false
-    end
-
-    vox.gui.Register('vox.f4.AdminStatsBase', PANEL)
-end
-
---[[------------------------------
-TEST
---------------------------------]]
--- if (IsValid(DebugPanel)) then
---     DebugPanel:Remove()
--- end
--- DebugPanel = vox.f4.OpenAdminSettings()

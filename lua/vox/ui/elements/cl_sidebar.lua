@@ -1,12 +1,14 @@
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorTertiary = vox:Config('colors.tertiary')
-local colorGray = Color(141, 141, 141)
-local colorDark = Color(30, 30, 30)
+local fallbackSidebarColors = {
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255),
+    textSecondary = Color(141, 141, 141),
+    activeText = Color(30, 30, 30)
+}
 
 local function getSidebarColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.textSecondary or colorGray
+    return colors.secondary or fallbackSidebarColors.secondary, colors.tertiary or fallbackSidebarColors.tertiary, colors.accent or fallbackSidebarColors.accent, colors.textSecondary or fallbackSidebarColors.textSecondary
 end
 
 local PANEL = {}
@@ -75,7 +77,6 @@ function PANEL:PerformLayout(w, h)
     self.mask = vox.CalculateRoundedBox(self.m_iRoundness, 0, 0, w, h)
 end
 
-local colorGradient = vox.OffsetColor(colorAccent, -75)
 function PANEL:Paint(w, h)
     local inset = 0
     local _, tertiary, themeAccent = getSidebarColors()
@@ -145,7 +146,7 @@ function PANEL:SetState(bool)
         vox.anim.Create(self, .33, {
             index = vox.anim.ANIM_HOVER,
             target = {
-                ['color'] = vox.ColorEditHSV(colorAccent, nil, .7, .7)
+                ['color'] = vox.ColorEditHSV(select(3, getSidebarColors()), nil, .7, .7)
             }
         })
     end
@@ -153,8 +154,8 @@ function PANEL:SetState(bool)
     vox.anim.Create(self, .33, {
         index = 1,
         target = {
-            textColor = (bool and colorDark or color_white),
-            subtextColor = (bool and colorDark or colorGray)
+            textColor = (bool and fallbackSidebarColors.activeText or color_white),
+            subtextColor = (bool and fallbackSidebarColors.activeText or fallbackSidebarColors.textSecondary)
         },
         think = function(anim, panel)
             panel.lblTitle:SetTextColor(panel.textColor)

@@ -8,6 +8,11 @@ local fallbackComboColors = {
 local colorGray = Color(125, 125, 125)
 local MAT_ARROW = Material('vox_framework/tick.png', 'smooth mips')
 
+local function getComboPrimary()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.primary or fallbackComboColors.primary
+end
+
 AccessorFunc(PANEL, 'm_CurrentOptionText', 'CurrentOptionText')
 AccessorFunc(PANEL, 'm_Font', 'Font')
 AccessorFunc(PANEL, 'm_colOutlineActiveColor', 'OutlineActiveColor')
@@ -229,14 +234,14 @@ end
 function PANEL:OnDisabled()
     local offset = -5
     self.voxAnims = nil
-    self:SetColorIdle(vox.OffsetColor((vox.GetUIThemeColors and vox.GetUIThemeColors().primary) or fallbackComboColors.primary, offset))
+    self:SetColorIdle(vox.OffsetColor(getComboPrimary(), offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
 end
 
 function PANEL:OnEnabled()
     local offset = 0
     self.voxAnims = nil
-    self:SetColorIdle(vox.OffsetColor((vox.GetUIThemeColors and vox.GetUIThemeColors().primary) or fallbackComboColors.primary, offset))
+    self:SetColorIdle(vox.OffsetColor(getComboPrimary(), offset))
     self:SetColorHover(vox.OffsetColor(self:GetColorIdle(), -5 + offset))
 end
 

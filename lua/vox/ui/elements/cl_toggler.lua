@@ -1,11 +1,13 @@
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorTertiary = vox:Config('colors.tertiary')
-local colorAccent = vox:Config('colors.accent')
+local fallbackTogglerColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255)
+}
 
 local function getTogglerColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent
+    return colors.primary or fallbackTogglerColors.primary, colors.secondary or fallbackTogglerColors.secondary, colors.tertiary or fallbackTogglerColors.tertiary, colors.accent or fallbackTogglerColors.accent
 end
 
 do
@@ -91,7 +93,7 @@ do
 
     function PANEL:SetBackgroundColor(color)
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        local accent = colors.accent or colorAccent
+        local accent = colors.accent or fallbackTogglerColors.accent
         self.backgroundColorCurrent = color
         self.backgroundColorActive = vox.LerpColor(.66, accent, self.backgroundColorCurrent)
 

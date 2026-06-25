@@ -1,13 +1,15 @@
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
-local colorTertiary = vox:Config('colors.tertiary')
-local colorLine = Color(75, 75, 75)
-local colorBG = vox.OffsetColor(colorPrimary, -3)
+local fallbackJobPreviewColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    tertiary = Color(16, 42, 78),
+    accent = Color(70, 135, 255),
+    money = Color(35, 225, 120)
+}
+local colorBG = vox.OffsetColor(fallbackJobPreviewColors.primary, -3)
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or colorPrimary, colors.secondary or colorSecondary, colors.tertiary or colorTertiary, colors.accent or colorAccent, colors.money or Color(35, 225, 120)
+    return colors.primary or fallbackJobPreviewColors.primary, colors.secondary or fallbackJobPreviewColors.secondary, colors.tertiary or fallbackJobPreviewColors.tertiary, colors.accent or fallbackJobPreviewColors.accent, colors.money or fallbackJobPreviewColors.money
 end
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
@@ -58,13 +60,13 @@ local function generateDescHTML(desc)
 
                 /* Handle */
                 ::-webkit-scrollbar-thumb {
-                    background: ]] .. vox.ColorToHex(colorAccent) .. [[;
+                    background: ]] .. vox.ColorToHex(fallbackJobPreviewColors.accent) .. [[;
                     border-radius: 5px;
                 }
 
                 /* Handle on hover */
                 ::-webkit-scrollbar-thumb:hover {
-                    background: ]] .. vox.ColorToHex(vox.OffsetColor(colorAccent, -30)) .. [[;
+                    background: ]] .. vox.ColorToHex(vox.OffsetColor(fallbackJobPreviewColors.accent, -30)) .. [[;
                 }
             </style>
         </head>
@@ -78,7 +80,8 @@ end
 local PANEL = {}
 
 function PANEL:Init()
-    self.colorSlightGradient = colorTertiary
+    local _, _, themeTertiary = getThemeColors()
+    self.colorSlightGradient = themeTertiary
 
     self.divInfo = self:Add('Panel')
 
@@ -167,7 +170,7 @@ function PANEL:Init()
 
     self.btnChoose = self.footer:Add('vox.Button')
     self.btnChoose:SetText(L('f4_become_u'))
-    self.btnChoose:SetGradientColor(vox.OffsetColor(colorAccent, -50))
+    self.btnChoose:SetGradientColor(vox.OffsetColor(fallbackJobPreviewColors.accent, -50))
     self.btnChoose:SetMasking(true)
     self.btnChoose:Font('Comfortaa Bold@16')
     self.btnChoose:Dock(FILL)
@@ -315,7 +318,7 @@ function PANEL:SetupJob(job)
                     end)
                 end
 
-                vox.DrawOutlinedCircle(w * .5, h * .5, h * .5, 3, panel.active and colorAccent or color_white)
+                vox.DrawOutlinedCircle(w * .5, h * .5, h * .5, 3, panel.active and (select(4, getThemeColors())) or color_white)
             end
             button.DoClick = function(panel)
                 if (oldActiveModel) then

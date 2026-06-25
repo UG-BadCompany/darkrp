@@ -1,8 +1,10 @@
 local PANEL = {}
 
-local colorPrimary = vox:Config('colors.primary')
-local colorSecondary = vox:Config('colors.secondary')
-local colorAccent = vox:Config('colors.accent')
+local fallbackCheckboxColors = {
+    primary = Color(8, 19, 38),
+    secondary = Color(12, 32, 62),
+    accent = Color(70, 135, 255)
+}
 local MAT_TICK = Material('vox_framework/tick.png', 'smooth mips')
 
 AccessorFunc(PANEL, 'm_bChecked', 'Checked', FORCE_BOOL)
@@ -10,9 +12,9 @@ AccessorFunc(PANEL, 'm_bChecked', 'Checked', FORCE_BOOL)
 function PANEL:Init()
     local size = vox.ScaleTall(18)
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    local primary = colors.primary or colorPrimary
-    local secondary = colors.secondary or colorSecondary
-    local accent = colors.accent or colorAccent
+    local primary = colors.primary or fallbackCheckboxColors.primary
+    local secondary = colors.secondary or fallbackCheckboxColors.secondary
+    local accent = colors.accent or fallbackCheckboxColors.accent
 
     self.m_bChecked = false
 
