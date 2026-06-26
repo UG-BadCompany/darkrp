@@ -339,23 +339,21 @@ function PANEL:RebuildDashboard(parent, w, h)
     parent:Clear()
     palette()
 
-    w = math.min(w, vox.ScaleWide(760))
+    local scale = math.min(1, w / vox.ScaleWide(760))
+    local function sx(v) return math.floor(vox.ScaleWide(v) * scale) end
+    local function sy(v) return math.floor(vox.ScaleTall(v) * scale) end
 
     local lp = LocalPlayer()
     local moneyVal = IsValid(lp) and (lp:getDarkRPVar('money') or 0) or 0
     local job = getJobName(lp)
     local players = player.GetAll()
     local maxPlayers = game.MaxPlayers and game.MaxPlayers() or 64
-    local gap = 12
-    local topH = 64
-    local cardW = math.floor((w - gap * 3) / 4)
-    local bodyY = topH + gap + 4
-    local bodyH = h - bodyY
-    local colW = math.floor((w - gap * 2) / 3)
-    local bottomY = bodyY + math.floor(bodyH * .52) + gap
-    local bottomH = math.max(96, h - bottomY)
+    local cardW, topH, gap = sx(150), sy(66), sx(10)
+    local topY = 0
+    local row1Y = topY + topH + sy(16)
+    local row2Y = row1Y + sy(132) + sy(16)
 
-    local jobCard = addCard(parent, cardW + gap, 0, cardW, topH, 'Current Job', job, 'View Jobs →', C.accent, ICON.jobs)
+    local jobCard = addCard(parent, cardW + gap, topY, cardW, topH, 'Current Job', job, 'View Jobs →', C.accent, ICON.jobs)
     jobCard:SetMouseInputEnabled(true)
     jobCard.OnMouseReleased = function()
         self.active = 'jobs'
@@ -363,12 +361,14 @@ function PANEL:RebuildDashboard(parent, w, h)
         self:BuildContent()
     end
 
-    addCard(parent, 0, 0, cardW, topH, 'Wallet', money(moneyVal), 'Bank Balance', C.green, ICON.wallet)
-    addCard(parent, (cardW + gap) * 2, 0, cardW, topH, 'Players Online', #players .. ' / ' .. maxPlayers, 'Join the community', C.accent, ICON.players)
-    addCard(parent, (cardW + gap) * 3, 0, cardW, topH, 'Server Time', os.date('%H:%M'), os.date('%A'), C.accent, ICON.time)
+    addCard(parent, 0, topY, cardW, topH, 'Wallet', money(moneyVal), 'Bank Balance', C.green, ICON.wallet)
+    addCard(parent, (cardW + gap) * 2, topY, cardW, topH, 'Players Online', #players .. ' / ' .. maxPlayers, 'Join the community', C.accent, ICON.players)
+    addCard(parent, (cardW + gap) * 3, topY, cardW, topH, 'Server Time', os.date('%H:%M'), os.date('%A'), C.accent, ICON.time)
 
-    local announcementH = math.floor(bodyH * .52)
-    self:ListPanel(parent, 0, bodyY, colW, announcementH, 'ANNOUNCEMENTS', self:GetDashboardAnnouncements(), {
+    local wideA = sx(300)
+    local wideB = sx(230)
+    local wideC = sx(180)
+    self:ListPanel(parent, 0, row1Y, wideA, sy(132), 'ANNOUNCEMENTS', self:GetDashboardAnnouncements(), {
         text = 'CONFIGURE DISCORD IDS',
         click = function()
             self.active = 'settings'
@@ -376,7 +376,7 @@ function PANEL:RebuildDashboard(parent, w, h)
             self:BuildContent()
         end
     })
-    self:ListPanel(parent, colW + gap, bodyY, colW, announcementH, 'POPULAR JOBS', self:GetPopularJobs(4), {
+    self:ListPanel(parent, wideA + gap, row1Y, wideB, sy(132), 'POPULAR JOBS', self:GetPopularJobs(3), {
         text = 'VIEW ALL JOBS',
         click = function()
             self.active = 'jobs'
@@ -384,9 +384,9 @@ function PANEL:RebuildDashboard(parent, w, h)
             self:BuildContent()
         end
     })
-    self:ListPanel(parent, (colW + gap) * 2, bodyY, w - (colW + gap) * 2, announcementH, 'QUICK ACTIONS', self:GetQuickActions())
-    self:ListPanel(parent, 0, bottomY, colW, bottomH, 'STAFF ONLINE', self:GetStaffRows())
-    self.wantedPanel = self:ListPanel(parent, colW + gap, bottomY, w - colW - gap, bottomH, 'WANTED PLAYERS', self:GetWantedRows())
+    self:ListPanel(parent, wideA + wideB + gap * 2, row1Y, wideC, sy(132), 'QUICK ACTIONS', self:GetQuickActions())
+    self:ListPanel(parent, 0, row2Y, wideA, sy(116), 'STAFF ONLINE', self:GetStaffRows())
+    self.wantedPanel = self:ListPanel(parent, wideA + gap, row2Y, wideB + wideC + gap, sy(116), 'WANTED PLAYERS', self:GetWantedRows())
 end
 
 function PANEL:ListPanel(parent,x,y,w,h,title,rows,footer)
