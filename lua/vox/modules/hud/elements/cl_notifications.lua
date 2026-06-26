@@ -53,105 +53,70 @@ local function overrideNotifications()
 end
 vox.hud.OverrideGamemode( 'vox.hud.OverrideNotifications', overrideNotifications )
 
+local NOTIF_TITLES = {
+    [ NOTIFY_GENERIC ] = 'New Announcement',
+    [ NOTIFY_ERROR ] = 'Wanted Level',
+    [ NOTIFY_UNDO ] = 'Money Received',
+    [ NOTIFY_HINT ] = 'New Announcement',
+    [ NOTIFY_CLEANUP ] = 'Cleanup'
+}
+
 local function drawNotifications( self, client, scrW, scrH )
     local theme = hud:GetCurrentTheme()
     local colors = ( theme and theme.colors ) or {}
-    local colorPrimary = colors.primary or Color( 20, 22, 28, 240 )
-    local colorSecondary = colors.secondary or Color( 30, 34, 44, 240 )
-    local colorTertiary = colors.tertiary or Color( 45, 50, 62, 240 )
+    local colorPrimary = colors.primary or Color( 3, 11, 24 )
+    local colorSecondary = colors.secondary or Color( 8, 27, 52 )
     local colorText = colors.textPrimary or color_white
-    local isDark = theme and theme.dark
+    local colorMuted = colors.textSecondary or Color( 145, 172, 200 )
 
     local space = vox.hud.GetScreenPadding()
-    local horPadding = vox.hud.ScaleTall( 10 )
-    local notifH = vox.hud.ScaleTall( 46 )
-    local hudRoundness = vox.hud.GetRoundness()
-    local notifSpace = vox.hud.ScaleTall( 5 )
-    local iconSpace = vox.hud.ScaleTall( 10 )
-    local iconSize = vox.hud.ScaleTall( 18 )
-    local lineH = vox.hud.ScaleTall( 2 )
-
-    local amount = #cache
-    local posY = scrH * .75
+    local notifW = vox.hud.ScaleWide( 278 )
+    local notifH = vox.hud.ScaleTall( 58 )
+    local notifSpace = vox.hud.ScaleTall( 8 )
+    local iconSize = vox.hud.ScaleTall( 32 )
+    local x = scrW - notifW - space
+    local posY = scrH * .28
     local speed = FrameTime() * 8
 
-    -- to avoid overlapping
-    if ( #vox.hud.VoicePanels > 0 ) then
-        for _, data in ipairs( vox.hud.VoicePanels ) do
-            local panel = data.panel
-            if ( IsValid( panel ) and panel:IsVisible() ) then
-                posY = math.min( posY, select( 2, panel:GetPos() ) )
-            end
-        end
-        posY = posY - notifSpace
+    if ( #cache > 0 ) then
+        draw.SimpleText( 'NOTIFICATIONS', vox.hud.fonts.ExtraTinyBold, x + vox.hud.ScaleWide( 6 ), posY - vox.hud.ScaleTall( 12 ), colorText, 0, 1 )
     end
 
-    posY = posY - notifH
-
-    for index = 1, amount do
+    for index = 1, #cache do
         local data = cache[ index ]
         if ( not data ) then continue end
 
-        local notifText = data.text
         local notifType = data.type or 0
         local notifTypeData = NOTIFICATION_TYPES[ notifType ] or NOTIFICATION_TYPES[ NOTIFY_GENERIC ]
-        local colorKey = notifTypeData.colorKey or 'accent'
-        local notifColor = colors[ colorKey ] or colors.accent or Color( 0, 174, 255 )
+        local notifColor = colors[ notifTypeData.colorKey or 'accent' ] or colors.accent or Color( 0, 174, 255 )
         local timeLeft = math.max( 0, data.endtime - CurTime() )
         local lifeFraction = timeLeft / data.duration
         local expired = lifeFraction == 0
         local targetFraction = expired and 0 or 1
-        local wimgObject = notifTypeData.wimg
 
-        -- Get size
-        surface.SetFont( FONT_TEXT )
-        local textW, textH = surface.GetTextSize( notifText )
-        local notifW = math.Clamp( textW + horPadding * 2 + iconSize + iconSpace + vox.hud.ScaleWide( 18 ), vox.hud.ScaleWide( 260 ), vox.hud.ScaleWide( 420 ) )
-
-        -- Calculate pos
-        local posX = expired and scrW or ( scrW - notifW - space )
-
-        data.x = Lerp( speed, data.x or scrW, posX )
+        data.x = Lerp( speed, data.x or ( scrW + notifW ), expired and scrW or x )
         data.y = Lerp( speed, data.y or posY, posY )
         data.fraction = math.Approach( data.fraction or 0, targetFraction, speed )
 
-        local x = data.x
         local y = math.ceil( data.y )
-
-        -- Draw
         local prevAlpha = surface.GetAlphaMultiplier()
-        local lineColor = isDark and ColorAlpha( notifColor, 20 ) or COLOR_BAR
-
         surface.SetAlphaMultiplier( data.fraction )
-
-            if vox.DrawVoxCard then
-                vox.DrawVoxCard( x, y, notifW, notifH, colors, { accent = notifColor, radius = hudRoundness, bladeWidth = vox.hud.ScaleWide( 6 ) } )
-            elseif vox.DrawVoxPanel then
-                vox.DrawVoxPanel( x, y, notifW, notifH, colors, hudRoundness )
-            else
-                vox.hud.DrawRoundedBox( x, y, notifW, notifH, colorPrimary )
+            draw.RoundedBox( vox.hud.ScaleTall( 8 ), data.x, y, notifW, notifH, ColorAlpha( colorPrimary, 235 ) )
+            vox.DrawMatGradient( data.x, y, notifW, notifH, RIGHT, ColorAlpha( notifColor, 28 ) )
+            surface.SetDrawColor( ColorAlpha( notifColor, 115 ) )
+            surface.DrawOutlinedRect( data.x, y, notifW, notifH, 1 )
+            draw.RoundedBox( vox.hud.ScaleTall( 6 ), data.x + vox.hud.ScaleWide( 10 ), y + notifH * .5 - iconSize * .5, iconSize, iconSize, ColorAlpha( notifColor, 38 ) )
+            if notifTypeData.wimg and notifTypeData.wimg.Draw then
+                notifTypeData.wimg:Draw( data.x + vox.hud.ScaleWide( 18 ), y + notifH * .5 - vox.hud.ScaleTall( 8 ), vox.hud.ScaleTall( 16 ), vox.hud.ScaleTall( 16 ), notifColor )
             end
-
-            if wimgObject and wimgObject.Draw then
-                wimgObject:Draw( x + horPadding + vox.hud.ScaleWide( 6 ), y + notifH * .5 - iconSize * .5, iconSize, iconSize, notifColor )
-            end
-
-            render.SetScissorRect( x, y + notifH - lineH, x + notifW, y + notifH, true )
-                vox.hud.DrawRoundedBox( x, y, notifW, notifH, lineColor )
-            render.SetScissorRect( x, y + notifH - lineH, x + notifW * lifeFraction, y + notifH, true )
-                vox.hud.DrawRoundedBox( x, y, notifW, notifH, notifColor )
-            render.SetScissorRect( 0, 0, 0, 0, false )
-
-            vox.hud.DrawCheapText( 'VOX UI', FONT_TEXT, x + horPadding + iconSize + iconSpace + vox.hud.ScaleWide( 6 ), y + vox.hud.ScaleTall( 7 ), ColorAlpha( notifColor, 220 ) )
-            vox.hud.DrawCheapText( notifText, FONT_TEXT, x + horPadding + iconSize + iconSpace + vox.hud.ScaleWide( 6 ), y + notifH - vox.hud.ScaleTall( 8 ) - textH, colorText )
-
+            draw.SimpleText( NOTIF_TITLES[ notifType ] or 'Notification', vox.hud.fonts.ExtraTinyBold, data.x + vox.hud.ScaleWide( 54 ), y + vox.hud.ScaleTall( 18 ), colorText, 0, 1 )
+            draw.SimpleText( data.text, FONT_TEXT, data.x + vox.hud.ScaleWide( 54 ), y + vox.hud.ScaleTall( 36 ), colorMuted, 0, 1 )
+            draw.SimpleText( index == 1 and 'now' or ( math.ceil( ( data.duration - timeLeft ) / 60 ) .. 'm ago' ), vox.hud.fonts.ExtraTinyBold, data.x + notifW - vox.hud.ScaleWide( 10 ), y + vox.hud.ScaleTall( 17 ), colorMuted, 2, 1 )
+            draw.RoundedBox( 2, data.x, y + notifH - 2, notifW * lifeFraction, 2, ColorAlpha( notifColor, 185 ) )
         surface.SetAlphaMultiplier( prevAlpha )
 
-        posY = posY - notifH - notifSpace
-
-        if ( expired and data.fraction == 0 ) then
-            table.remove( cache, index )
-        end
+        posY = posY + notifH + notifSpace
+        if ( expired and data.fraction == 0 ) then table.remove( cache, index ) end
     end
 end
 
