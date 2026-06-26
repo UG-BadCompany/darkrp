@@ -176,6 +176,24 @@ vox.f4:RegisterOption('discord_url', {
     default = ''
 })
 
+vox.f4:RegisterOption('announcement_discord_server_id', {
+    title = 'f4.announcement_discord_server_id.name',
+    desc = 'f4.announcement_discord_server_id.desc',
+    category = 'Links',
+    cami = 'vox_f4_edit',
+    type = 'string',
+    default = ''
+})
+
+vox.f4:RegisterOption('announcement_discord_channel_id', {
+    title = 'f4.announcement_discord_channel_id.name',
+    desc = 'f4.announcement_discord_channel_id.desc',
+    category = 'Links',
+    cami = 'vox_f4_edit',
+    type = 'string',
+    default = ''
+})
+
 vox.f4:RegisterOption('forum_url', {
     title = 'f4.forum_url.name',
     desc = 'f4.option_url_desc',

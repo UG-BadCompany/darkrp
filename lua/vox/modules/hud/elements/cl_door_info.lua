@@ -5,6 +5,13 @@ local FONT_HELP = vox.hud.CreateFont3D2D( 'DoorHelp', 'Comfortaa', 32 )
 local COLOR_GRAY = Color( 200, 200, 200 )
 local COLOR_GREEN = Color( 147, 255, 108)
 local COLOR_RED = Color( 255, 87, 87)
+local COLOR_PANEL = Color( 4, 16, 32, 224 )
+local COLOR_PANEL_INNER = Color( 8, 34, 58, 206 )
+local COLOR_PANEL_LINE = Color( 28, 230, 115, 190 )
+local COLOR_BLUE_LINE = Color( 20, 154, 255, 170 )
+local COLOR_TEXT_MUTED = Color( 159, 177, 199 )
+local MAT_DOOR = Material( 'vox_hud/door_title.png', 'smooth mips' )
+local MAT_LOCK = Material( 'vox_hud/door_own.png', 'smooth mips' )
 local L = function( ... ) return vox.lang:Get( ... ) end
 
 local nearest = {}
@@ -125,11 +132,41 @@ local function drawInfo( ent, client )
         subtitle = L( 'hud_door_help', { bind = bindKey, price = DarkRP.formatMoney( doorPrice ) } )
     end
 
+    local accentColor = isOwned and color or COLOR_PANEL_LINE
+    local subtitleLine = string.Explode( '\n', subtitle or '' )[ 1 ] or ''
+    local promptText = L( 'hud_door_help', { bind = string.upper( bindKey ~= '' and bindKey or 'E' ), price = DarkRP.formatMoney( doorPrice ) } )
+    promptText = isOwned and 'Press E to interact' or promptText
+
     cam.Start3D2D( renderPos, renderAng, .085 )
 
-        vox.hud.DrawShadowText( title, titleFont, 0, 0, color, 1, 0 )
-        draw.DrawText( subtitle, FONT_HELP .. '.Blur', 2, 60 + 2, color_black, 1 )
-        draw.DrawText( subtitle, FONT_HELP, 0, 60, COLOR_GRAY, 1 )
+        local w, h = 560, 230
+        local x, y = -w * .5, -h * .5
+
+        draw.RoundedBox( 14, x, y, w, h, COLOR_PANEL )
+        draw.RoundedBox( 14, x + 2, y + 2, w - 4, h - 4, COLOR_PANEL_INNER )
+        surface.SetDrawColor( accentColor.r, accentColor.g, accentColor.b, 210 )
+        surface.DrawOutlinedRect( x, y, w, h, 2 )
+        surface.SetDrawColor( COLOR_BLUE_LINE.r, COLOR_BLUE_LINE.g, COLOR_BLUE_LINE.b, 140 )
+        surface.DrawLine( x + 18, y, x + w - 18, y )
+
+        draw.RoundedBox( 4, x + 34, y + 42, 82, 116, Color( 13, 16, 22, 238 ) )
+        surface.SetDrawColor( 255, 255, 255, 225 )
+        surface.SetMaterial( MAT_DOOR )
+        surface.DrawTexturedRect( x + 42, y + 50, 66, 100 )
+
+        draw.RoundedBox( 46, x + w - 106, y - 18, 92, 92, Color( 8, 35, 51, 238 ) )
+        surface.SetDrawColor( accentColor.r, accentColor.g, accentColor.b, 225 )
+        surface.DrawOutlinedRect( x + w - 106, y - 18, 92, 92, 2 )
+        surface.SetDrawColor( accentColor.r, accentColor.g, accentColor.b, 230 )
+        surface.SetMaterial( MAT_LOCK )
+        surface.DrawTexturedRect( x + w - 73, y + 11, 28, 28 )
+
+        draw.DrawText( title, titleFont == FONT_NAME and FONT_SMALL_NAME or titleFont, x + 142, y + 48, color_white, TEXT_ALIGN_LEFT )
+        draw.DrawText( subtitleLine, FONT_HELP, x + 142, y + 93, COLOR_TEXT_MUTED, TEXT_ALIGN_LEFT )
+
+        draw.RoundedBox( 5, x + 142, y + 145, 34, 34, Color( 15, 210, 105, 210 ) )
+        draw.DrawText( string.upper( bindKey ~= '' and bindKey or 'E' ), FONT_HELP, x + 159, y + 146, color_white, TEXT_ALIGN_CENTER )
+        draw.DrawText( promptText, FONT_HELP, x + 186, y + 148, COLOR_GRAY, TEXT_ALIGN_LEFT )
 
     cam.End3D2D()
 end
