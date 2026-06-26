@@ -10,10 +10,10 @@ local C=FALLBACK
 local function palette()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     C = {
-        bg = FALLBACK.bg,
-        panel = FALLBACK.panel,
-        card = FALLBACK.card,
-        card2 = FALLBACK.card2,
+        bg = colors.primary or FALLBACK.bg,
+        panel = colors.secondary or FALLBACK.panel,
+        card = colors.tertiary or colors.secondary or FALLBACK.card,
+        card2 = colors.quaternary or colors.tertiary or FALLBACK.card2,
         border = ColorAlpha(colors.accent or FALLBACK.accent, 110),
         accent = colors.accent or FALLBACK.accent,
         green = colors.money or colors.positive or FALLBACK.green,
