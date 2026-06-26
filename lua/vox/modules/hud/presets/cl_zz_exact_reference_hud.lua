@@ -347,4 +347,5 @@ end
 
 hud:RegisterHUDPreset('tactical_card', { name = 'Reference Card', style = 0, drawFn = drawReferenceMain })
 hud:RegisterElement('notifications', { priority = 90, drawFn = drawRefNotifications, hideElements = {} })
-hud:RegisterElement('weapon_selector', { priority = 80, drawFn = drawRefWeaponSelector, hideElements = {'CHudWeaponSelection'} })
+-- Weapon selector is provided by lua/vox/modules/hud/elements/cl_weapon_selector.lua.
+-- Avoid registering a second bottom-center selector for this preset.

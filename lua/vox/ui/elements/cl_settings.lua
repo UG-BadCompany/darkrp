@@ -13,8 +13,12 @@ local font3 = vox.Font('Comfortaa@14')
 local MAT_SAVE = Material('vox_framework/save.png', 'smooth mips')
 
 local function getSettingsColors()
-    local theme = vox.hud and vox.hud.GetCurrentTheme and vox.hud:GetCurrentTheme()
-    local colors = theme and theme.colors
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors()
+    if not colors and vox.hud and vox.hud.GetCurrentTheme then
+        local theme = vox.hud:GetCurrentTheme()
+        colors = theme and theme.colors
+    end
+
     if not colors then
         return fallbackSettingsColors.primary, fallbackSettingsColors.secondary, fallbackSettingsColors.accent, fallbackSettingsColors.negative
     end

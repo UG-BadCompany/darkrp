@@ -85,6 +85,10 @@ LANG['f4.option_url_desc'] = 'Input the URL (leave empty to disable)'
 
 LANG['f4.discord_url.name'] = 'Discord'
 LANG['f4.discord_url.desc'] = 'Join our Discord server'
+LANG['f4.announcement_discord_server_id.name'] = 'Announcement Discord Server ID'
+LANG['f4.announcement_discord_server_id.desc'] = 'Discord server ID reserved for the F4 announcement feed'
+LANG['f4.announcement_discord_channel_id.name'] = 'Announcement Discord Channel ID'
+LANG['f4.announcement_discord_channel_id.desc'] = 'Discord channel ID reserved for the F4 announcement feed'
 
 LANG['f4.forum_url.name'] = 'Forum'
 LANG['f4.forum_url.desc'] = 'Meet the community'
