@@ -236,18 +236,24 @@ function PANEL:BuildRows()
         row.avatar:SetPlayer(ply, 64)
         row.avatar:SetPaintedManually(true)
         row.DoRightClick = function()
+            if not IsValid(ply) then return end
+
             local m = vgui.Create('vox.Menu')
             m:SetMinimumWidth(vox.ScaleWide(150))
             local options = {
-                {'View Profile', ICON.players},
-                {'Message', ICON.arrow},
-                {'Add Friend', ICON.ranks},
-                {'Report Player', Material('vox_scoreboard/death.png', 'smooth mips')},
-                {'Mute', ICON.microphoneMuted},
-                {'Kick Player', Material('vox_scoreboard/slay.png', 'smooth mips')}
+                {'View Profile', ICON.players, function() ply:ShowProfile() end},
+                {'Message', ICON.arrow, function() RunConsoleCommand('say', '/pm ' .. ply:Nick() .. ' ') end},
+                {'Add Friend', ICON.ranks, function() gui.OpenURL('steam://friends/add/' .. ply:SteamID64()) end},
+                {'Report Player', Material('vox_scoreboard/death.png', 'smooth mips'), function() RunConsoleCommand('say', '@ Reporting ' .. ply:Nick() .. ': ') end},
+                {'Mute', ICON.microphoneMuted, function() ply:SetMuted(not ply:IsMuted()) end},
+                {'Kick Player', Material('vox_scoreboard/slay.png', 'smooth mips'), function()
+                    vox.SimpleQuery('Kick Player', 'Are you sure you want to kick ' .. ply:Nick() .. ' from the server?', true, function(reason)
+                        RunConsoleCommand('say', '!kick ' .. ply:SteamID() .. ' ' .. (reason ~= '' and reason or 'No reason provided'))
+                    end, 'Kick Player', nil, 'Cancel')
+                end}
             }
             for _, data in ipairs(options) do
-                local opt = m:AddOption(data[1], function() end)
+                local opt = m:AddOption(data[1], data[3])
                 opt:SetMaterial(data[2])
             end
             m:ToCursor()
@@ -256,6 +262,9 @@ function PANEL:BuildRows()
         row.Paint = function(panel, rw, rh) self:PaintPlayerRow(panel, rw, rh) end
         y = y + 46
     end
+
+    local canvas = self.list:GetCanvas()
+    if IsValid(canvas) then canvas:SetTall(y) end
 end
 
 function PANEL:PaintPlayerRow(row, w, h)

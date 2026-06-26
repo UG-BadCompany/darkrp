@@ -98,15 +98,15 @@ local function drawWeaponSelector( client, scrW, scrH )
     toggleFraction = math.Approach( toggleFraction, toggleState and 1 or 0, FrameTime() * 8 )
     if ( toggleFraction <= 0 ) then return end
 
-    local theme = hud:GetCurrentTheme()
-    local colors = theme.colors
-    local colorPrimary = colors.primary
-    local colorSecondary = colors.secondary
-    local colorTertiary = colors.tertiary
-    local colorAccent = colors.accent
-    local colorPrimaryText = colors.textPrimary
-    local colorSecondaryText = colors.textSecondary
-    local colorTertiaryText = colors.textTertiary
+    local theme = hud:GetCurrentTheme() or {}
+    local colors = theme.colors or ( vox.GetUIThemeColors and vox.GetUIThemeColors() ) or {}
+    local colorPrimary = colors.primary or Color( 3, 11, 24 )
+    local colorSecondary = colors.secondary or Color( 8, 27, 52 )
+    local colorTertiary = colors.tertiary or Color( 12, 38, 70 )
+    local colorAccent = colors.accent or Color( 0, 174, 255 )
+    local colorPrimaryText = colors.textPrimary or color_white
+    local colorSecondaryText = colors.textSecondary or Color( 145, 172, 200 )
+    local colorTertiaryText = colors.textTertiary or Color( 92, 112, 135 )
 
     local prevAlpha = surface.GetAlphaMultiplier()
     surface.SetAlphaMultiplier( toggleFraction )
@@ -139,6 +139,18 @@ local function drawWeaponSelector( client, scrW, scrH )
     surface.SetDrawColor( ColorAlpha( colorAccent, 95 ) )
     surface.DrawOutlinedRect( x, y + titleH, totalW, maxColumnH, 1 )
 
+    local screenPadding = vox.hud.GetScreenPadding()
+    local slotW = vox.hud.ScaleWide( 126 )
+    local titleH = vox.hud.ScaleTall( 24 )
+    local headerH = vox.hud.ScaleTall( 28 )
+    local selectedH = vox.hud.ScaleTall( 96 )
+    local compactH = vox.hud.ScaleTall( 34 )
+    local gap = vox.hud.ScaleTall( 3 )
+    local totalW = slotW * MAX_SLOTS
+    local x = scrW * .5 - totalW * .5
+    local y = screenPadding + vox.hud.ScaleTall( 10 )
+
+    local maxColumnH = headerH
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
         local sx = x + ( slotIndex - 1 ) * slotW
@@ -277,6 +289,7 @@ do
 
         if ( slot ) then
             cycleWeapons( slot )
+            return true
         elseif ( bind == '+attack' and not quickSwitchEnabled ) then
             if ( toggleState ) then
                 selectWeapon()
@@ -285,8 +298,10 @@ do
         elseif ( not ply:KeyDown( IN_ATTACK ) ) then
             if ( bind == 'invprev' ) then
                 scrollWeapons( -1 )
+                return true
             elseif ( bind == 'invnext' ) then
                 scrollWeapons( 1 )
+                return true
             elseif ( bind == 'lastinv' ) then
                 if ( IsValid( lastWeapon ) ) then
                     local wep = ply:GetActiveWeapon()
@@ -313,6 +328,8 @@ end )
 
 hook.Add( 'Think', 'vox.hud.UpdateWeaponSelector', function()
     local client = LocalPlayer()
+    if ( not IsValid( client ) ) then return end
+
     local weaponsList = client:GetWeapons()
 
     resetSlotsCache()
