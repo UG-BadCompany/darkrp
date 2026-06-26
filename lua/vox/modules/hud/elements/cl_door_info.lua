@@ -64,25 +64,18 @@ local function getPlayersStr( players, maxNames )
     return finalStr
 end
 
-local function getReadable3D2DAngle( hitNormal, renderPos, client )
-    if ( not hitNormal or not IsValid( client ) ) then
+local function getReadable3D2DAngle( client )
+    if ( not IsValid( client ) ) then
         return Angle( 0, 0, 0 )
     end
 
-    -- Horizontal/sloped doors need a billboard-style angle. If we use the
-    -- surface normal directly on these, the panel can appear sideways or
-    -- upside down depending on how the mapper rotated the brush/model.
-    if ( math.abs( hitNormal.z ) > .55 ) then
-        local ang = ( client:EyePos() - renderPos ):Angle()
-        ang:RotateAroundAxis( ang:Forward(), 90 )
-        ang:RotateAroundAxis( ang:Right(), 90 )
-
-        return ang
-    end
-
-    local ang = hitNormal:Angle()
-    ang:RotateAroundAxis( ang:Up(), 90 )
+    -- Always billboard the door card toward the viewer. Some DarkRP doors are
+    -- horizontal/sloped brushes and their trace normals can still resolve to an
+    -- edge/side face, so surface-aligned 3D2D can leave the panel lying flat or
+    -- sideways. Billboarded 3D2D keeps the HUD readable for every door angle.
+    local ang = client:EyeAngles()
     ang:RotateAroundAxis( ang:Forward(), 90 )
+    ang:RotateAroundAxis( ang:Right(), 90 )
 
     return ang
 end
@@ -106,8 +99,9 @@ local function drawInfo( ent, client )
 
     if ( length > 6 ) then return end
 
-    local renderPos = hitPos + hitNormal
-    local renderAng = getReadable3D2DAngle( hitNormal, renderPos, client )
+    local horizontalDoor = math.abs( hitNormal.z ) > .45 or math.abs( ent:GetUp().z ) > .65
+    local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal + Vector( 0, 0, 4 ) )
+    local renderAng = getReadable3D2DAngle( client )
 
     local doorTeams = ent:getKeysDoorTeams()
     local doorGroup = ent:getKeysDoorGroup()
