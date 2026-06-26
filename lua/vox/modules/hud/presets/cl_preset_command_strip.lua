@@ -9,6 +9,7 @@ local function drawCommandStrip( self, client, scrW, scrH )
     local health = math.Clamp( client:Health() / math.max( client:GetMaxHealth(), 1 ), 0, 1 )
     local armor = math.Clamp( client:Armor() / math.max( client:GetMaxArmor() or 100, 1 ), 0, 1 )
 
+    helpers.DrawPresetBackdrop( x, y, w, h, colors, colors.accent )
     vox.DrawVoxPanel( x, y, w, h, colors, hud.GetRoundness() )
     vox.DrawVoxAngledAccentBlade( x + 10, y + 8, 8, h - 16, colors.accent )
     vox.DrawVoxAngledAccentBlade( x + w - 18, y + 8, 8, h - 16, teamColor )

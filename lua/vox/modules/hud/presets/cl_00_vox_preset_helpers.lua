@@ -28,6 +28,12 @@ function helpers.GetThemeData( client )
     return theme, colors, team.GetColor( client:Team() )
 end
 
+function helpers.DrawPresetBackdrop( x, y, w, h, colors, accent, radius )
+    radius = radius or hud.GetRoundness()
+    draw.RoundedBox( radius + 4, x - 3, y - 3, w + 6, h + 6, ColorAlpha( color_black, 95 ) )
+    draw.RoundedBox( radius + 2, x - 1, y - 1, w + 2, h + 2, ColorAlpha( accent or colors.accent, 45 ) )
+end
+
 function helpers.DrawBar( x, y, w, h, fraction, color, colors, label )
     fraction = math.Clamp( fraction or 0, 0, 1 )
     draw.RoundedBox( h * .5, x, y, w, h, ColorAlpha( colors.textPrimary or color_white, 20 ) )

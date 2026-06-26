@@ -41,11 +41,19 @@ function PANEL:LoadOptions()
         local themeOptions = {}
 
         for id, theme in pairs( vox.hud.themes ) do
-            table.insert( themeOptions, {
-                name = vox.lang:Get( string.format( 'hud.theme.%s.name', id ) ),
-                key = id
-            } )
+            if ( theme.selectable ~= false ) then
+                table.insert( themeOptions, {
+                    name = vox.lang:Get( string.format( 'hud.theme.%s.name', id ) ),
+                    key = id,
+                    order = theme.sortOrder or 100
+                } )
+            end
         end
+
+        table.sort( themeOptions, function( a, b )
+            if ( a.order == b.order ) then return a.name < b.name end
+            return a.order < b.order
+        end )
 
         self:AddOption( 'combo', 'theme', 'cl_vox_hud_theme_id', {
             options = themeOptions

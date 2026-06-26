@@ -9,6 +9,7 @@ local function drawRoleplayProfile( self, client, scrW, scrH )
     local health = math.Clamp( client:Health() / math.max( client:GetMaxHealth(), 1 ), 0, 1 )
     local armor = math.Clamp( client:Armor() / math.max( client:GetMaxArmor() or 100, 1 ), 0, 1 )
 
+    helpers.DrawPresetBackdrop( x, y, w, h, colors, teamColor )
     vox.DrawVoxCard( x, y, w, h, colors, { accent = teamColor, radius = hud.GetRoundness(), bladeWidth = hud.ScaleWide( 9 ) } )
     vox.DrawVoxBadge( x + hud.ScaleWide( 24 ), y + hud.ScaleTall( 16 ), hud.ScaleWide( 128 ), hud.ScaleTall( 18 ), 'Roleplay Profile', colors, { accent = teamColor } )
     helpers.DrawIdentity( client, x + hud.ScaleWide( 24 ), y + hud.ScaleTall( 44 ), colors, teamColor, hud.fonts.SmallBold, hud.fonts.TinyBold )
