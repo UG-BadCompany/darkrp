@@ -25,18 +25,18 @@ local PANEL = {}
 AccessorFunc( PANEL, 'm_bShowLabel', 'ShowLabel' )
 
 function PANEL:Init()
-    local colors = vox.GetThemeColors()
+    local colors = ( vox.GetUIThemeColors and vox.GetUIThemeColors() ) or vox.GetThemeColors()
 
     self.m_bShowLabel = false
     self.choices = {}
     self.fraction = 0
     self.colors = {
-        primary = colors.primary,
-        secondary = colors.secondary,
-        tertiary = colors.tertiary,
-        accent = colors.accent,
-        textPrimary = colors.textPrimary,
-        textSecondary = colors.textSecondary
+        primary = colors.primary or Color( 3, 15, 30 ),
+        secondary = colors.secondary or Color( 9, 36, 65 ),
+        tertiary = colors.tertiary or Color( 18, 76, 118 ),
+        accent = colors.accent or Color( 41, 121, 255 ),
+        textPrimary = colors.textPrimary or color_white,
+        textSecondary = colors.textSecondary or Color( 176, 194, 218 )
     }
 
     self:Open()
@@ -66,8 +66,8 @@ function PANEL:Paint( w, h )
     for _, choice in ipairs( self.choices ) do
         if ( choice.valid ) then
             local isHovered = choice.isHovered
-            local bgColor = isHovered and colors.secondary or colors.primary
-            local textColor = isHovered and colors.accent or colors.textSecondary
+            local bgColor = isHovered and Color( colors.accent.r, colors.accent.g, colors.accent.b, 70 ) or Color( colors.primary.r, colors.primary.g, colors.primary.b, 188 )
+            local textColor = isHovered and colors.textPrimary or colors.textSecondary
             local outlineColor = not isHovered and colors.tertiary or colors.accent
 
             choice.outlineColor = vox.LerpColor( animSpeed, choice.outlineColor or outlineColor, outlineColor )
@@ -113,6 +113,11 @@ function PANEL:Paint( w, h )
              )
         end
     end
+
+    draw.RoundedBox( r * .18, x0 - r * .18, y0 - r * .18, r * .36, r * .36, Color( colors.primary.r, colors.primary.g, colors.primary.b, 236 ) )
+    surface.SetDrawColor( colors.tertiary.r, colors.tertiary.g, colors.tertiary.b, 190 )
+    surface.DrawLine( x0 - r * .07, y0 - r * .07, x0 + r * .07, y0 + r * .07 )
+    surface.DrawLine( x0 + r * .07, y0 - r * .07, x0 - r * .07, y0 + r * .07 )
 
     -- Draw label
     local hoveredChoice = self.hoveredChoice
