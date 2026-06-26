@@ -64,6 +64,29 @@ local function getPlayersStr( players, maxNames )
     return finalStr
 end
 
+local function getReadable3D2DAngle( hitNormal, renderPos, client )
+    if ( not hitNormal or not IsValid( client ) ) then
+        return Angle( 0, 0, 0 )
+    end
+
+    -- Horizontal/sloped doors need a billboard-style angle. If we use the
+    -- surface normal directly on these, the panel can appear sideways or
+    -- upside down depending on how the mapper rotated the brush/model.
+    if ( math.abs( hitNormal.z ) > .55 ) then
+        local ang = ( client:EyePos() - renderPos ):Angle()
+        ang:RotateAroundAxis( ang:Forward(), 90 )
+        ang:RotateAroundAxis( ang:Right(), 90 )
+
+        return ang
+    end
+
+    local ang = hitNormal:Angle()
+    ang:RotateAroundAxis( ang:Up(), 90 )
+    ang:RotateAroundAxis( ang:Forward(), 90 )
+
+    return ang
+end
+
 local function drawInfo( ent, client )
     if ( not IsValid( client ) ) then return end
 
@@ -84,7 +107,7 @@ local function drawInfo( ent, client )
     if ( length > 6 ) then return end
 
     local renderPos = hitPos + hitNormal
-    local renderAng = hitNormal:Angle() + Angle( 0, 90, 90 )
+    local renderAng = getReadable3D2DAngle( hitNormal, renderPos, client )
 
     local doorTeams = ent:getKeysDoorTeams()
     local doorGroup = ent:getKeysDoorGroup()
