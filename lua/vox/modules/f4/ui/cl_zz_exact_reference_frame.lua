@@ -5,15 +5,15 @@ surface.CreateFont('VoxRef.Small', {font='Comfortaa', size=12, weight=700, exten
 surface.CreateFont('VoxRef.Tiny', {font='Comfortaa', size=10, weight=600, extended=true})
 surface.CreateFont('VoxRef.CardTitle', {font='Comfortaa', size=20, weight=900, extended=true})
 
-local FALLBACK={bg=Color(5,13,30,246),panel=Color(8,21,44,238),card=Color(12,28,58,232),card2=Color(15,36,70,232),border=Color(54,91,145,110),accent=Color(70,135,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
+local FALLBACK={bg=Color(3,11,24,246),panel=Color(6,20,40,238),card=Color(8,27,52,232),card2=Color(10,36,68,232),border=Color(0,174,255,110),accent=Color(0,174,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
 local C=FALLBACK
 local function palette()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     C = {
-        bg = colors.primary or FALLBACK.bg,
-        panel = colors.secondary or FALLBACK.panel,
-        card = colors.secondary or FALLBACK.card,
-        card2 = colors.tertiary or FALLBACK.card2,
+        bg = FALLBACK.bg,
+        panel = FALLBACK.panel,
+        card = FALLBACK.card,
+        card2 = FALLBACK.card2,
         border = ColorAlpha(colors.accent or FALLBACK.accent, 110),
         accent = colors.accent or FALLBACK.accent,
         green = colors.money or colors.positive or FALLBACK.green,
@@ -63,7 +63,7 @@ end
 local PANEL={}
 function PANEL:Init()
     vox.f4.frame=self
-    self:SetSize(math.min(ScrW()*0.78,1040), math.min(ScrH()*0.72,560)); self:Center(); self:SetTitle('')
+    self:SetSize(math.min(ScrW()*0.9,1320), math.min(ScrH()*0.82,760)); self:Center(); self:SetTitle('')
     if self.ShowCloseButton then self:ShowCloseButton(false) end
     if IsValid(self.divHeader) then self.divHeader:SetVisible(false) end
     self:SetAlpha(0); self:AlphaTo(255,.15,0); self:MakePopup()
@@ -339,19 +339,25 @@ function PANEL:RebuildDashboard(parent, w, h)
     parent:Clear()
     palette()
 
-    local scale = math.min(1, w / vox.ScaleWide(760))
-    local function sx(v) return math.floor(vox.ScaleWide(v) * scale) end
-    local function sy(v) return math.floor(vox.ScaleTall(v) * scale) end
+    local gap = math.max(vox.ScaleWide(12), math.floor(w * .014))
+    local topH = math.max(vox.ScaleTall(74), math.floor(h * .13))
+    local cardW = math.floor((w - gap * 3) / 4)
+    local topY = 0
+    local row1Y = topY + topH + gap
+    local availableH = math.max(vox.ScaleTall(270), h - row1Y)
+    local rowGap = gap
+    local row1H = math.floor(availableH * .46)
+    local row2Y = row1Y + row1H + rowGap
+    local row2H = math.max(vox.ScaleTall(128), h - row2Y)
+    local leftW = math.floor(w * .36)
+    local midW = math.floor(w * .28)
+    local rightW = w - leftW - midW - gap * 2
 
     local lp = LocalPlayer()
     local moneyVal = IsValid(lp) and (lp:getDarkRPVar('money') or 0) or 0
     local job = getJobName(lp)
     local players = player.GetAll()
     local maxPlayers = game.MaxPlayers and game.MaxPlayers() or 64
-    local cardW, topH, gap = sx(150), sy(66), sx(10)
-    local topY = 0
-    local row1Y = topY + topH + sy(16)
-    local row2Y = row1Y + sy(132) + sy(16)
 
     local jobCard = addCard(parent, cardW + gap, topY, cardW, topH, 'Current Job', job, 'View Jobs →', C.accent, ICON.jobs)
     jobCard:SetMouseInputEnabled(true)
@@ -365,10 +371,7 @@ function PANEL:RebuildDashboard(parent, w, h)
     addCard(parent, (cardW + gap) * 2, topY, cardW, topH, 'Players Online', #players .. ' / ' .. maxPlayers, 'Join the community', C.accent, ICON.players)
     addCard(parent, (cardW + gap) * 3, topY, cardW, topH, 'Server Time', os.date('%H:%M'), os.date('%A'), C.accent, ICON.time)
 
-    local wideA = sx(300)
-    local wideB = sx(230)
-    local wideC = sx(180)
-    self:ListPanel(parent, 0, row1Y, wideA, sy(132), 'ANNOUNCEMENTS', self:GetDashboardAnnouncements(), {
+    self:ListPanel(parent, 0, row1Y, leftW, row1H, 'ANNOUNCEMENTS', self:GetDashboardAnnouncements(), {
         text = 'CONFIGURE DISCORD IDS',
         click = function()
             self.active = 'settings'
@@ -376,7 +379,7 @@ function PANEL:RebuildDashboard(parent, w, h)
             self:BuildContent()
         end
     })
-    self:ListPanel(parent, wideA + gap, row1Y, wideB, sy(132), 'POPULAR JOBS', self:GetPopularJobs(3), {
+    self:ListPanel(parent, leftW + gap, row1Y, midW, row1H, 'POPULAR JOBS', self:GetPopularJobs(4), {
         text = 'VIEW ALL JOBS',
         click = function()
             self.active = 'jobs'
@@ -384,31 +387,31 @@ function PANEL:RebuildDashboard(parent, w, h)
             self:BuildContent()
         end
     })
-    self:ListPanel(parent, wideA + wideB + gap * 2, row1Y, wideC, sy(132), 'QUICK ACTIONS', self:GetQuickActions())
-    self:ListPanel(parent, 0, row2Y, wideA, sy(116), 'STAFF ONLINE', self:GetStaffRows())
-    self.wantedPanel = self:ListPanel(parent, wideA + gap, row2Y, wideB + wideC + gap, sy(116), 'WANTED PLAYERS', self:GetWantedRows())
+    self:ListPanel(parent, leftW + midW + gap * 2, row1Y, rightW, row1H, 'QUICK ACTIONS', self:GetQuickActions())
+    self:ListPanel(parent, 0, row2Y, leftW, row2H, 'STAFF ONLINE', self:GetStaffRows())
+    self.wantedPanel = self:ListPanel(parent, leftW + gap, row2Y, w - leftW - gap, row2H, 'WANTED PLAYERS', self:GetWantedRows())
 end
 
 function PANEL:ListPanel(parent,x,y,w,h,title,rows,footer)
     local p=parent:Add('Panel'); p:SetPos(x,y); p:SetSize(w,h); p.Paint=function(_,cw,ch) softCard(0,0,cw,ch,8,ColorAlpha(C.card,218)); draw.SimpleText(title,'VoxRef.Tiny',12,9,C.text,0,0) end
     local yy=28
-    local rowH = 24
-    local footerH = footer and 20 or 0
-    local maxRows = math.max(1, math.floor((h - yy - footerH - 8) / (rowH + 4)))
+    local rowH = math.max(24, math.min(32, math.floor(h * .16)))
+    local footerH = footer and 24 or 0
+    local maxRows = math.max(1, math.floor((h - yy - footerH - 8) / (rowH + 5)))
     for index,r in ipairs(rows or {}) do
         if index > maxRows then break end
-        local row=p:Add(r.click and 'DButton' or 'Panel'); row:SetPos(10,yy); row:SetSize(w-20,rowH); if row.SetText then row:SetText('') end; yy=yy+rowH+4
+        local row=p:Add(r.click and 'DButton' or 'Panel'); row:SetPos(10,yy); row:SetSize(w-20,rowH); if row.SetText then row:SetText('') end; yy=yy+rowH+5
         if r.click then row.DoClick = r.click end
         row.Paint=function(panel,rw,rh)
             rr(0,0,rw,rh,5,ColorAlpha(C.card2,panel:IsHovered() and 235 or 210)); outline(0,0,rw,rh,5,ColorAlpha(r.color or C.accent,panel:IsHovered() and 100 or 35))
             if r.icon then iconBubble(r.icon,6,4,16,r.color or C.accent) end
-            draw.SimpleText(r.title or r[1] or '', 'VoxRef.Tiny', r.icon and 30 or 12, 4, C.text, 0, 0)
-            draw.SimpleText(r.desc or r[2] or '', 'VoxRef.Tiny', r.icon and 30 or 12, 14, C.soft, 0, 0)
+            draw.SimpleText(r.title or r[1] or '', 'VoxRef.Tiny', r.icon and 30 or 12, math.max(4, rh * .18), C.text, 0, 0)
+            draw.SimpleText(r.desc or r[2] or '', 'VoxRef.Tiny', r.icon and 30 or 12, math.max(14, rh * .55), C.soft, 0, 0)
             if r.meta or r[3] then draw.SimpleText(r.meta or r[3], 'VoxRef.Tiny', rw-10, rh*.5, (r.meta == 'WANTED') and C.red or (r.color or C.green), 2, 1) end
         end
     end
     if footer then
-        local b=p:Add('DButton'); b:SetText(''); b:SetPos(10,h-25); b:SetSize(w-20,18); b.DoClick=footer.click
+        local b=p:Add('DButton'); b:SetText(''); b:SetPos(10,h-30); b:SetSize(w-20,22); b.DoClick=footer.click
         b.Paint=function(panel,bw,bh) rr(0,0,bw,bh,5,ColorAlpha(C.accent,panel:IsHovered() and 70 or 38)); outline(0,0,bw,bh,5,ColorAlpha(C.accent,120)); draw.SimpleText(footer.text or footer,'VoxRef.Tiny',bw*.5,bh*.5,C.text,1,1) end
     end
     return p

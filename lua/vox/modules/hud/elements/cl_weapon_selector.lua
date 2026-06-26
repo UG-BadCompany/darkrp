@@ -139,17 +139,6 @@ local function drawWeaponSelector( client, scrW, scrH )
     surface.SetDrawColor( ColorAlpha( colorAccent, 95 ) )
     surface.DrawOutlinedRect( x, y + titleH, totalW, maxColumnH, 1 )
 
-    local screenPadding = vox.hud.GetScreenPadding()
-    local slotW = vox.hud.ScaleWide( 126 )
-    local titleH = vox.hud.ScaleTall( 24 )
-    local headerH = vox.hud.ScaleTall( 28 )
-    local selectedH = vox.hud.ScaleTall( 96 )
-    local compactH = vox.hud.ScaleTall( 34 )
-    local gap = vox.hud.ScaleTall( 3 )
-    local totalW = slotW * MAX_SLOTS
-    local x = scrW * .5 - totalW * .5
-    local y = screenPadding + vox.hud.ScaleTall( 10 )
-
     local maxColumnH = headerH
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
