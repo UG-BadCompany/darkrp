@@ -50,7 +50,7 @@ function PANEL:Init()
         local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
         if vox.DrawVoxPanel then
             vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
-            vox.DrawVoxBlade(0, vox.ScaleTall(8), vox.ScaleWide(5), h - vox.ScaleTall(16), themeAccent)
+            draw.RoundedBox(3, 0, vox.ScaleTall(8), vox.ScaleWide(5), h - vox.ScaleTall(16), themeAccent)
         else
             draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
         end
