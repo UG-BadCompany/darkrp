@@ -116,6 +116,7 @@ end
 function PANEL:Paint(w,h)
     palette()
     glass(0,0,w,h,14,ColorAlpha(C.accent,135))
+    vox.DrawVoxCornerTicks(8,8,w-16,h-16,ColorAlpha(C.accent,115),18)
     draw.SimpleText('F4 MENU','VoxRef.Title',14,15,C.text,0,1)
     draw.SimpleText('(COMMAND CENTER)','VoxRef.Tiny',92,15,C.soft,0,1)
 end
