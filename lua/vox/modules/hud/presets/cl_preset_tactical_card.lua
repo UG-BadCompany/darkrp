@@ -9,6 +9,7 @@ local function drawTacticalCard( self, client, scrW, scrH )
     local health = math.Clamp( client:Health() / math.max( client:GetMaxHealth(), 1 ), 0, 1 )
     local armor = math.Clamp( client:Armor() / math.max( client:GetMaxArmor() or 100, 1 ), 0, 1 )
 
+    helpers.DrawPresetBackdrop( x, y, w, h, colors, teamColor )
     vox.DrawVoxCard( x, y, w, h, colors, { accent = teamColor, radius = hud.GetRoundness(), bladeWidth = hud.ScaleWide( 10 ) } )
     vox.DrawVoxCornerTicks( x + 8, y + 8, w - 16, h - 16, ColorAlpha( colors.accent, 95 ), 18 )
     helpers.DrawIdentity( client, x + hud.ScaleWide( 28 ), y + hud.ScaleTall( 16 ), colors, teamColor, hud.fonts.SmallBold, hud.fonts.Tiny )
