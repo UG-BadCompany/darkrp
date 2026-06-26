@@ -5,14 +5,21 @@ AccessorFunc(PANEL, 'm_iMinimumWidth', 'MinimumWidth')
 
 local MAT_WING = Material('vox_framework/wing.png', 'smooth mips')
 local fallbackMenuColors = {
-    primary = Color(8, 19, 38),
-    secondary = Color(12, 32, 62)
+    primary = Color(3, 11, 24),
+    secondary = Color(8, 27, 52),
+    accent = Color(0, 174, 255),
+    text = Color(238, 246, 255),
+    muted = Color(145, 172, 200),
+    negative = Color(255, 75, 95)
 }
 
 function PANEL:Init()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     self.backgroundColor = colors.primary or fallbackMenuColors.primary
-    self.outlineColor = colors.secondary or fallbackMenuColors.secondary
+    self.outlineColor = colors.accent or fallbackMenuColors.accent
+    self.textColor = colors.textPrimary or fallbackMenuColors.text
+    self.mutedColor = colors.textSecondary or fallbackMenuColors.muted
+    self.negativeColor = colors.negative or fallbackMenuColors.negative
     self.options = {}
     self.submenus = {}
 
@@ -65,8 +72,8 @@ function PANEL:Paint(w, h)
     local thickness = 1
 
     vox.bshadows.BeginShadow()
-        draw.RoundedBox(8, x, y, w, h, self.outlineColor)
-        draw.RoundedBox(8, x + thickness, y + thickness, w - thickness * 2, h - thickness * 2, self.backgroundColor)
+        draw.RoundedBox(8, x, y, w, h, ColorAlpha(self.outlineColor, 110))
+        draw.RoundedBox(8, x + thickness, y + thickness, w - thickness * 2, h - thickness * 2, ColorAlpha(self.backgroundColor, 245))
     vox.bshadows.EndShadow(1, 3, 3)
 end
 
@@ -99,6 +106,7 @@ function PANEL:AddOption(text, callback)
 
     button:SetColorIdle(color)
     button:SetColorHover(vox.OffsetColor(button:GetColorIdle(), 10))
+    button:SetTextColor((text:find('Report') or text:find('Kick')) and self.negativeColor or self.textColor)
     button:SetContentAlignment(4)
     button:SetText('')
     button:InjectEventHandler('Paint')
@@ -116,6 +124,7 @@ function PANEL:AddOption(text, callback)
             x = x + size + vox.ScaleWide(5)
         end
 
+        if (text:find('Report') or text:find('Kick')) then panel:SetTextColor(self.negativeColor) end
         draw.SimpleText(text, panel:GetFont(), x, h * .5, panel:GetTextColor(), 0, 1)
     end)
 

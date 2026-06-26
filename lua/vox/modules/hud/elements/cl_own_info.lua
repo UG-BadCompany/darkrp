@@ -11,8 +11,8 @@ timer.Create( 'vox.hud.CatchTraceVehicle', 1 / 6, 0, function()
     local client = LocalPlayer()
     if ( IsValid( client ) ) then
         local origin = client:GetPos()
-        local trace = client:GetEyeTrace()
-        local ent = trace.Entity
+        local trace = client.GetEyeTrace and client:GetEyeTrace()
+        local ent = trace and trace.Entity
 
         if ( IsValid( ent ) and ent:IsVehicle() and not client:InVehicle() and ent:GetPos():DistToSqr( origin ) <= MAX_RANGE ) then
             local class = ent:GetVehicleClass()
@@ -60,17 +60,17 @@ local function drawOwnInfo( element, client, scrW, scrH )
     local x0 = scrW * .5
     local y0 = scrH * .85
 
-    local theme = hud:GetCurrentTheme()
-    local colors = theme.colors
+    local theme = hud.GetCurrentTheme and hud:GetCurrentTheme()
+    local colors = ( vox.GetUIThemeColors and vox.GetUIThemeColors() ) or ( theme and theme.colors ) or {}
     local infoW = hud.ScaleWide( 200 )
     local infoH = hud.ScaleTall( 50 )
     local infoX, infoY = x0 - infoW * .5, y0 - infoH * .5
 
     hud.OverrideAlpha( showFraction, function()
 
-        hud.DrawRoundedBox( infoX, infoY, infoW, infoH, colors.primary )
-        draw.SimpleText( traceData.name, hud.fonts.SmallBold, x0, y0, colors.textPrimary, 1, 4 )
-        draw.SimpleText( traceData.info, hud.fonts.Tiny, x0, y0, colors.textSecondary, 1, 0 )
+        hud.DrawRoundedBox( infoX, infoY, infoW, infoH, ( colors.primary or Color( 3, 11, 24, 230 ) ) )
+        draw.SimpleText( traceData.name, hud.fonts.SmallBold, x0, y0, ( colors.textPrimary or color_white ), 1, 4 )
+        draw.SimpleText( traceData.info, hud.fonts.Tiny, x0, y0, ( colors.textSecondary or Color( 145, 172, 200 ) ), 1, 0 )
 
     end )
 end
