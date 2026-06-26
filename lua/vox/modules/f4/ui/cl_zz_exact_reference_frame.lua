@@ -7,13 +7,26 @@ surface.CreateFont('VoxRef.CardTitle', {font='Comfortaa', size=20, weight=900, e
 
 local FALLBACK={bg=Color(3,11,24,246),panel=Color(6,20,40,238),card=Color(8,27,52,232),card2=Color(10,36,68,232),border=Color(0,174,255,110),accent=Color(0,174,255),green=Color(35,225,120),red=Color(255,75,95),amber=Color(255,190,65),text=Color(240,248,255),soft=Color(145,172,200)}
 local C=FALLBACK
+local function blendColor(a,b,t,alpha)
+    a = a or FALLBACK.bg
+    b = b or FALLBACK.bg
+    return Color(
+        math.Clamp(a.r + (b.r - a.r) * t, 0, 255),
+        math.Clamp(a.g + (b.g - a.g) * t, 0, 255),
+        math.Clamp(a.b + (b.b - a.b) * t, 0, 255),
+        alpha or a.a or 255
+    )
+end
 local function palette()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    local primary = colors.primary or FALLBACK.bg
+    local secondary = colors.secondary or FALLBACK.panel
+    local tertiary = colors.tertiary or secondary
     C = {
-        bg = colors.primary or FALLBACK.bg,
-        panel = colors.secondary or FALLBACK.panel,
-        card = colors.tertiary or colors.secondary or FALLBACK.card,
-        card2 = colors.quaternary or colors.tertiary or FALLBACK.card2,
+        bg = blendColor(FALLBACK.bg, primary, .35, 244),
+        panel = blendColor(FALLBACK.panel, secondary, .38, 232),
+        card = blendColor(FALLBACK.card, tertiary, .42, 220),
+        card2 = blendColor(FALLBACK.card2, colors.quaternary or tertiary, .42, 216),
         border = ColorAlpha(colors.accent or FALLBACK.accent, 110),
         accent = colors.accent or FALLBACK.accent,
         green = colors.money or colors.positive or FALLBACK.green,
@@ -45,8 +58,17 @@ local ICON = {
 }
 local function rr(x,y,w,h,r,col) draw.RoundedBox(r or 8,x,y,w,h,col) end
 local function outline(x,y,w,h,r,col) surface.SetDrawColor(col or C.border); surface.DrawOutlinedRect(x,y,w,h,1) end
-local function glass(x,y,w,h,r,accent) palette(); if vox.DrawVoxPanel then vox.DrawVoxPanel(x,y,w,h,{primary=C.bg,secondary=C.panel,tertiary=C.card2,accent=accent or C.accent},r or 10) else rr(x,y,w,h,r or 10,C.bg); rr(x+1,y+1,w-2,h-2,r or 10,C.panel); outline(x,y,w,h,r,accent or C.border) end end
-local function softCard(x,y,w,h,r,col) palette(); if vox.DrawVoxPanel then vox.DrawVoxPanel(x,y,w,h,{primary=col or C.card,secondary=C.panel,tertiary=C.card2,accent=C.accent},r or 8) else rr(x,y,w,h,r or 8,col or C.card); outline(x,y,w,h,r,ColorAlpha(C.border,70)) end end
+local function cleanPanel(x,y,w,h,r,col,accent)
+    r = r or 10
+    accent = accent or C.accent
+    rr(x,y,w,h,r,ColorAlpha(col or C.panel,232))
+    rr(x+1,y+1,w-2,h-2,math.max(r-1,0),ColorAlpha(C.card2,42))
+    surface.SetDrawColor(ColorAlpha(accent,82)); surface.DrawLine(x+r,y+1,x+math.min(w-r,170),y+1)
+    surface.SetDrawColor(ColorAlpha(C.soft,18)); surface.DrawLine(x+r,y+2,x+w-r,y+2)
+    outline(x,y,w,h,r,ColorAlpha(accent,58))
+end
+local function glass(x,y,w,h,r,accent) palette(); cleanPanel(x,y,w,h,r or 10,C.bg,accent or C.accent) end
+local function softCard(x,y,w,h,r,col) palette(); cleanPanel(x,y,w,h,r or 8,col or C.card,C.accent) end
 local function matIcon(txt,x,y,col) draw.SimpleText(txt,'VoxRef.Title',x,y,col or C.text,1,1) end
 local function money(v) if DarkRP and DarkRP.formatMoney then return DarkRP.formatMoney(v or 0) end return '$'..string.Comma(v or 0) end
 local function drawIcon(icon,x,y,w,h,col)
@@ -94,17 +116,16 @@ end
 function PANEL:Paint(w,h)
     palette()
     glass(0,0,w,h,14,ColorAlpha(C.accent,135))
-    vox.DrawVoxScanlines(14,32,w-28,h-44,ColorAlpha(C.accent,8),8)
     vox.DrawVoxCornerTicks(8,8,w-16,h-16,ColorAlpha(C.accent,115),18)
     draw.SimpleText('F4 MENU','VoxRef.Title',14,15,C.text,0,1)
     draw.SimpleText('(COMMAND CENTER)','VoxRef.Tiny',92,15,C.soft,0,1)
 end
 function PANEL:BuildSidebar()
     local s=self.sidebar
-    s.Paint=function(_,w,h) palette(); softCard(0,0,w,h,12,ColorAlpha(C.bg,225)); vox.DrawVoxScanlines(12,12,w-24,h-24,ColorAlpha(C.accent,7),8) end
+    s.Paint=function(_,w,h) palette(); softCard(0,0,w,h,12,ColorAlpha(C.bg,225)) end
     local profile=s:Add('Panel'); profile:SetPos(10,12); profile:SetSize(200,64)
     profile.Paint=function(_,w,h)
-        vox.DrawVoxPanel(0,0,w,h,{primary=ColorAlpha(C.panel,210),secondary=C.card2,accent=C.accent},10)
+        cleanPanel(0,0,w,h,10,ColorAlpha(C.panel,220),C.accent)
         local lp=LocalPlayer()
         draw.SimpleText(IsValid(lp) and lp:Name() or 'Player','VoxRef.Small',64,14,C.text,0,0)
         draw.SimpleText(IsValid(lp) and (lp:getDarkRPVar('job') or team.GetName(lp:Team())) or 'Citizen','VoxRef.Tiny',64,34,C.green,0,0)
