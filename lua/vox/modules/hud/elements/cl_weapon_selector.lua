@@ -139,6 +139,7 @@ local function drawWeaponSelector( client, scrW, scrH )
     surface.SetDrawColor( ColorAlpha( colorAccent, 95 ) )
     surface.DrawOutlinedRect( x, y + titleH, totalW, maxColumnH, 1 )
 
+    local maxColumnH = headerH
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
         local sx = x + ( slotIndex - 1 ) * slotW
