@@ -11,7 +11,7 @@ local function getThemeColors()
         primary = colors.primary or COLOR_PRIMARY,
         secondary = colors.secondary or COLOR_SECONDARY,
         tertiary = colors.tertiary or COLOR_TERTIARY,
-        accent = Color(70, 135, 255),
+        accent = colors.accent or Color(70, 135, 255),
         money = colors.money or Color(35, 225, 120),
         negative = colors.negative or Color(255, 75, 95),
         warning = Color(88, 166, 255),
@@ -30,7 +30,7 @@ local function paintCommandRow(panel, w, h, title, desc, state, action)
     vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
     draw.RoundedBox(9, 1, 1, w - 2, h - 2, ColorAlpha(colors.primary, 82))
     vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colors.accent, hovered and 18 or 7))
-    vox.DrawVoxBlade(vox.ScaleWide(12), vox.ScaleTall(13), vox.ScaleWide(4), h - vox.ScaleTall(26), colors.accent)
+    draw.RoundedBox(2, vox.ScaleWide(12), vox.ScaleTall(13), vox.ScaleWide(4), h - vox.ScaleTall(26), colors.accent)
 
     draw.SimpleText(title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(28), vox.ScaleTall(14), colors.text, 0, 0)
     draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(28), vox.ScaleTall(38), colors.muted, 0, 0)
@@ -54,7 +54,7 @@ local function buildHeader(parent, title, subtitle)
     header.Paint = function(_, w, h)
         local colors = getThemeColors()
         vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary, 245), secondary = colors.secondary, accent = colors.accent }, 12)
-        vox.DrawVoxBlade(vox.ScaleWide(14), vox.ScaleTall(13), vox.ScaleWide(5), h - vox.ScaleTall(26), colors.accent)
+        draw.RoundedBox(3, vox.ScaleWide(14), vox.ScaleTall(13), vox.ScaleWide(5), h - vox.ScaleTall(26), colors.accent)
         draw.SimpleText(title, vox.Font('Comfortaa Bold@24'), vox.ScaleWide(32), vox.ScaleTall(15), colors.text, 0, 0)
         draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(34), vox.ScaleTall(43), colors.muted, 0, 0)
     end
@@ -123,38 +123,29 @@ vox.gui.Register('vox.f4.Upgrades', UP)
 local SET = {}
 function SET:Init()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Vox Settings', 'Compact settings panel for HUD, F4, scoreboard, notifications, and accessibility.')
-    local body = self:Add('Panel')
-    body:Dock(FILL)
-    local nav = body:Add('Panel')
-    nav:Dock(LEFT)
-    nav:SetWide(vox.ScaleWide(150))
-    nav:DockMargin(0, 0, vox.ScaleWide(10), 0)
-    nav.Paint = function(_, w, h)
+    buildHeader(self, 'Vox Settings', 'Live F4 configuration using the same settings controls as the admin menu.')
+
+    local config = self:Add('vox.Configuration')
+    config:Dock(FILL)
+    config:LoadAddonSettings('f4')
+    config:OpenCategories()
+
+    local hudButton = self:Add('DButton')
+    hudButton:Dock(BOTTOM)
+    hudButton:DockMargin(0, vox.ScaleTall(10), 0, 0)
+    hudButton:SetTall(vox.ScaleTall(34))
+    hudButton:SetText('')
+    hudButton.Paint = function(panel, w, h)
         local colors = getThemeColors()
-        vox.DrawVoxPanel(0, 0, w, h, { primary = colors.primary, secondary = colors.secondary, accent = colors.accent }, 10)
-        draw.SimpleText('SETTINGS', vox.Font('Comfortaa Bold@13'), vox.ScaleWide(14), vox.ScaleTall(14), colors.text, 0, 0)
+        draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(colors.accent, panel:IsHovered() and 58 or 34))
+        surface.SetDrawColor(ColorAlpha(colors.accent, 130))
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.SimpleText('OPEN FULL HUD SETTINGS', vox.Font('Comfortaa Bold@12'), w * .5, h * .5, colors.text, 1, 1)
     end
-    local sections = {'HUD', 'F4 Menu', 'Scoreboard', 'Notifications', 'Accessibility'}
-    for index, name in ipairs(sections) do
-        local item = nav:Add('DButton')
-        item:Dock(TOP)
-        item:DockMargin(vox.ScaleWide(10), index == 1 and vox.ScaleTall(44) or 0, vox.ScaleWide(10), vox.ScaleTall(6))
-        item:SetTall(vox.ScaleTall(32))
-        item:SetText('')
-        item.Paint = function(panel, w, h)
-            local colors = getThemeColors()
-            draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(colors.accent, panel:IsHovered() and 34 or 16))
-            draw.SimpleText(name, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(10), h * .5, colors.text, 0, 1)
+    hudButton.DoClick = function()
+        if vox.hud and vox.hud.OpenSettings then
+            vox.hud.OpenSettings()
         end
     end
-    addRows(body, {
-        {'HUD Style', 'Tactical Card, Command Strip, Minimal Edge, or Roleplay Profile.', 'DROPDOWN', 'EDIT'},
-        {'HUD / F4 / Scoreboard Scale', 'Adjust readable frame sizes without clipping.', 'SLIDER', 'TUNE'},
-        {'Theme & Accent', 'Dark glass, blue-gray, electric blue, and active theme accents.', 'SELECT', 'CHANGE'},
-        {'Blur & Animations', 'Glass blur, transitions, and reduced-motion preferences.', 'TOGGLES', 'UPDATE'},
-        {'Compact Mode', 'Tighter rows for dense roleplay servers.', 'TOGGLE', 'SWITCH'},
-        {'Live Previews', 'HUD card, F4 card, scoreboard row, and notification preview.', 'PREVIEW', 'OPEN'}
-    }, function() if vox.hud and vox.hud.OpenSettings then vox.hud.OpenSettings() end end)
 end
 vox.gui.Register('vox.f4.Settings', SET)
