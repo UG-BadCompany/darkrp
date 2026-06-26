@@ -5,11 +5,11 @@ local function voxTheme(primary, secondary, tertiary, accent, extras)
             primary = primary,
             secondary = secondary,
             tertiary = tertiary,
-            quaternary = Color(8, 11, 16),
+            quaternary = extras.quaternary or Color(8, 11, 16),
             accent = accent,
-            secondaryAccent = Color(142, 84, 255),
-            border = Color(46, 62, 88),
-            glow = ColorAlpha and ColorAlpha(accent, 70) or accent,
+            secondaryAccent = extras.secondaryAccent or Color(142, 84, 255),
+            border = extras.border or Color(46, 62, 88),
+            glow = ColorAlpha and ColorAlpha(accent, extras.glowAlpha or 70) or accent,
             textPrimary = Color(246, 248, 255),
             textSecondary = Color(166, 178, 204),
             textTertiary = Color(96, 110, 138),
@@ -22,63 +22,101 @@ local function voxTheme(primary, secondary, tertiary, accent, extras)
             lockdown = Color(255, 80, 105)
         }
     for key, value in pairs( extras ) do
-        colors[ key ] = value
+        if ( key ~= 'selectable' and key ~= 'sortOrder' and key ~= 'glowAlpha' ) then
+            colors[ key ] = value
+        end
     end
-    return { colors = colors }
+    return { colors = colors, selectable = extras.selectable ~= false, sortOrder = extras.sortOrder or 100 }
 end
 
 vox.hud:CreateTheme( 'default', voxTheme(
-    Color(10, 13, 20), Color(16, 22, 34), Color(24, 32, 48), Color(0, 174, 255)
-) )
-
-vox.hud:CreateTheme( 'vox_obsidian', voxTheme(
-    Color(9, 11, 16), Color(14, 19, 29), Color(23, 31, 45), Color(0, 174, 255)
+    Color(7, 10, 18), Color(12, 18, 31), Color(20, 29, 46), Color(0, 204, 255), {
+        secondaryAccent = Color(124, 92, 255),
+        border = Color(34, 56, 86),
+        glowAlpha = 92,
+        sortOrder = 0
+    }
 ) )
 
 vox.hud:CreateTheme( 'vox_midnight', voxTheme(
-    Color(8, 14, 28), Color(13, 24, 42), Color(20, 38, 62), Color(72, 149, 255)
+    Color(6, 13, 29), Color(10, 24, 45), Color(17, 42, 72), Color(73, 166, 255), {
+        secondaryAccent = Color(88, 101, 242),
+        border = Color(31, 66, 105),
+        sortOrder = 1
+    }
 ) )
 
 vox.hud:CreateTheme( 'vox_royal_purple', voxTheme(
-    Color(16, 12, 28), Color(26, 18, 45), Color(42, 28, 68), Color(177, 94, 255)
-) )
-
-vox.hud:CreateTheme( 'vox_carbon_red', voxTheme(
-    Color(16, 14, 16), Color(27, 21, 23), Color(46, 30, 34), Color(255, 66, 92)
+    Color(18, 10, 33), Color(31, 18, 55), Color(52, 31, 86), Color(190, 100, 255), {
+        secondaryAccent = Color(255, 93, 180),
+        border = Color(74, 49, 111),
+        sortOrder = 2
+    }
 ) )
 
 vox.hud:CreateTheme( 'vox_emerald', voxTheme(
-    Color(8, 18, 16), Color(12, 31, 27), Color(18, 50, 42), Color(52, 211, 153)
+    Color(4, 20, 18), Color(8, 35, 31), Color(14, 58, 48), Color(45, 226, 160), {
+        secondaryAccent = Color(75, 190, 255),
+        border = Color(24, 82, 68),
+        sortOrder = 3
+    }
+) )
+
+vox.hud:CreateTheme( 'vox_carbon_red', voxTheme(
+    Color(18, 12, 15), Color(32, 20, 24), Color(54, 31, 37), Color(255, 72, 104), {
+        secondaryAccent = Color(255, 157, 77),
+        border = Color(90, 44, 54),
+        sortOrder = 4
+    }
 ) )
 
 vox.hud:CreateTheme( 'vox_gold', voxTheme(
-    Color(18, 15, 10), Color(33, 27, 16), Color(56, 44, 22), Color(245, 197, 66)
+    Color(20, 15, 7), Color(36, 27, 13), Color(62, 46, 20), Color(255, 205, 72), {
+        secondaryAccent = Color(255, 132, 60),
+        border = Color(92, 68, 31),
+        sortOrder = 5
+    }
 ) )
 
 vox.hud:CreateTheme( 'vox_light', voxTheme(
-    Color(230, 235, 245), Color(244, 247, 252), Color(255, 255, 255), Color(0, 124, 255), {
-        quaternary = Color(216, 224, 238),
-        textPrimary = Color(20, 27, 39),
-        textSecondary = Color(74, 86, 108),
-        textTertiary = Color(120, 132, 154)
+    Color(228, 235, 246), Color(243, 247, 253), Color(255, 255, 255), Color(0, 126, 255), {
+        quaternary = Color(212, 223, 240),
+        secondaryAccent = Color(111, 76, 255),
+        border = Color(178, 192, 214),
+        textPrimary = Color(18, 25, 38),
+        textSecondary = Color(72, 84, 106),
+        textTertiary = Color(116, 130, 154),
+        sortOrder = 6
     }
 ) )
 
 vox.hud:CreateTheme( 'custom_accent', voxTheme(
-    Color(10, 13, 20), Color(16, 22, 34), Color(24, 32, 48), vox:Config( 'colors.accent' )
+    Color(7, 10, 18), Color(12, 18, 31), Color(20, 29, 46), vox:Config( 'colors.accent' ), {
+        sortOrder = 7
+    }
 ) )
 
--- Legacy names retained so existing saves do not break.
-vox.hud.themes.vox = vox.hud.themes.default
-vox.hud.themes.gray = vox.hud.themes.vox_light
-vox.hud.themes.golden_dawn = vox.hud.themes.vox_gold
-vox.hud.themes.sky_blue = vox.hud.themes.vox_midnight
-vox.hud.themes.mint_light = vox.hud.themes.vox_emerald
-vox.hud.themes.lavender = vox.hud.themes.vox_royal_purple
-vox.hud.themes.green_apple = vox.hud.themes.vox_emerald
-vox.hud.themes.elegance = vox.hud.themes.vox_obsidian
-vox.hud.themes.ocean_wave = vox.hud.themes.vox_midnight
-vox.hud.themes.violet_night = vox.hud.themes.vox_royal_purple
-vox.hud.themes.forest = vox.hud.themes.vox_emerald
-vox.hud.themes.rose_garden = vox.hud.themes.vox_carbon_red
-vox.hud.themes.rustic_ember = vox.hud.themes.vox_carbon_red
+-- Legacy names retained so existing saves do not break, but hidden from the picker
+-- to avoid multiple nearly identical theme presets.
+local function legacyThemeAlias( id, targetID )
+    local target = vox.hud.themes[ targetID ] or vox.hud.themes.default
+    local alias = table.Copy( target )
+    alias.selectable = false
+    alias.aliasOf = targetID
+    vox.hud.themes[ id ] = alias
+end
+
+legacyThemeAlias( 'vox', 'default' )
+legacyThemeAlias( 'vox_obsidian', 'default' )
+legacyThemeAlias( 'gray', 'vox_light' )
+legacyThemeAlias( 'golden_dawn', 'vox_gold' )
+legacyThemeAlias( 'sky_blue', 'vox_midnight' )
+legacyThemeAlias( 'mint_light', 'vox_emerald' )
+legacyThemeAlias( 'lavender', 'vox_royal_purple' )
+legacyThemeAlias( 'green_apple', 'vox_emerald' )
+legacyThemeAlias( 'elegance', 'default' )
+legacyThemeAlias( 'ocean_wave', 'vox_midnight' )
+legacyThemeAlias( 'violet_night', 'vox_royal_purple' )
+legacyThemeAlias( 'forest', 'vox_emerald' )
+legacyThemeAlias( 'rose_garden', 'vox_carbon_red' )
+legacyThemeAlias( 'rustic_ember', 'vox_carbon_red' )
