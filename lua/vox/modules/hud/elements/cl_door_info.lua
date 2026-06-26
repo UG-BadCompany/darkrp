@@ -76,24 +76,17 @@ local function isHorizontalDoor( ent, hitNormal )
     return math.abs( ent:GetUp().z ) > .65
 end
 
-local function getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
+local function getReadable3D2DAngle( client )
     if ( not IsValid( client ) ) then
         return Angle( 0, 0, 0 )
     end
 
-    if ( horizontalDoor ) then
-        -- Horizontal/sloped doors need an upright sign, but not a full camera
-        -- billboard. Use yaw only so the panel faces the player's side while
-        -- staying vertical instead of pitching/rolling with the camera.
-        local toClient = client:EyePos() - renderPos
-        local yaw = toClient:Angle().y
-
-        return Angle( 0, yaw - 90, 90 )
-    end
-
-    local ang = hitNormal:Angle()
-    ang:RotateAroundAxis( ang:Up(), 90 )
+    -- Keep the door card camera-facing instead of surface-aligned. Brush and
+    -- prop doors can report edge/side trace normals, which makes 3D2D panels
+    -- stretch into unreadable dark slabs when viewed at a shallow angle.
+    local ang = client:EyeAngles()
     ang:RotateAroundAxis( ang:Forward(), 90 )
+    ang:RotateAroundAxis( ang:Right(), 90 )
 
     return ang
 end
@@ -119,7 +112,7 @@ local function drawInfo( ent, client )
 
     local horizontalDoor = isHorizontalDoor( ent, hitNormal )
     local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal + Vector( 0, 0, 4 ) )
-    local renderAng = getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
+    local renderAng = getReadable3D2DAngle( client )
 
     local doorTeams = ent:getKeysDoorTeams()
     local doorGroup = ent:getKeysDoorGroup()
