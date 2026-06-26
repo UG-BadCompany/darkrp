@@ -236,8 +236,21 @@ function PANEL:BuildRows()
         row.avatar:SetPlayer(ply, 64)
         row.avatar:SetPaintedManually(true)
         row.DoRightClick = function()
-            local m = DermaMenu()
-            for _, a in ipairs({'View Profile', 'Copy SteamID', 'Goto', 'Bring', 'Freeze', 'Kick Player'}) do m:AddOption(a, function() end) end
+            local m = vgui.Create('vox.Menu')
+            m:SetMinimumWidth(vox.ScaleWide(150))
+            local options = {
+                {'View Profile', ICON.players},
+                {'Message', ICON.arrow},
+                {'Add Friend', ICON.ranks},
+                {'Report Player', Material('vox_scoreboard/death.png', 'smooth mips')},
+                {'Mute', ICON.microphoneMuted},
+                {'Kick Player', Material('vox_scoreboard/slay.png', 'smooth mips')}
+            }
+            for _, data in ipairs(options) do
+                local opt = m:AddOption(data[1], function() end)
+                opt:SetMaterial(data[2])
+            end
+            m:ToCursor()
             m:Open()
         end
         row.Paint = function(panel, rw, rh) self:PaintPlayerRow(panel, rw, rh) end
