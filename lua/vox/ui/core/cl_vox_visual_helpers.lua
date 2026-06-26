@@ -1,7 +1,7 @@
 --[[------------------------------
 Vox visual helper aliases matching the public README naming.
-These wrappers keep older call sites working while exposing the documented
-angled accent blade, Vox card, Vox row, Vox badge, and Vox stat module names.
+These wrappers keep older call sites working while routing them through the
+current rounded Vox card, row, badge, and stat module styles.
 --------------------------------]]
 function vox.DrawVoxAngledAccentBlade( x, y, w, h, color, glowColor )
     return vox.DrawVoxBlade( x, y, w, h, color, glowColor )
@@ -13,7 +13,7 @@ function vox.DrawVoxRow( x, y, w, h, colors, state )
     local accent = state.accent or colors.accent or Color( 0, 174, 255 )
     local bg = state.background or colors.secondary or Color( 16, 22, 34 )
 
-    vox.DrawAngledRect( x, y, w, h, state.cut or 10, ColorAlpha( bg, state.alpha or 210 ) )
+    draw.RoundedBox( state.radius or 6, x, y, w, h, ColorAlpha( bg, state.alpha or 210 ) )
     if state.hovered or state.selected then
         vox.DrawVoxRowHover( x, y, w, h, accent, state.selected and 1 or 0.65 )
     end
@@ -26,9 +26,10 @@ function vox.DrawVoxBadge( x, y, w, h, label, colors, state )
     local textColor = state.textColor or colors.textPrimary or Color( 255, 255, 255 )
     local font = state.font or ( vox.hud and vox.hud.fonts and vox.hud.fonts.ExtraTinyBold ) or 'DermaDefaultBold'
 
-    vox.DrawAngledRect( x, y, w, h, state.cut or 7, ColorAlpha( accent, state.alpha or 42 ) )
+    local radius = state.radius or math.min( 8, h * .5 )
+    draw.RoundedBox( radius, x, y, w, h, ColorAlpha( accent, state.alpha or 42 ) )
     surface.SetDrawColor( ColorAlpha( accent, 155 ) )
-    surface.DrawOutlinedRect( x, y, w, h, 1 )
+    surface.DrawLine( x + radius, y, x + w - radius, y )
     draw.SimpleText( string.upper( tostring( label or '' ) ), font, x + w * .5, y + h * .5, textColor, 1, 1 )
 end
 

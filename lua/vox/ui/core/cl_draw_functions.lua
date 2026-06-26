@@ -70,8 +70,8 @@ end
 
 function vox.DrawVoxBlade( x, y, w, h, color, glowColor )
     glowColor = glowColor or color
-    vox.DrawAngledRect( x - 2, y, w + 4, h, math.min( w * .5, 12 ), ColorAlpha( glowColor, 28 ) )
-    vox.DrawAngledRect( x, y, w, h, math.min( w * .45, 10 ), color )
+    draw.RoundedBox( math.max( 2, math.floor( w * .5 ) ), x - 2, y, w + 4, h, ColorAlpha( glowColor, 24 ) )
+    draw.RoundedBox( math.max( 2, math.floor( w * .5 ) ), x, y, w, h, color )
 end
 
 function vox.DrawVoxPanel( x, y, w, h, colors, radius )
@@ -83,13 +83,12 @@ function vox.DrawVoxPanel( x, y, w, h, colors, radius )
     local accent = colors.accent or Color( 0, 188, 255 )
     local violet = colors.violet or Color( 139, 92, 246 )
 
-    draw.RoundedBox( radius, x, y, w, h, ColorAlpha( primary, 238 ) )
+    draw.RoundedBox( radius, x, y, w, h, ColorAlpha( secondary, 170 ) )
+    draw.RoundedBox( math.max( radius - 1, 0 ), x + 1, y + 1, w - 2, h - 2, ColorAlpha( primary, 238 ) )
     vox.DrawMatGradient( x, y, w, h, RIGHT, ColorAlpha( accent, 24 ) )
     vox.DrawMatGradient( x, y, w, h, BOTTOM, ColorAlpha( violet, 16 ) )
     vox.DrawMatGradient( x, y, w, h, TOP, ColorAlpha( tertiary, 74 ) )
 
-    surface.SetDrawColor( ColorAlpha( secondary, 230 ) )
-    surface.DrawOutlinedRect( x + 1, y + 1, w - 2, h - 2, 1 )
     surface.SetDrawColor( ColorAlpha( color_white, 10 ) )
     surface.DrawLine( x + radius, y + 2, x + w - radius, y + 2 )
     surface.SetDrawColor( ColorAlpha( accent, 115 ) )
@@ -121,12 +120,12 @@ function vox.DrawVoxCard( x, y, w, h, colors, state )
     local lift = state.hovered and 3 or 0
 
     vox.DrawVoxPanel( x, y - lift, w, h, colors, state.radius or 6 )
-    vox.DrawVoxBlade( x, y + 8 - lift, state.bladeWidth or 7, h - 16, accent, accent )
+    draw.RoundedBox( 3, x + 8, y + 8 - lift, state.bladeWidth or 5, h - 16, ColorAlpha( accent, 210 ) )
 
     if state.hovered then
-        vox.DrawAngledRect( x + w - 74, y - lift, 74, h, 16, ColorAlpha( accent, 34 ) )
-        surface.SetDrawColor( ColorAlpha( accent, 120 ) )
-        surface.DrawOutlinedRect( x + 1, y + 1 - lift, w - 2, h - 2, 1 )
+        draw.RoundedBox( state.radius or 6, x, y - lift, w, h, ColorAlpha( accent, 24 ) )
+        surface.SetDrawColor( ColorAlpha( accent, 95 ) )
+        surface.DrawLine( x + ( state.radius or 6 ), y + 1 - lift, x + math.min( w - ( state.radius or 6 ), 150 ), y + 1 - lift )
     end
 end
 
@@ -135,6 +134,6 @@ function vox.DrawVoxRowHover( x, y, w, h, accent, amount )
     if amount <= 0 then return end
 
     accent = accent or Color( 0, 174, 255 )
-    vox.DrawAngledRect( x, y, w, h, 10, ColorAlpha( accent, 20 * amount ) )
-    vox.DrawVoxBlade( x, y + 5, 5, h - 10, ColorAlpha( accent, 220 * amount ), accent )
+    draw.RoundedBox( 6, x, y, w, h, ColorAlpha( accent, 18 * amount ) )
+    draw.RoundedBox( 3, x + 5, y + 5, 5, h - 10, ColorAlpha( accent, 210 * amount ) )
 end
