@@ -69,26 +69,33 @@ local function isHorizontalDoor( ent, hitNormal )
     if ( not IsValid( ent ) ) then return false end
 
     local ang = ent:GetAngles()
-    if ( math.abs( math.AngleDifference( ang.p, 0 ) ) > 35 or math.abs( math.AngleDifference( ang.r, 0 ) ) > 35 ) then
-        return true
-    end
-
-    return math.abs( ent:GetUp().z ) > .65
+    return math.abs( math.AngleDifference( ang.p, 0 ) ) > 35 or math.abs( math.AngleDifference( ang.r, 0 ) ) > 35
 end
 
-local function getReadable3D2DAngle( client )
+local function getUpright3D2DAngle( yaw )
+    return Angle( 0, yaw, 90 )
+end
+
+local function getFacingYaw( fromPos, toPos )
+    return ( toPos - fromPos ):Angle().y
+end
+
+local function getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
     if ( not IsValid( client ) ) then
-        return Angle( 0, 0, 0 )
+        return Angle( 0, 0, 90 )
     end
 
-    -- Keep the door card camera-facing instead of surface-aligned. Brush and
-    -- prop doors can report edge/side trace normals, which makes 3D2D panels
-    -- stretch into unreadable dark slabs when viewed at a shallow angle.
-    local ang = client:EyeAngles()
-    ang:RotateAroundAxis( ang:Forward(), 90 )
-    ang:RotateAroundAxis( ang:Right(), 90 )
+    if ( horizontalDoor ) then
+        -- Horizontal/sloped doors need a vertical sign, so face the player by
+        -- yaw only. Keeping pitch/roll stripped prevents sideways or skewed UI.
+        return getUpright3D2DAngle( getFacingYaw( renderPos, client:EyePos() ) - 90 )
+    end
 
-    return ang
+    -- Upright doors should stay aligned with the traced door face. Do not use
+    -- entity up-vectors here: normal doors also point upward and were being
+    -- misclassified as horizontal/sloped panels.
+    local faceYaw = hitNormal:Angle().y
+    return getUpright3D2DAngle( faceYaw + 90 )
 end
 
 local function drawInfo( ent, client )
@@ -111,8 +118,8 @@ local function drawInfo( ent, client )
     if ( length > 6 ) then return end
 
     local horizontalDoor = isHorizontalDoor( ent, hitNormal )
-    local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal + Vector( 0, 0, 4 ) )
-    local renderAng = getReadable3D2DAngle( client )
+    local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal * 2 + Vector( 0, 0, 4 ) )
+    local renderAng = getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
 
     local doorTeams = ent:getKeysDoorTeams()
     local doorGroup = ent:getKeysDoorGroup()
