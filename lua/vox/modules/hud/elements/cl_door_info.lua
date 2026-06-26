@@ -64,18 +64,36 @@ local function getPlayersStr( players, maxNames )
     return finalStr
 end
 
-local function getReadable3D2DAngle( client )
+local function isHorizontalDoor( ent, hitNormal )
+    if ( hitNormal and math.abs( hitNormal.z ) > .45 ) then return true end
+    if ( not IsValid( ent ) ) then return false end
+
+    local ang = ent:GetAngles()
+    if ( math.abs( math.AngleDifference( ang.p, 0 ) ) > 35 or math.abs( math.AngleDifference( ang.r, 0 ) ) > 35 ) then
+        return true
+    end
+
+    return math.abs( ent:GetUp().z ) > .65
+end
+
+local function getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
     if ( not IsValid( client ) ) then
         return Angle( 0, 0, 0 )
     end
 
-    -- Always billboard the door card toward the viewer. Some DarkRP doors are
-    -- horizontal/sloped brushes and their trace normals can still resolve to an
-    -- edge/side face, so surface-aligned 3D2D can leave the panel lying flat or
-    -- sideways. Billboarded 3D2D keeps the HUD readable for every door angle.
-    local ang = client:EyeAngles()
+    if ( horizontalDoor ) then
+        -- Horizontal/sloped doors need an upright sign, but not a full camera
+        -- billboard. Use yaw only so the panel faces the player's side while
+        -- staying vertical instead of pitching/rolling with the camera.
+        local toClient = client:EyePos() - renderPos
+        local yaw = toClient:Angle().y
+
+        return Angle( 0, yaw - 90, 90 )
+    end
+
+    local ang = hitNormal:Angle()
+    ang:RotateAroundAxis( ang:Up(), 90 )
     ang:RotateAroundAxis( ang:Forward(), 90 )
-    ang:RotateAroundAxis( ang:Right(), 90 )
 
     return ang
 end
@@ -99,9 +117,9 @@ local function drawInfo( ent, client )
 
     if ( length > 6 ) then return end
 
-    local horizontalDoor = math.abs( hitNormal.z ) > .45 or math.abs( ent:GetUp().z ) > .65
+    local horizontalDoor = isHorizontalDoor( ent, hitNormal )
     local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal + Vector( 0, 0, 4 ) )
-    local renderAng = getReadable3D2DAngle( client )
+    local renderAng = getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
 
     local doorTeams = ent:getKeysDoorTeams()
     local doorGroup = ent:getKeysDoorGroup()
