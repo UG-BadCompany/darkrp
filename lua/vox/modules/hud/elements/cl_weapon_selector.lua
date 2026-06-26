@@ -52,28 +52,45 @@ local function toggleWeaponSelector( state, bScroll )
     end
 end
 
+local function getWeaponName( wep )
+    local name = wep:GetPrintName()
+    if ( not name or name == '' ) then name = wep:GetClass() end
+    return language.GetPhrase( name ) or name
+end
+
+local function getWeaponAmmoText( client, wep )
+    local ammoType = wep:GetPrimaryAmmoType()
+    local clip = wep:Clip1()
+
+    if ( ammoType and ammoType >= 0 ) then
+        local reserve = client:GetAmmoCount( ammoType ) or 0
+        if ( clip and clip >= 0 ) then
+            return clip .. ' / ' .. reserve
+        end
+        return tostring( reserve )
+    end
+
+    return '∞'
+end
+
+local function drawWeaponIcon( wep, x, y, w, h, alpha )
+    local ok = false
+    if ( wep.DrawWeaponSelection ) then
+        ok = pcall( function() wep:DrawWeaponSelection( x, y, w, h, alpha or 255 ) end )
+    end
+
+    if ( ok ) then return end
+
+    if killicon and killicon.Exists and killicon.Exists( wep:GetClass() ) then
+        killicon.Draw( x + w * .5, y + h * .5, wep:GetClass(), Color( 255, 255, 255, alpha or 255 ) )
+    else
+        draw.SimpleText( '●', vox.hud.fonts.SmallBold, x + w * .5, y + h * .5, Color( 255, 255, 255, alpha or 255 ), 1, 1 )
+    end
+end
+
 local function drawWeaponSelector( client, scrW, scrH )
     toggleFraction = math.Approach( toggleFraction, toggleState and 1 or 0, FrameTime() * 8 )
     if ( toggleFraction <= 0 ) then return end
-
-    local prevAlpha = surface.GetAlphaMultiplier()
-    local screenPadding = vox.hud.GetScreenPadding()
-
-    local activeSlots, emptySlots = 0, 0
-    for _, cachedWeapons in ipairs( slotsCache ) do
-        if ( #cachedWeapons > 0 ) then
-            activeSlots = activeSlots + 1
-        else
-            emptySlots = emptySlots + 1
-        end
-    end
-
-    local slotSpace = vox.hud.ScaleTall( 3 )
-    local baseSlotH = vox.hud.ScaleTall( 27.5 )
-    local slotActiveW = vox.hud.ScaleWide( 150 )
-    local slotEmptyW = baseSlotH
-
-    local totalW = slotSpace * ( MAX_SLOTS - 1) + activeSlots * slotActiveW + emptySlots * slotEmptyW
 
     local theme = hud:GetCurrentTheme()
     local colors = theme.colors
@@ -84,58 +101,49 @@ local function drawWeaponSelector( client, scrW, scrH )
     local colorPrimaryText = colors.textPrimary
     local colorSecondaryText = colors.textSecondary
     local colorTertiaryText = colors.textTertiary
-    local isDark = theme.dark
 
-    local y = screenPadding
-    local x = scrW * .5 - totalW * .5
-
+    local prevAlpha = surface.GetAlphaMultiplier()
     surface.SetAlphaMultiplier( toggleFraction )
 
+    local screenPadding = vox.hud.GetScreenPadding()
+    local slotW = vox.hud.ScaleWide( 126 )
+    local slotH = vox.hud.ScaleTall( 96 )
+    local titleH = vox.hud.ScaleTall( 22 )
+    local totalW = slotW * MAX_SLOTS
+    local x = scrW * .5 - totalW * .5
+    local y = screenPadding + vox.hud.ScaleTall( 10 )
+
+    draw.SimpleText( 'WEAPON SELECTOR', vox.hud.fonts.SmallBold, x, y - vox.hud.ScaleTall( 7 ), colorPrimaryText, 0, 1 )
+    vox.DrawVoxPanel( x, y + titleH, totalW, slotH, { primary = ColorAlpha( colorPrimary, 238 ), secondary = colorSecondary, tertiary = colorTertiary, accent = colorAccent }, vox.hud.ScaleTall( 5 ) )
+
     for slotIndex = 1, MAX_SLOTS do
-        local slotWeapons = slotsCache[ slotIndex ]
-        if ( not slotWeapons ) then break end
+        local slotWeapons = slotsCache[ slotIndex ] or {}
+        local wep = slotWeapons[ math.Clamp( selectorData.selectedPos or 1, 1, math.max( #slotWeapons, 1 ) ) ] or slotWeapons[ 1 ]
+        local sx = x + ( slotIndex - 1 ) * slotW
+        local selected = selectorData.selectedSlot == slotIndex and IsValid( wep )
+        local active = IsValid( wep ) and selectorData.activeWeapon == wep
 
-        local amount = #slotWeapons
-        local isEmpty = amount == 0
-        local isSlotSelected = selectorData.selectedSlot == slotIndex
-        local slotW = isEmpty and slotEmptyW or slotActiveW
-        local slotY = y
-
-        hud.DrawRoundedBox( x, slotY, slotW, baseSlotH, isEmpty and colorPrimary or colorSecondary )
-        draw.SimpleText( slotIndex, vox.hud.fonts.SmallBold, x + slotW * .5, slotY + baseSlotH * .5, isEmpty and colorTertiaryText or colorSecondaryText, 1, 1 )
-
-        slotY = slotY + baseSlotH + slotSpace
-
-        if ( not isEmpty ) then
-            for index = 1, amount do
-                local wep = slotWeapons[ index ]
-                if ( IsValid( wep ) ) then
-                    local wepName = wep:GetPrintName()
-                    local isSelected = isSlotSelected and ( index == selectorData.selectedPos )
-                    local isActive = selectorData.activeWeapon == wep
-                    local textColor = isSelected and ( isDark and colorAccent or vox.LerpColor( .5, colorAccent, colorPrimaryText ) ) or ( isActive and colorPrimaryText or colorSecondaryText)
-                    local slotH = isSelected and baseSlotH * 1.33 or baseSlotH
-                    local slotFont = vox.hud.fonts.TinyBold
-
-                    if ( isSelected ) then
-                        hud.DrawRoundedBox( x, slotY, slotW, slotH, colorAccent )
-                        hud.DrawRoundedBox( x + 1, slotY + 1, slotW - 2, slotH - 2, colorPrimary )
-                        hud.DrawRoundedBox( x + 1, slotY + 1, slotW - 2, slotH - 2, ColorAlpha( colorAccent, isDark and 5 or 150 ) )
-                    else
-                        hud.DrawRoundedBox( x, slotY, slotW, slotH, colorPrimary )
-                    end
-
-                    -- This guarantee that weapon's name won't render outside slot's bounds
-                    render.SetScissorRect( x, slotY, x + slotW, slotY + slotH, true )
-                        draw.SimpleText( wepName, slotFont, x + slotW * .5, slotY + slotH * .5, textColor, 1, 1 )
-                    render.SetScissorRect( 0, 0, 0, 0, false )
-
-                    slotY = slotY + slotH + slotSpace
-                end
-            end
+        if ( selected ) then
+            draw.RoundedBox( vox.hud.ScaleTall( 5 ), sx + 2, y + titleH + 2, slotW - 4, slotH - 4, ColorAlpha( colorAccent, 72 ) )
+            surface.SetDrawColor( ColorAlpha( colorAccent, 190 ) )
+            surface.DrawOutlinedRect( sx + 2, y + titleH + 2, slotW - 4, slotH - 4, 1 )
+            draw.RoundedBox( 2, sx + 2, y + titleH + 2, slotW - 4, 3, colorAccent )
+        elseif ( active ) then
+            draw.RoundedBox( vox.hud.ScaleTall( 5 ), sx + 4, y + titleH + 4, slotW - 8, slotH - 8, ColorAlpha( colorAccent, 28 ) )
         end
 
-        x = x + slotW + slotSpace
+        draw.SimpleText( slotIndex, vox.hud.fonts.TinyBold, sx + vox.hud.ScaleWide( 12 ), y + titleH + vox.hud.ScaleTall( 14 ), IsValid( wep ) and colorPrimaryText or colorTertiaryText, 0, 1 )
+
+        if ( IsValid( wep ) ) then
+            drawWeaponIcon( wep, sx + vox.hud.ScaleWide( 26 ), y + titleH + vox.hud.ScaleTall( 14 ), slotW - vox.hud.ScaleWide( 52 ), vox.hud.ScaleTall( 38 ), 255 )
+            draw.SimpleText( getWeaponName( wep ), vox.hud.fonts.TinyBold, sx + slotW * .5, y + titleH + vox.hud.ScaleTall( 70 ), selected and colorPrimaryText or colorSecondaryText, 1, 1 )
+            draw.SimpleText( getWeaponAmmoText( client, wep ), vox.hud.fonts.ExtraTinyBold, sx + slotW * .5, y + titleH + vox.hud.ScaleTall( 84 ), selected and colorPrimaryText or colorSecondaryText, 1, 1 )
+        end
+
+        if ( slotIndex < MAX_SLOTS ) then
+            surface.SetDrawColor( ColorAlpha( colorSecondaryText, 35 ) )
+            surface.DrawLine( sx + slotW, y + titleH + vox.hud.ScaleTall( 10 ), sx + slotW, y + titleH + slotH - vox.hud.ScaleTall( 10 ) )
+        end
     end
 
     surface.SetAlphaMultiplier( prevAlpha )

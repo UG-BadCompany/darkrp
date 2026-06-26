@@ -327,11 +327,19 @@ function PANEL:BuildDashboard(c)
         panel._lastH = h
         self:RebuildDashboard(panel, w, h)
     end
+    timer.Simple(0, function()
+        if IsValid(self.dashboardContent) then
+            local w, h = self.dashboardContent:GetSize()
+            self:RebuildDashboard(self.dashboardContent, w, h)
+        end
+    end)
 end
 
 function PANEL:RebuildDashboard(parent, w, h)
     parent:Clear()
     palette()
+
+    w = math.min(w, vox.ScaleWide(760))
 
     local lp = LocalPlayer()
     local moneyVal = IsValid(lp) and (lp:getDarkRPVar('money') or 0) or 0
@@ -339,7 +347,7 @@ function PANEL:RebuildDashboard(parent, w, h)
     local players = player.GetAll()
     local maxPlayers = game.MaxPlayers and game.MaxPlayers() or 64
     local gap = 12
-    local topH = 66
+    local topH = 64
     local cardW = math.floor((w - gap * 3) / 4)
     local bodyY = topH + gap + 4
     local bodyH = h - bodyY
