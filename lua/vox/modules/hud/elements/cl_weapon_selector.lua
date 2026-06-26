@@ -272,6 +272,8 @@ do
     end
 
     hook.Add( 'PlayerBindPress', 'vox.hud.HandleBinds', function( ply, bind, pressed, code )
+        if ( not pressed ) then return end
+
         local slot = binds[ bind ]
 
         if ( ply:InVehicle() ) then return end
