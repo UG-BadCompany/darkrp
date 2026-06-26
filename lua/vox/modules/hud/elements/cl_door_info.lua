@@ -73,7 +73,11 @@ local function isHorizontalDoor( ent, hitNormal )
 end
 
 local function getUpright3D2DAngle( yaw )
-    return Angle( 0, yaw, 90 )
+    local ang = Angle( 0, yaw, 0 )
+    ang:RotateAroundAxis( ang:Up(), 90 )
+    ang:RotateAroundAxis( ang:Forward(), 90 )
+
+    return ang
 end
 
 local function getFacingYaw( fromPos, toPos )
@@ -88,14 +92,14 @@ local function getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoo
     if ( horizontalDoor ) then
         -- Horizontal/sloped doors need a vertical sign, so face the player by
         -- yaw only. Keeping pitch/roll stripped prevents sideways or skewed UI.
-        return getUpright3D2DAngle( getFacingYaw( renderPos, client:EyePos() ) - 90 )
+        return getUpright3D2DAngle( getFacingYaw( renderPos, client:EyePos() ) )
     end
 
     -- Upright doors should stay aligned with the traced door face. Do not use
     -- entity up-vectors here: normal doors also point upward and were being
     -- misclassified as horizontal/sloped panels.
     local faceYaw = hitNormal:Angle().y
-    return getUpright3D2DAngle( faceYaw + 90 )
+    return getUpright3D2DAngle( faceYaw )
 end
 
 local function drawInfo( ent, client )
