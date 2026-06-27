@@ -136,11 +136,21 @@ end)
 local function getZUpgradesAPI()
     local candidates = {
         ZUpgrades,
+        zUpgrades,
         zupgrades,
         ZUPGRADES,
+        ZUpgrade,
+        zUpgrade,
+        ZUpgradesAPI,
+        zUpgradesAPI,
         _G.ZUpgrades,
+        _G.zUpgrades,
         _G.zupgrades,
-        _G.ZUPGRADES
+        _G.ZUPGRADES,
+        _G.ZUpgrade,
+        _G.zUpgrade,
+        _G.ZUpgradesAPI,
+        _G.zUpgradesAPI
     }
 
     for _, api in ipairs(candidates) do
@@ -200,9 +210,7 @@ end
 
 local function collectZUpgrades()
     local api = getZUpgradesAPI()
-    if not api then return {} end
-
-    local source = api.Upgrades or api.upgrades or api.Config and (api.Config.Upgrades or api.Config.upgrades) or {}
+    local source = api and (api.Upgrades or api.upgrades or api.RegisteredUpgrades or api.registeredUpgrades or api.Items or api.items or api.Config and (api.Config.Upgrades or api.Config.upgrades or api.Config.RegisteredUpgrades or api.Config.Items or api.Config.Categories) or api.Categories) or {}
     local upgrades = {}
 
     for key, upgrade in pairs(source) do
