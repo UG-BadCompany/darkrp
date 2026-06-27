@@ -105,18 +105,111 @@ function INV:Init()
 end
 vox.gui.Register('vox.f4.Inventory', INV)
 
+
+local function getZUpgradesAPI()
+    local candidates = {
+        ZUpgrades,
+        zupgrades,
+        ZUPGRADES,
+        _G.ZUpgrades,
+        _G.zupgrades,
+        _G.ZUPGRADES
+    }
+
+    for _, api in ipairs(candidates) do
+        if istable(api) then return api end
+    end
+end
+
+local ZUPGRADE_OPEN_FUNCTIONS = {
+    'OpenMenu',
+    'OpenUI',
+    'OpenF4Menu',
+    'OpenUpgradeMenu',
+    'ShowMenu',
+    'ShowUI',
+    'CreateMenu',
+    'Open'
+}
+
+local ZUPGRADE_CONCOMMANDS = {
+    'zupgrades',
+    'zupgrades_menu',
+    'zupgrades_open',
+    'zupgrades_f4',
+    'zupgrades_upgrades'
+}
+
+local function callZUpgradesOpenFunction(owner, fn)
+    if not isfunction(fn) then return false end
+
+    local ok = pcall(fn, owner, LocalPlayer())
+    if ok then return true end
+
+    ok = pcall(fn, LocalPlayer())
+    if ok then return true end
+
+    ok = pcall(fn)
+    return ok == true
+end
+
+local function openZUpgradesMenu()
+    local api = getZUpgradesAPI()
+
+    if api then
+        for _, fnName in ipairs(ZUPGRADE_OPEN_FUNCTIONS) do
+            if callZUpgradesOpenFunction(api, api[fnName]) then return true end
+        end
+
+        if istable(api.UI) then
+            for _, fnName in ipairs(ZUPGRADE_OPEN_FUNCTIONS) do
+                if callZUpgradesOpenFunction(api.UI, api.UI[fnName]) then return true end
+            end
+        end
+    end
+
+    local commands = concommand and concommand.GetTable and concommand.GetTable() or {}
+    for _, command in ipairs(ZUPGRADE_CONCOMMANDS) do
+        if commands[command] then
+            RunConsoleCommand(command)
+            return true
+        end
+    end
+
+    return false
+end
+
+local function getZUpgradesStatus()
+    local api = getZUpgradesAPI()
+    if not api then return 'ADDON NOT DETECTED', 'Install/enable ZUpgrades and reload the client.' end
+
+    if istable(api.Upgrades) then
+        local count = table.Count(api.Upgrades)
+        return 'READY', count > 0 and ('Detected ' .. count .. ' registered upgrades.') or 'ZUpgrades API detected.'
+    end
+
+    if istable(api.Config) and istable(api.Config.Upgrades) then
+        local count = table.Count(api.Config.Upgrades)
+        return 'READY', count > 0 and ('Detected ' .. count .. ' configured upgrades.') or 'ZUpgrades API detected.'
+    end
+
+    return 'READY', 'ZUpgrades API detected.'
+end
+
 local UP = {}
 function UP:Init()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Player Upgrades', 'Compact progression rows for perks, boosts, and server-specific unlocks.')
+    buildHeader(self, 'Player Upgrades', 'Open and manage your progression through the ZUpgrades addon API.')
+
+    local state, description = getZUpgradesStatus()
     addRows(self, {
-        {'Salary Boost', '+10% payday preview', 'ACTIVE', 'CONFIGURE'},
-        {'Pocket Capacity', 'Extra DarkRP storage slots', 'LOCKED', 'UPGRADE'},
-        {'Crafting Speed', 'Faster roleplay interactions', 'READY', 'VIEW'},
-        {'Reputation', 'Community standing module', 'TRACKED', 'OPEN'},
-        {'VIP Queue', 'Donation integration ready', 'LOCKED', 'LEARN'},
-        {'Cosmetic Badge', 'Scoreboard rank flair', 'EQUIPPED', 'CHANGE'}
-    })
+        {'ZUpgrades Menu', description, state, 'OPEN'}
+    }, function()
+        local opened = openZUpgradesMenu()
+        if not opened and notification and notification.AddLegacy then
+            notification.AddLegacy('ZUpgrades API was not detected. Make sure the addon is installed and enabled.', NOTIFY_ERROR, 5)
+        end
+    end)
 end
 vox.gui.Register('vox.f4.Upgrades', UP)
 
