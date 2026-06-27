@@ -108,6 +108,31 @@ end
 vox.gui.Register('vox.f4.Inventory', INV)
 
 
+vox.f4.zupgrades = vox.f4.zupgrades or {}
+vox.f4.zupgrades.upgrades = vox.f4.zupgrades.upgrades or {}
+vox.f4.zupgrades.requested = vox.f4.zupgrades.requested or false
+vox.f4.zupgrades.nextRequest = vox.f4.zupgrades.nextRequest or 0
+
+local function requestZUpgrades()
+    if vox.f4.zupgrades.requested or not net then return end
+    if vox.f4.zupgrades.nextRequest > CurTime() then return end
+
+    vox.f4.zupgrades.requested = true
+    vox.f4.zupgrades.nextRequest = CurTime() + 5
+    net.Start('vox.f4.zupgrades.request')
+    net.SendToServer()
+end
+
+net.Receive('vox.f4.zupgrades.sync', function()
+    local payload = net.ReadString()
+    vox.f4.zupgrades.upgrades = util.JSONToTable(payload) or {}
+    vox.f4.zupgrades.requested = false
+
+    if IsValid(vox.f4.zupgrades.panel) and vox.f4.zupgrades.panel.Rebuild then
+        vox.f4.zupgrades.panel:Rebuild()
+    end
+end)
+
 local function getZUpgradesAPI()
     local candidates = {
         ZUpgrades,
@@ -198,6 +223,21 @@ local function collectZUpgrades()
         end
     end
 
+    if #upgrades <= 0 and istable(vox.f4.zupgrades.upgrades) then
+        for _, upgrade in ipairs(vox.f4.zupgrades.upgrades) do
+            local id = tostring(upgrade.id or upgrade.name)
+            local state = (tonumber(upgrade.maxLevel) or 0) > 0 and ('LVL 0/' .. upgrade.maxLevel) or 'AVAILABLE'
+
+            table.insert(upgrades, {
+                id = id,
+                sort = tostring(upgrade.name or id),
+                source = upgrade,
+                row = {tostring(upgrade.name or id), tostring(upgrade.description or 'Upgrade available for purchase.'), state, upgrade.price and money(upgrade.price) or 'Free'},
+                server = true
+            })
+        end
+    end
+
     table.SortByMember(upgrades, 'sort', true)
     return upgrades
 end
@@ -239,6 +279,13 @@ local function callZUpgradesPurchaseFunction(owner, fn, upgrade)
 end
 
 local function purchaseZUpgrade(upgrade)
+    if upgrade.server and net then
+        net.Start('vox.f4.zupgrades.purchase')
+        net.WriteString(tostring(upgrade.id))
+        net.SendToServer()
+        return true
+    end
+
     local api = getZUpgradesAPI()
 
     if api then
@@ -269,14 +316,22 @@ end
 
 local UP = {}
 function UP:Init()
+    vox.f4.zupgrades.panel = self
+    self:Rebuild()
+    requestZUpgrades()
+end
+
+function UP:Rebuild()
+    self:Clear()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
     buildHeader(self, 'Player Upgrades', 'Buy ZUpgrades directly from the F4 menu without opening the addon menu.')
 
     local upgrades = collectZUpgrades()
     if #upgrades <= 0 then
         addRows(self, {
-            {'ZUpgrades unavailable', 'Install/enable ZUpgrades or make sure its upgrade table is loaded clientside.', 'MISSING', 'WAITING'}
+            {'Loading ZUpgrades', 'Waiting for the server to send installed ZUpgrades data.', 'SYNCING', 'WAITING'}
         })
+        requestZUpgrades()
         return
     end
 
