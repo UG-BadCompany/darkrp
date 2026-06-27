@@ -86,7 +86,9 @@ local function addRows(parent, rows, onClick)
         row:SetText('')
         row:SetTall(vox.ScaleTall(72))
         row.Paint = function(panel, w, h) paintCommandRow(panel, w, h, data[1], data[2], data[3], data[4]) end
-        row.DoClick = onClick or function() end
+        row.DoClick = function()
+            if onClick then onClick(data) end
+        end
     end
 end
 
@@ -121,93 +123,177 @@ local function getZUpgradesAPI()
     end
 end
 
-local ZUPGRADE_OPEN_FUNCTIONS = {
-    'OpenMenu',
-    'OpenUI',
-    'OpenF4Menu',
-    'OpenUpgradeMenu',
-    'ShowMenu',
-    'ShowUI',
-    'CreateMenu',
-    'Open'
-}
+local function getUpgradeValue(upgrade, keys, fallback)
+    if not istable(upgrade) then return fallback end
 
-local ZUPGRADE_CONCOMMANDS = {
-    'zupgrades',
-    'zupgrades_menu',
-    'zupgrades_open',
-    'zupgrades_f4',
-    'zupgrades_upgrades'
-}
+    for _, key in ipairs(keys) do
+        local value = upgrade[key]
+        if value ~= nil then return value end
+    end
 
-local function callZUpgradesOpenFunction(owner, fn)
-    if not isfunction(fn) then return false end
-
-    local ok = pcall(fn, owner, LocalPlayer())
-    if ok then return true end
-
-    ok = pcall(fn, LocalPlayer())
-    if ok then return true end
-
-    ok = pcall(fn)
-    return ok == true
+    return fallback
 end
 
-local function openZUpgradesMenu()
+local function getUpgradeIdentifier(upgrade, key)
+    return getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key)
+end
+
+local function getUpgradeCost(upgrade)
+    return tonumber(getUpgradeValue(upgrade, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, 0)) or 0
+end
+
+local function formatUpgradeCost(upgrade)
+    local cost = getUpgradeCost(upgrade)
+    if cost <= 0 then return 'Free' end
+
+    return money(cost)
+end
+
+local function getUpgradeLevel(upgrade, id)
     local api = getZUpgradesAPI()
+    local ply = LocalPlayer()
+    local level = getUpgradeValue(upgrade, {'level', 'Level', 'owned', 'Owned'}, nil)
+
+    if level ~= nil then return tonumber(level) or (level and 1 or 0) end
 
     if api then
-        for _, fnName in ipairs(ZUPGRADE_OPEN_FUNCTIONS) do
-            if callZUpgradesOpenFunction(api, api[fnName]) then return true end
-        end
+        local functions = {'GetUpgradeLevel', 'GetLevel', 'GetPlayerUpgradeLevel', 'HasUpgrade'}
+        for _, fnName in ipairs(functions) do
+            local fn = api[fnName]
+            if isfunction(fn) then
+                local ok, result = pcall(fn, api, ply, id)
+                if ok and result ~= nil then return tonumber(result) or (result and 1 or 0) end
 
-        if istable(api.UI) then
-            for _, fnName in ipairs(ZUPGRADE_OPEN_FUNCTIONS) do
-                if callZUpgradesOpenFunction(api.UI, api.UI[fnName]) then return true end
+                ok, result = pcall(fn, ply, id)
+                if ok and result ~= nil then return tonumber(result) or (result and 1 or 0) end
             end
         end
     end
 
-    local commands = concommand and concommand.GetTable and concommand.GetTable() or {}
-    for _, command in ipairs(ZUPGRADE_CONCOMMANDS) do
-        if commands[command] then
-            RunConsoleCommand(command)
-            return true
+    return 0
+end
+
+local function collectZUpgrades()
+    local api = getZUpgradesAPI()
+    if not api then return {} end
+
+    local source = api.Upgrades or api.upgrades or api.Config and (api.Config.Upgrades or api.Config.upgrades) or {}
+    local upgrades = {}
+
+    for key, upgrade in pairs(source) do
+        if istable(upgrade) then
+            local id = getUpgradeIdentifier(upgrade, key)
+            local name = tostring(getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id))
+            local desc = tostring(getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, formatUpgradeCost(upgrade)))
+            local level = getUpgradeLevel(upgrade, id)
+            local maxLevel = tonumber(getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0)) or 0
+            local state = maxLevel > 0 and ('LVL ' .. level .. '/' .. maxLevel) or (level > 0 and 'OWNED' or 'AVAILABLE')
+
+            table.insert(upgrades, {
+                id = id,
+                sort = tostring(id),
+                source = upgrade,
+                row = {name, desc, state, formatUpgradeCost(upgrade)}
+            })
+        end
+    end
+
+    table.SortByMember(upgrades, 'sort', true)
+    return upgrades
+end
+
+local ZUPGRADE_PURCHASE_FUNCTIONS = {
+    'PurchaseUpgrade',
+    'BuyUpgrade',
+    'Buy',
+    'Upgrade',
+    'UnlockUpgrade',
+    'Unlock'
+}
+
+local ZUPGRADE_NET_MESSAGES = {
+    'ZUpgrades.PurchaseUpgrade',
+    'ZUpgrades:PurchaseUpgrade',
+    'ZUpgrades_BuyUpgrade',
+    'ZUpgrades.Purchase',
+    'zupgrades_purchase',
+    'zupgrades_buy'
+}
+
+local function callZUpgradesPurchaseFunction(owner, fn, upgrade)
+    if not isfunction(fn) then return false end
+
+    local ply = LocalPlayer()
+    local id = upgrade.id
+    local ok = pcall(fn, owner, ply, id, upgrade.source)
+    if ok then return true end
+
+    ok = pcall(fn, owner, id, upgrade.source)
+    if ok then return true end
+
+    ok = pcall(fn, ply, id)
+    if ok then return true end
+
+    ok = pcall(fn, id)
+    return ok == true
+end
+
+local function purchaseZUpgrade(upgrade)
+    local api = getZUpgradesAPI()
+
+    if api then
+        for _, fnName in ipairs(ZUPGRADE_PURCHASE_FUNCTIONS) do
+            if callZUpgradesPurchaseFunction(api, api[fnName], upgrade) then return true end
+        end
+
+        if istable(api.Upgrades) then
+            for _, fnName in ipairs(ZUPGRADE_PURCHASE_FUNCTIONS) do
+                if callZUpgradesPurchaseFunction(api.Upgrades, api.Upgrades[fnName], upgrade) then return true end
+            end
+        end
+    end
+
+    if net and util and util.NetworkStringToID then
+        for _, message in ipairs(ZUPGRADE_NET_MESSAGES) do
+            if util.NetworkStringToID(message) ~= 0 then
+                net.Start(message)
+                net.WriteString(tostring(upgrade.id))
+                net.SendToServer()
+                return true
+            end
         end
     end
 
     return false
 end
 
-local function getZUpgradesStatus()
-    local api = getZUpgradesAPI()
-    if not api then return 'ADDON NOT DETECTED', 'Install/enable ZUpgrades and reload the client.' end
-
-    if istable(api.Upgrades) then
-        local count = table.Count(api.Upgrades)
-        return 'READY', count > 0 and ('Detected ' .. count .. ' registered upgrades.') or 'ZUpgrades API detected.'
-    end
-
-    if istable(api.Config) and istable(api.Config.Upgrades) then
-        local count = table.Count(api.Config.Upgrades)
-        return 'READY', count > 0 and ('Detected ' .. count .. ' configured upgrades.') or 'ZUpgrades API detected.'
-    end
-
-    return 'READY', 'ZUpgrades API detected.'
-end
-
 local UP = {}
 function UP:Init()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    buildHeader(self, 'Player Upgrades', 'Open and manage your progression through the ZUpgrades addon API.')
+    buildHeader(self, 'Player Upgrades', 'Buy ZUpgrades directly from the F4 menu without opening the addon menu.')
 
-    local state, description = getZUpgradesStatus()
-    addRows(self, {
-        {'ZUpgrades Menu', description, state, 'OPEN'}
-    }, function()
-        local opened = openZUpgradesMenu()
-        if not opened and notification and notification.AddLegacy then
-            notification.AddLegacy('ZUpgrades API was not detected. Make sure the addon is installed and enabled.', NOTIFY_ERROR, 5)
+    local upgrades = collectZUpgrades()
+    if #upgrades <= 0 then
+        addRows(self, {
+            {'ZUpgrades unavailable', 'Install/enable ZUpgrades or make sure its upgrade table is loaded clientside.', 'MISSING', 'WAITING'}
+        })
+        return
+    end
+
+    local rows = {}
+    local rowsByRef = {}
+    for _, upgrade in ipairs(upgrades) do
+        table.insert(rows, upgrade.row)
+        rowsByRef[upgrade.row] = upgrade
+    end
+
+    addRows(self, rows, function(row)
+        local upgrade = rowsByRef[row]
+        if not upgrade then return end
+
+        local purchased = purchaseZUpgrade(upgrade)
+        if not purchased and notification and notification.AddLegacy then
+            notification.AddLegacy('ZUpgrades purchase API was not detected for ' .. tostring(upgrade.id) .. '.', NOTIFY_ERROR, 5)
         end
     end)
 end
