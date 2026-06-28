@@ -62,6 +62,13 @@ local function syncSelectionToWeapon( weapon )
     return false
 end
 
+local function getSelectedWeapon()
+    local slotWeapons = slotsCache[ selectorData.selectedSlot ]
+    local weapon = slotWeapons and slotWeapons[ selectorData.selectedPos ]
+
+    return IsValid( weapon ) and weapon or selectorData.activeWeapon
+end
+
 local function rebuildSlotsCache( client )
     resetSlotsCache()
 
@@ -132,7 +139,13 @@ local function getWeaponAmmoText( client, wep )
         return tostring( reserve )
     end
 
-    return '∞'
+    return 'INF'
+end
+
+local function getWeaponMetaText( wep )
+    if ( not IsValid( wep ) ) then return '' end
+
+    return string.format( 'SLOT %d  |  POS %d', getWeaponSlotIndex( wep ), getWeaponSlotPos( wep ) + 1 )
 end
 
 local function drawClippedText( text, font, x, y, color, alignX, alignY, clipX, clipY, clipW, clipH )
@@ -174,64 +187,100 @@ local function drawWeaponSelector( client, scrW, scrH )
     surface.SetAlphaMultiplier( toggleFraction )
 
     local screenPadding = vox.hud.GetScreenPadding()
-    local slotW = vox.hud.ScaleWide( 126 )
+    local targetSlotW = vox.hud.ScaleWide( 126 )
     local titleH = vox.hud.ScaleTall( 24 )
-    local headerH = vox.hud.ScaleTall( 28 )
-    local selectedH = vox.hud.ScaleTall( 96 )
-    local compactH = vox.hud.ScaleTall( 34 )
+    local previewH = vox.hud.ScaleTall( 62 )
+    local headerH = vox.hud.ScaleTall( 26 )
+    local rowH = vox.hud.ScaleTall( 32 )
     local gap = vox.hud.ScaleTall( 3 )
-    local totalW = slotW * MAX_SLOTS
+    local totalW = math.min( targetSlotW * MAX_SLOTS, scrW - screenPadding * 2 )
+    local slotW = math.floor( totalW / MAX_SLOTS )
+    totalW = slotW * MAX_SLOTS
     local x = scrW * .5 - totalW * .5
     local y = screenPadding + vox.hud.ScaleTall( 10 )
+    local selectedWeapon = getSelectedWeapon()
 
-    local maxColumnH = headerH
+    local maxRows = 0
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
-        local colH = headerH
-        for index = 1, #slotWeapons do
-            local selected = selectorData.selectedSlot == slotIndex and index == selectorData.selectedPos
-            colH = colH + ( selected and selectedH or compactH ) + gap
-        end
-        maxColumnH = math.max( maxColumnH, colH )
+        maxRows = math.max( maxRows, #slotWeapons )
     end
 
-    draw.SimpleText( 'WEAPON SELECTOR', vox.hud.fonts.SmallBold, x, y - vox.hud.ScaleTall( 7 ), colorPrimaryText, 0, 1 )
-    draw.RoundedBox( vox.hud.ScaleTall( 5 ), x, y + titleH, totalW, maxColumnH, ColorAlpha( colorPrimary, 25 ) )
-    vox.DrawMatGradient( x, y + titleH, totalW, maxColumnH, RIGHT, ColorAlpha( colorAccent, 18 ) )
-    surface.SetDrawColor( ColorAlpha( colorAccent, 95 ) )
-    surface.DrawOutlinedRect( x, y + titleH, totalW, maxColumnH, 1 )
+    local columnH = headerH + math.max( maxRows, 1 ) * rowH + math.max( maxRows - 1, 0 ) * gap
+    local panelY = y + titleH
+    local panelH = previewH + gap + columnH
 
-    local maxColumnH = headerH
+    draw.SimpleText( 'WEAPON SELECTOR', vox.hud.fonts.SmallBold, x, y - vox.hud.ScaleTall( 7 ), colorPrimaryText, 0, 1 )
+    draw.SimpleText( quickSwitchEnabled and 'FAST SWITCH' or 'SCROLL TO SELECT', vox.hud.fonts.ExtraTinyBold, x + totalW, y - vox.hud.ScaleTall( 7 ), colorSecondaryText, 2, 1 )
+
+    draw.RoundedBox( vox.hud.ScaleTall( 5 ), x, panelY, totalW, panelH, ColorAlpha( colorPrimary, 44 ) )
+    vox.DrawMatGradient( x, panelY, totalW, panelH, RIGHT, ColorAlpha( colorAccent, 18 ) )
+    vox.DrawMatGradient( x, panelY, totalW, panelH, BOTTOM, ColorAlpha( colorTertiary, 34 ) )
+    surface.SetDrawColor( ColorAlpha( colorAccent, 95 ) )
+    surface.DrawOutlinedRect( x, panelY, totalW, panelH, 1 )
+
+    local previewX = x + vox.hud.ScaleWide( 8 )
+    local previewY = panelY + vox.hud.ScaleTall( 7 )
+    local previewW = totalW - vox.hud.ScaleWide( 16 )
+    local previewInnerH = previewH - vox.hud.ScaleTall( 12 )
+    draw.RoundedBox( vox.hud.ScaleTall( 5 ), previewX, previewY, previewW, previewInnerH, ColorAlpha( colorSecondary, 142 ) )
+    surface.SetDrawColor( ColorAlpha( colorAccent, 45 ) )
+    surface.DrawOutlinedRect( previewX, previewY, previewW, previewInnerH, 1 )
+
+    if ( IsValid( selectedWeapon ) ) then
+        local iconSize = math.min( vox.hud.ScaleTall( 44 ), previewInnerH - vox.hud.ScaleTall( 8 ) )
+        local iconX = previewX + vox.hud.ScaleWide( 12 )
+        local iconY = previewY + previewInnerH * .5 - iconSize * .5
+        draw.RoundedBox( vox.hud.ScaleTall( 4 ), iconX - vox.hud.ScaleWide( 4 ), iconY - vox.hud.ScaleTall( 4 ), iconSize + vox.hud.ScaleWide( 8 ), iconSize + vox.hud.ScaleTall( 8 ), ColorAlpha( colorAccent, 26 ) )
+        drawWeaponIcon( selectedWeapon, iconX, iconY, iconSize, iconSize, 255 )
+
+        local textX = iconX + iconSize + vox.hud.ScaleWide( 18 )
+        local textW = previewW - ( textX - previewX ) - vox.hud.ScaleWide( 150 )
+        draw.SimpleText( 'SELECTED', vox.hud.fonts.ExtraTinyBold, textX, previewY + vox.hud.ScaleTall( 10 ), colorSecondaryText, 0, 0 )
+        drawClippedText( getWeaponName( selectedWeapon ), vox.hud.fonts.SmallBold, textX, previewY + vox.hud.ScaleTall( 29 ), colorPrimaryText, 0, 1, textX, previewY + vox.hud.ScaleTall( 22 ), math.max( textW, vox.hud.ScaleWide( 80 ) ), vox.hud.ScaleTall( 22 ) )
+        draw.SimpleText( getWeaponMetaText( selectedWeapon ), vox.hud.fonts.ExtraTinyBold, textX, previewY + previewInnerH - vox.hud.ScaleTall( 9 ), colorSecondaryText, 0, 1 )
+
+        local ammoText = getWeaponAmmoText( client, selectedWeapon )
+        draw.SimpleText( ammoText, vox.hud.fonts.SmallBold, previewX + previewW - vox.hud.ScaleWide( 16 ), previewY + vox.hud.ScaleTall( 21 ), colorPrimaryText, 2, 1 )
+        draw.SimpleText( selectedWeapon == selectorData.activeWeapon and 'EQUIPPED' or 'READY', vox.hud.fonts.ExtraTinyBold, previewX + previewW - vox.hud.ScaleWide( 16 ), previewY + previewInnerH - vox.hud.ScaleTall( 12 ), selectedWeapon == selectorData.activeWeapon and colorAccent or colorSecondaryText, 2, 1 )
+    else
+        draw.SimpleText( 'NO WEAPON SELECTED', vox.hud.fonts.SmallBold, previewX + previewW * .5, previewY + previewInnerH * .5, colorSecondaryText, 1, 1 )
+    end
+
+    local columnsY = panelY + previewH + gap
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
         local sx = x + ( slotIndex - 1 ) * slotW
-        local slotY = y + titleH
+        local slotY = columnsY
 
-        draw.SimpleText( slotIndex, vox.hud.fonts.SmallBold, sx + vox.hud.ScaleWide( 14 ), slotY + headerH * .5, #slotWeapons > 0 and colorPrimaryText or colorTertiaryText, 0, 1 )
+        draw.SimpleText( 'S' .. slotIndex, vox.hud.fonts.SmallBold, sx + vox.hud.ScaleWide( 10 ), slotY + headerH * .5, #slotWeapons > 0 and colorPrimaryText or colorTertiaryText, 0, 1 )
+        draw.SimpleText( tostring( #slotWeapons ), vox.hud.fonts.ExtraTinyBold, sx + slotW - vox.hud.ScaleWide( 12 ), slotY + headerH * .5, #slotWeapons > 0 and colorSecondaryText or colorTertiaryText, 2, 1 )
         slotY = slotY + headerH
 
         for index, wep in ipairs( slotWeapons ) do
             if ( IsValid( wep ) ) then
                 local selected = selectorData.selectedSlot == slotIndex and index == selectorData.selectedPos
                 local active = selectorData.activeWeapon == wep
-                local rowH = selected and selectedH or compactH
                 local rowX = sx + vox.hud.ScaleWide( 3 )
                 local rowW = slotW - vox.hud.ScaleWide( 6 )
+                local rowColor = selected and ColorAlpha( colorAccent, 62 ) or ColorAlpha( active and colorAccent or colorSecondary, active and 32 or 112 )
+                local rowBorder = selected and ColorAlpha( colorAccent, 180 ) or ColorAlpha( active and colorAccent or colorSecondaryText, active and 110 or 30 )
+
+                draw.RoundedBox( vox.hud.ScaleTall( 4 ), rowX, slotY, rowW, rowH, rowColor )
+                surface.SetDrawColor( rowBorder )
+                surface.DrawOutlinedRect( rowX, slotY, rowW, rowH, 1 )
 
                 if ( selected ) then
-                    draw.RoundedBox( vox.hud.ScaleTall( 5 ), rowX, slotY, rowW, rowH, ColorAlpha( colorAccent, 72 ) )
-                    surface.SetDrawColor( ColorAlpha( colorAccent, 190 ) )
-                    surface.DrawOutlinedRect( rowX, slotY, rowW, rowH, 1 )
-                    draw.RoundedBox( 2, rowX, slotY, rowW, 3, colorAccent )
-                    drawWeaponIcon( wep, rowX + vox.hud.ScaleWide( 22 ), slotY + vox.hud.ScaleTall( 13 ), rowW - vox.hud.ScaleWide( 44 ), vox.hud.ScaleTall( 38 ), 255 )
-                    drawClippedText( getWeaponName( wep ), vox.hud.fonts.TinyBold, rowX + rowW * .5, slotY + vox.hud.ScaleTall( 70 ), colorPrimaryText, 1, 1, rowX + vox.hud.ScaleWide( 5 ), slotY + vox.hud.ScaleTall( 58 ), rowW - vox.hud.ScaleWide( 10 ), vox.hud.ScaleTall( 20 ) )
-                    drawClippedText( getWeaponAmmoText( client, wep ), vox.hud.fonts.ExtraTinyBold, rowX + rowW * .5, slotY + vox.hud.ScaleTall( 84 ), colorPrimaryText, 1, 1, rowX + vox.hud.ScaleWide( 5 ), slotY + vox.hud.ScaleTall( 74 ), rowW - vox.hud.ScaleWide( 10 ), vox.hud.ScaleTall( 18 ) )
-                else
-                    draw.RoundedBox( vox.hud.ScaleTall( 4 ), rowX, slotY, rowW, rowH, ColorAlpha( active and colorAccent or colorSecondary, active and 34 or 110 ) )
-                    surface.SetDrawColor( ColorAlpha( active and colorAccent or colorSecondaryText, active and 120 or 30 ) )
-                    surface.DrawOutlinedRect( rowX, slotY, rowW, rowH, 1 )
-                    drawClippedText( getWeaponName( wep ), vox.hud.fonts.ExtraTinyBold, rowX + rowW * .5, slotY + rowH * .5, active and colorPrimaryText or colorSecondaryText, 1, 1, rowX + vox.hud.ScaleWide( 5 ), slotY, rowW - vox.hud.ScaleWide( 10 ), rowH )
+                    draw.RoundedBox( 2, rowX, slotY, vox.hud.ScaleWide( 4 ), rowH, colorAccent )
                 end
+
+                if ( active ) then
+                    draw.RoundedBox( 2, rowX + rowW - vox.hud.ScaleWide( 8 ), slotY + rowH * .5 - vox.hud.ScaleTall( 3 ), vox.hud.ScaleWide( 6 ), vox.hud.ScaleTall( 6 ), colorAccent )
+                end
+
+                local textX = rowX + vox.hud.ScaleWide( selected and 11 or 7 )
+                local textW = rowW - vox.hud.ScaleWide( active and 20 or 12 ) - ( textX - rowX )
+                drawClippedText( getWeaponName( wep ), selected and vox.hud.fonts.TinyBold or vox.hud.fonts.ExtraTinyBold, textX, slotY + rowH * .5, selected and colorPrimaryText or ( active and colorPrimaryText or colorSecondaryText ), 0, 1, textX, slotY, textW, rowH )
 
                 slotY = slotY + rowH + gap
             end
@@ -239,7 +288,7 @@ local function drawWeaponSelector( client, scrW, scrH )
 
         if ( slotIndex < MAX_SLOTS ) then
             surface.SetDrawColor( ColorAlpha( colorSecondaryText, 35 ) )
-            surface.DrawLine( sx + slotW, y + titleH + vox.hud.ScaleTall( 10 ), sx + slotW, y + titleH + maxColumnH - vox.hud.ScaleTall( 10 ) )
+            surface.DrawLine( sx + slotW, columnsY + vox.hud.ScaleTall( 8 ), sx + slotW, columnsY + columnH - vox.hud.ScaleTall( 8 ) )
         end
     end
 
