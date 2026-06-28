@@ -119,12 +119,29 @@ end
 
 local UPGRADE_TABS = {
     { id = 'props', label = 'Props' },
-    { id = 'jobs', label = 'Job' },
-    { id = 'shipments', label = 'Shipment' },
-    { id = 'entities', label = 'Entities' }
+    { id = 'jobs', label = 'Jobs' },
+    { id = 'shipments', label = 'Shipments' },
+    { id = 'entities', label = 'Entities' },
+    { id = 'bank', label = 'Bank' }
 }
 
-local REFRESH_DELAYS = { .2, .75, 1.5 }
+local SUBCATEGORY_ORDER = {
+    props = {'Prop Limit'},
+    jobs = {'Citizens', 'Dealers', 'Criminals', 'Government', 'Other'},
+    shipments = {'Assault Rifles', 'Pistols', 'SMGs', 'Shotguns', 'Sniper Rifles', 'LMGs', 'Melee', 'Grenades', 'Explosives', 'Other'},
+    entities = {'Printers', 'Drugs', 'Tools', 'Explosives', 'Other'},
+    bank = {'Storage'}
+}
+
+local TAB_TITLES = {
+    props = 'Props',
+    jobs = 'Jobs',
+    shipments = 'Shipments',
+    entities = 'Entities',
+    bank = 'Bank'
+}
+
+local PURCHASE_REFRESH_DELAY = .35
 local zupgradeRows = {}
 local zupgradeByCategory = {}
 local zupgradeLoaded = false
@@ -136,7 +153,8 @@ local function rebuildZUpgradeCache(rows)
         props = {},
         jobs = {},
         shipments = {},
-        entities = {}
+        entities = {},
+        bank = {}
     }
 
     for _, row in ipairs(zupgradeRows) do
@@ -249,9 +267,10 @@ local function collectUnlockRows(statusRows, sectionId, pendingOwner)
             pendingKey = pendingKey,
             title = info.name or tostring(key),
             desc = info.description or '',
+            subcategory = info.subcategory,
             price = unlocked and nil or money(info.price or 0),
             affordable = info.canAfford ~= false,
-            action = unlocked and 'UNLOCKED' or 'BUY',
+            action = unlocked and 'UNLOCKED' or 'UNLOCK',
             disabled = unlocked,
             pending = getPending(pendingOwner, pendingKey),
             onClick = function()
@@ -262,6 +281,91 @@ local function collectUnlockRows(statusRows, sectionId, pendingOwner)
 
     sortRows(rows)
     return rows
+end
+
+local function inferShipmentSubcategory(name)
+    local lower = string.lower(tostring(name or ''))
+
+    if lower:find('pistol', 1, true) or lower:find('m9', 1, true) or lower:find('glock', 1, true) or lower:find('m45', 1, true) or lower:find('50ds', 1, true) then return 'Pistols' end
+    if lower:find('smg', 1, true) or lower:find('mp5', 1, true) or lower:find('mp7', 1, true) or lower:find('mp9', 1, true) or lower:find('mpx', 1, true) or lower:find('ump', 1, true) or lower:find('uzi', 1, true) or lower:find('vector', 1, true) then return 'SMGs' end
+    if lower:find('shotgun', 1, true) or lower:find('saiga%-12') or lower:find('aa%-12') or lower:find('m870', 1, true) or lower:find('590a1', 1, true) then return 'Shotguns' end
+    if lower:find('sniper', 1, true) or lower:find('mosin', 1, true) or lower:find('sv%-98') or lower:find('m700', 1, true) or lower:find('rsass', 1, true) then return 'Sniper Rifles' end
+    if lower:find('lmg', 1, true) or lower:find('m60', 1, true) or lower:find('pkm', 1, true) or lower:find('rpk', 1, true) or lower:find('rpd', 1, true) then return 'LMGs' end
+    if lower:find('knife', 1, true) or lower:find('bayonet', 1, true) or lower:find('crowbar', 1, true) or lower:find('melee', 1, true) then return 'Melee' end
+    if lower:find('grenade', 1, true) or lower:find('smoke', 1, true) or lower:find('flash', 1, true) or lower:find('vog', 1, true) then return 'Grenades' end
+    if lower:find('explosive', 1, true) or lower:find('bomb', 1, true) or lower:find('rshg', 1, true) then return 'Explosives' end
+    if lower:find('ak', 1, true) or lower:find('ar%-') or lower:find('m4', 1, true) or lower:find('m16', 1, true) or lower:find('rifle', 1, true) or lower:find('scar', 1, true) or lower:find('aug', 1, true) then return 'Assault Rifles' end
+
+    return 'Other'
+end
+
+local function getRowSubcategory(row, sectionId)
+    local subcategory = tostring(row.subcategory or '')
+    if subcategory ~= '' then return subcategory end
+
+    local name = row.name or row.title or row.key
+    if sectionId == 'props' then return 'Prop Limit' end
+    if sectionId == 'shipments' then return inferShipmentSubcategory(name) end
+    if sectionId == 'bank' then return 'Storage' end
+
+    return 'Other'
+end
+
+local function getOrderedSubcategories(sectionId, grouped)
+    local order = {}
+    local seen = {}
+
+    for _, label in ipairs(SUBCATEGORY_ORDER[sectionId] or {}) do
+        if grouped[label] and #grouped[label] > 0 then
+            order[#order + 1] = label
+            seen[label] = true
+        end
+    end
+
+    local extra = {}
+    for label, rows in pairs(grouped) do
+        if not seen[label] and #rows > 0 then
+            extra[#extra + 1] = label
+        end
+    end
+    table.sort(extra)
+
+    for _, label in ipairs(extra) do
+        order[#order + 1] = label
+    end
+
+    return order
+end
+
+local function groupUpgradeRows(sectionId, rows)
+    local grouped = {}
+
+    for _, row in ipairs(rows or {}) do
+        local label = getRowSubcategory(row, sectionId)
+        grouped[label] = grouped[label] or {}
+        grouped[label][#grouped[label] + 1] = row
+    end
+
+    for _, groupRows in pairs(grouped) do
+        sortRows(groupRows)
+    end
+
+    return grouped, getOrderedSubcategories(sectionId, grouped)
+end
+
+local function rowMatchesSearch(row, search)
+    search = tostring(search or ''):Trim():lower()
+    if search == '' then return true end
+
+    local haystack = table.concat({
+        tostring(row.title or ''),
+        tostring(row.name or ''),
+        tostring(row.desc or ''),
+        tostring(row.description or ''),
+        tostring(row.key or '')
+    }, ' '):lower()
+
+    return haystack:find(search, 1, true) ~= nil
 end
 
 net.Receive('vox.f4.zupgrades.sync', function()
@@ -288,9 +392,12 @@ local function addUpgradeRows(panel, rows)
         end
         row.DoClick = function()
             if (data.disabled or data.pending) then return end
-            if (data.pendingKey) then markPending(panel.ownerPanel, data.pendingKey) end
+            local owner = panel.ownerPanel
+            if (not IsValid(owner)) then return end
+
+            if (data.pendingKey) then markPending(owner, data.pendingKey) end
             if (data.onClick) then data.onClick() end
-            panel.ownerPanel:RefreshSoon()
+            owner:RefreshSoon()
         end
     end
 end
@@ -310,51 +417,75 @@ function INV:Init()
 end
 vox.gui.Register('vox.f4.Inventory', INV)
 
-local UP = {}
-function UP:Init()
-    timer.Remove('vox_f4_zupgrades_refresh')
+local function paintUpgradeRailButton(panel, w, h, label, active, count)
+    local colors = getThemeColors()
+    local hovered = panel:IsHovered()
+    local bg = active and ColorAlpha(colors.accent, 54) or ColorAlpha(colors.secondary, hovered and 190 or 120)
 
-    self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
-    self.pendingUntil = {}
-    self.activeUpgradeTab = 'props'
-    self.zupgradesHook = 'vox.f4.zupgrades.updated.' .. tostring(self)
-
-    buildHeader(self, 'ZUpgrades', 'Buy prop, job, shipment, and entity upgrades from the server upgrade system.')
-
-    self.tabBar = self:Add('Panel')
-    self.tabBar:Dock(TOP)
-    self.tabBar:SetTall(vox.ScaleTall(42))
-    self.tabBar:DockMargin(0, 0, 0, vox.ScaleTall(10))
-
-    self.content = self:Add('Panel')
-    self.content:Dock(FILL)
-
-    self.tabButtons = {}
-    for _, tab in ipairs(UPGRADE_TABS) do
-        local button = self.tabBar:Add('DButton')
-        button:Dock(LEFT)
-        button:DockMargin(0, 0, vox.ScaleWide(8), 0)
-        button:SetWide(vox.ScaleWide(tab.id == 'shipments' and 122 or 96))
-        button:SetText('')
-        button.tabId = tab.id
-        button.Paint = function(panel, w, h)
-            local colors = getThemeColors()
-            local active = self.activeUpgradeTab == panel.tabId
-            local bg = active and ColorAlpha(colors.accent, 46) or ColorAlpha(colors.tertiary, panel:IsHovered() and 210 or 165)
-            draw.RoundedBox(8, 0, 0, w, h, bg)
-            surface.SetDrawColor(ColorAlpha(active and colors.accent or colors.secondary, active and 150 or 90))
-            surface.DrawOutlinedRect(0, 0, w, h, 1)
-            draw.SimpleText(tab.label, vox.Font('Comfortaa Bold@13'), w * .5, h * .5, active and colors.text or colors.muted, 1, 1)
-        end
-        button.DoClick = function()
-            self:SelectUpgradeTab(tab.id)
-        end
-
-        self.tabButtons[tab.id] = button
+    draw.RoundedBox(7, 0, 0, w, h, bg)
+    if active then
+        draw.RoundedBox(3, 0, 0, vox.ScaleWide(4), h, ColorAlpha(colors.accent, 245))
     end
 
-    self:SelectUpgradeTab('props', true)
-    requestZUpgrades()
+    surface.SetDrawColor(ColorAlpha(active and colors.accent or colors.secondary, active and 125 or 55))
+    surface.DrawOutlinedRect(0, 0, w, h, 1)
+    draw.SimpleText(label, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(12), h * .5, active and colors.text or colors.muted, 0, 1)
+
+    if count and count > 0 then
+        draw.SimpleText(tostring(count), vox.Font('Comfortaa Bold@10'), w - vox.ScaleWide(10), h * .5, colors.muted, 2, 1)
+    end
+end
+
+local UP = {}
+function UP:Init()
+    self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
+    self.pendingUntil = {}
+    self.activeUpgradeTab = self.activeUpgradeTab or 'props'
+    self.activeSubCategory = self.activeSubCategory or {}
+    self.searchByTab = self.searchByTab or {}
+    self.zupgradesHook = 'vox.f4.zupgrades.updated.' .. tostring(self)
+
+    buildHeader(self, 'ZUpgrades', 'Buy prop, job, shipment, entity, and bank upgrades from the server upgrade system.')
+
+    self.body = self:Add('Panel')
+    self.body:Dock(FILL)
+
+    self.mainRail = self.body:Add('Panel')
+    self.mainRail:Dock(LEFT)
+    self.mainRail:SetWide(vox.ScaleWide(146))
+    self.mainRail:DockMargin(0, 0, vox.ScaleWide(10), 0)
+    self.mainRail.Paint = function(_, w, h)
+        local colors = getThemeColors()
+        if vox.f4 and vox.f4.DrawReferencePanel then
+            vox.f4.DrawReferencePanel(0, 0, w, h, { colors = colors, color = ColorAlpha(colors.bg, 220), accent = colors.accent, radius = 8 })
+        else
+            draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(colors.primary, 225))
+        end
+        draw.SimpleText('MENU', vox.Font('Comfortaa@11'), vox.ScaleWide(12), vox.ScaleTall(13), colors.muted, 0, 0)
+    end
+
+    self.subRail = self.body:Add('Panel')
+    self.subRail:Dock(LEFT)
+    self.subRail:SetWide(vox.ScaleWide(154))
+    self.subRail:DockMargin(0, 0, vox.ScaleWide(12), 0)
+    self.subRail.Paint = function(_, w, h)
+        local colors = getThemeColors()
+        if vox.f4 and vox.f4.DrawReferencePanel then
+            vox.f4.DrawReferencePanel(0, 0, w, h, { colors = colors, color = ColorAlpha(colors.bg, 205), accent = colors.accent, radius = 8 })
+        else
+            draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(colors.primary, 205))
+        end
+        draw.SimpleText('CATEGORIES', vox.Font('Comfortaa@11'), vox.ScaleWide(12), vox.ScaleTall(13), colors.muted, 0, 0)
+    end
+
+    self.content = self.body:Add('Panel')
+    self.content:Dock(FILL)
+    self.content.ownerPanel = self
+
+    self:BuildMainRail()
+    self:SelectUpgradeTab(self.activeUpgradeTab, true)
+
+    if zupgradeLoaded then requestZUpgrades() end
 
     hook.Add('vox.f4.zupgrades.updated', self.zupgradesHook, function()
         if (not IsValid(self)) then
@@ -364,35 +495,84 @@ function UP:Init()
 
         self:BuildActiveUpgradeTab()
     end)
-
-    timer.Create('vox_f4_zupgrades_refresh', 1, 0, function()
-        if (not IsValid(self)) then
-            timer.Remove('vox_f4_zupgrades_refresh')
-            return
-        end
-
-        requestZUpgrades()
-    end)
 end
 
 function UP:OnRemove()
-    timer.Remove('vox_f4_zupgrades_refresh')
     if (self.zupgradesHook) then
         hook.Remove('vox.f4.zupgrades.updated', self.zupgradesHook)
     end
 end
 
+function UP:BuildMainRail()
+    self.mainRail:Clear()
+    self.mainButtons = {}
+
+    local spacer = self.mainRail:Add('Panel')
+    spacer:Dock(TOP)
+    spacer:SetTall(vox.ScaleTall(34))
+
+    for _, tab in ipairs(UPGRADE_TABS) do
+        local button = self.mainRail:Add('DButton')
+        button:Dock(TOP)
+        button:DockMargin(vox.ScaleWide(8), 0, vox.ScaleWide(8), vox.ScaleTall(8))
+        button:SetTall(vox.ScaleTall(36))
+        button:SetText('')
+        button.tabId = tab.id
+        button.Paint = function(panel, w, h)
+            local count = #(zupgradeByCategory[panel.tabId] or {})
+            paintUpgradeRailButton(panel, w, h, tab.label, self.activeUpgradeTab == panel.tabId, count)
+        end
+        button.DoClick = function()
+            self:SelectUpgradeTab(tab.id)
+        end
+
+        self.mainButtons[tab.id] = button
+    end
+end
+
+function UP:BuildSubRail(order)
+    self.subRail:Clear()
+
+    local spacer = self.subRail:Add('Panel')
+    spacer:Dock(TOP)
+    spacer:SetTall(vox.ScaleTall(34))
+
+    if not order or #order == 0 then
+        local empty = self.subRail:Add('Panel')
+        empty:Dock(TOP)
+        empty:SetTall(vox.ScaleTall(42))
+        empty.Paint = function(_, w, h)
+            local colors = getThemeColors()
+            draw.SimpleText('No categories', vox.Font('Comfortaa@12'), vox.ScaleWide(12), h * .5, colors.muted, 0, 1)
+        end
+        return
+    end
+
+    for _, label in ipairs(order) do
+        local button = self.subRail:Add('DButton')
+        button:Dock(TOP)
+        button:DockMargin(vox.ScaleWide(8), 0, vox.ScaleWide(8), vox.ScaleTall(7))
+        button:SetTall(vox.ScaleTall(32))
+        button:SetText('')
+        button.subcategory = label
+        button.Paint = function(panel, w, h)
+            paintUpgradeRailButton(panel, w, h, label, self.activeSubCategory[self.activeUpgradeTab] == panel.subcategory)
+        end
+        button.DoClick = function()
+            self.activeSubCategory[self.activeUpgradeTab] = label
+            self:BuildActiveUpgradeTab()
+        end
+    end
+end
+
 function UP:RefreshSoon()
     self:BuildActiveUpgradeTab()
-    requestZUpgrades()
 
-    for _, delay in ipairs(REFRESH_DELAYS) do
-        timer.Simple(delay, function()
-            if (IsValid(self)) then
-                requestZUpgrades()
-            end
-        end)
-    end
+    timer.Simple(PURCHASE_REFRESH_DELAY, function()
+        if (IsValid(self)) then
+            requestZUpgrades()
+        end
+    end)
 end
 
 function UP:SelectUpgradeTab(tabId, force)
@@ -409,29 +589,83 @@ function UP:BuildActiveUpgradeTab()
     self.content.ownerPanel = self
 
     if (not zupgradeLoaded) then
+        self:BuildSubRail({})
         addMessage(self.content, 'Loading ZUpgrades', 'Fetching upgrade data from the server.')
         requestZUpgrades()
         return
     end
 
     if (#zupgradeRows == 0) then
+        self:BuildSubRail({})
         addMessage(self.content, 'ZUpgrades Not Loaded', 'Install and enable ZUpgrades to use this F4 upgrade tab.')
         return
     end
 
     if (self.activeUpgradeTab == 'props') then
         self:BuildPropsTab(zupgradeByCategory.props or {})
-    elseif (self.activeUpgradeTab == 'jobs') then
-        self:BuildUnlockTab('jobs')
-    elseif (self.activeUpgradeTab == 'shipments') then
-        self:BuildUnlockTab('shipments')
-    elseif (self.activeUpgradeTab == 'entities') then
-        self:BuildUnlockTab('entities')
+    else
+        self:BuildUnlockTab(self.activeUpgradeTab)
     end
+end
+
+function UP:BuildUpgradeListView(title, rows)
+    rows = rows or {}
+    self.currentRows = rows
+
+    local heading = self.content:Add('Panel')
+    heading:Dock(TOP)
+    heading:SetTall(vox.ScaleTall(46))
+    heading:DockMargin(0, 0, 0, vox.ScaleTall(8))
+    heading.Paint = function(_, w, h)
+        local colors = getThemeColors()
+        draw.SimpleText(title or TAB_TITLES[self.activeUpgradeTab] or 'Upgrades', vox.Font('Comfortaa Bold@24'), 0, vox.ScaleTall(2), colors.text, 0, 0)
+        draw.SimpleText(#rows .. ' upgrades', vox.Font('Comfortaa@12'), 0, vox.ScaleTall(31), colors.muted, 0, 0)
+    end
+
+    self.searchEntry = self.content:Add('vox.TextEntry')
+    self.searchEntry:Dock(TOP)
+    self.searchEntry:SetTall(vox.ScaleTall(30))
+    self.searchEntry:DockMargin(0, 0, 0, vox.ScaleTall(10))
+    self.searchEntry:SetPlaceholderText('Search ' .. tostring(title or 'upgrades') .. '...')
+    self.searchEntry:SetValue(self.searchByTab[self.activeUpgradeTab] or '')
+    self.searchEntry.OnValueChange = function(_, value)
+        self.searchByTab[self.activeUpgradeTab] = tostring(value or '')
+        self:RefreshVisibleRows()
+    end
+
+    self.rowHost = self.content:Add('Panel')
+    self.rowHost:Dock(FILL)
+    self.rowHost.ownerPanel = self
+
+    self:RefreshVisibleRows()
+end
+
+function UP:RefreshVisibleRows()
+    if not IsValid(self.rowHost) then return end
+
+    self.rowHost:Clear()
+    self.rowHost.ownerPanel = self
+
+    local search = self.searchByTab[self.activeUpgradeTab] or ''
+    local filtered = {}
+    for _, row in ipairs(self.currentRows or {}) do
+        if rowMatchesSearch(row, search) then
+            filtered[#filtered + 1] = row
+        end
+    end
+
+    if #filtered == 0 then
+        addMessage(self.rowHost, 'No Matches', 'No upgrades match the current search in this category.')
+        return
+    end
+
+    addUpgradeRows(self.rowHost, filtered)
 end
 
 function UP:BuildPropsTab(rows)
     local info = rows and rows[1]
+    self.activeSubCategory.props = self.activeSubCategory.props or 'Prop Limit'
+    self:BuildSubRail({'Prop Limit'})
 
     if (not info) then
         addMessage(self.content, 'Props Unavailable', 'ZUpgrades did not expose prop upgrade data on the server.')
@@ -448,7 +682,7 @@ function UP:BuildPropsTab(rows)
     local canAfford = info.canAfford ~= false
     local perUpgrade = tonumber(info.propLimitPerUpgrade) or 0
 
-    addUpgradeRows(self.content, {
+    self:BuildUpgradeListView('Prop Limit', {
         {
             pendingKey = pendingKey,
             title = 'Prop Limit',
@@ -470,11 +704,20 @@ function UP:BuildUnlockTab(sectionId)
     local status = zupgradeByCategory[sectionId] or {}
 
     if (#status == 0) then
+        self:BuildSubRail({})
         addMessage(self.content, 'Upgrades Unavailable', 'ZUpgrades did not expose data for this upgrade type on the server.')
         return
     end
 
-    addUpgradeRows(self.content, collectUnlockRows(status, sectionId, self))
+    local grouped, order = groupUpgradeRows(sectionId, status)
+    local selected = self.activeSubCategory[sectionId]
+    if not selected or not grouped[selected] or #grouped[selected] == 0 then
+        selected = order[1]
+        self.activeSubCategory[sectionId] = selected
+    end
+
+    self:BuildSubRail(order)
+    self:BuildUpgradeListView(selected or TAB_TITLES[sectionId] or 'Upgrades', collectUnlockRows(grouped[selected] or {}, sectionId, self))
 end
 vox.gui.Register('vox.f4.Upgrades', UP)
 

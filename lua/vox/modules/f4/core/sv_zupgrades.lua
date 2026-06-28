@@ -4,9 +4,10 @@ util.AddNetworkString('vox.f4.zupgrades.sync')
 
 local CATEGORY_LABELS = {
     props = 'Props',
-    jobs = 'Job',
-    shipments = 'Shipment',
-    entities = 'Entities'
+    jobs = 'Jobs',
+    shipments = 'Shipments',
+    entities = 'Entities',
+    bank = 'Bank'
 }
 
 local function getZUpgrades()
@@ -27,6 +28,88 @@ local function canAfford(z, fnName, ply, key)
     if result == nil then return true end
 
     return result == true
+end
+
+local function findDarkRPJob(command)
+    command = tostring(command or '')
+    for _, job in pairs(RPExtraTeams or {}) do
+        if tostring(job.command or '') == command then return job end
+    end
+end
+
+local function normalizeJobSubcategory(raw, name)
+    local text = string.lower(tostring(raw or '') .. ' ' .. tostring(name or ''))
+
+    if text:find('dealer', 1, true) then return 'Dealers' end
+    if text:find('civil protection', 1, true) or text:find('government', 1, true) or text:find('police', 1, true) or text:find('swat', 1, true) or text:find('mayor', 1, true) then return 'Government' end
+    if text:find('criminal', 1, true) or text:find('gang', 1, true) or text:find('mob', 1, true) or text:find('thief', 1, true) or text:find('hitman', 1, true) or text:find('spy', 1, true) or text:find('explosive', 1, true) then return 'Criminals' end
+    if text:find('citizen', 1, true) or text:find('hobo', 1, true) or text:find('medic', 1, true) or text:find('security', 1, true) then return 'Citizens' end
+
+    return raw and tostring(raw) ~= '' and tostring(raw) or 'Other'
+end
+
+local function findDarkRPShipment(name)
+    name = tostring(name or '')
+    for _, shipment in pairs(CustomShipments or {}) do
+        if tostring(shipment.name or '') == name then return shipment end
+    end
+end
+
+local function normalizeShipmentSubcategory(raw, name)
+    local label = tostring(raw or '')
+    local lower = string.lower(label .. ' ' .. tostring(name or ''))
+
+    if lower:find('assault', 1, true) or lower:find('rifle', 1, true) or lower:find('ar%-') then return 'Assault Rifles' end
+    if lower:find('pistol', 1, true) or lower:find('handgun', 1, true) then return 'Pistols' end
+    if lower:find('smg', 1, true) or lower:find('submachine', 1, true) then return 'SMGs' end
+    if lower:find('shotgun', 1, true) then return 'Shotguns' end
+    if lower:find('sniper', 1, true) or lower:find('marksman', 1, true) then return 'Sniper Rifles' end
+    if lower:find('lmg', 1, true) or lower:find('machine gun', 1, true) then return 'LMGs' end
+    if lower:find('melee', 1, true) or lower:find('knife', 1, true) or lower:find('crowbar', 1, true) then return 'Melee' end
+    if lower:find('grenade', 1, true) or lower:find('smoke', 1, true) or lower:find('flash', 1, true) then return 'Grenades' end
+    if lower:find('explosive', 1, true) or lower:find('bomb', 1, true) then return 'Explosives' end
+
+    return label ~= '' and label or 'Other'
+end
+
+local function findDarkRPEntity(name)
+    name = tostring(name or '')
+    for _, ent in pairs(DarkRPEntities or {}) do
+        if tostring(ent.name or '') == name then return ent end
+    end
+end
+
+local function normalizeEntitySubcategory(raw, name)
+    local label = tostring(raw or '')
+    local lower = string.lower(label .. ' ' .. tostring(name or ''))
+
+    if lower:find('printer', 1, true) then return 'Printers' end
+    if lower:find('drug', 1, true) or lower:find('lab', 1, true) then return 'Drugs' end
+    if lower:find('keycard', 1, true) or lower:find('cracker', 1, true) or lower:find('tool', 1, true) then return 'Tools' end
+    if lower:find('bomb', 1, true) or lower:find('explosive', 1, true) then return 'Explosives' end
+
+    return label ~= '' and label or 'Other'
+end
+
+local function getUnlockSubcategory(category, key, info)
+    info = info or {}
+    if isstring(info.subcategory) and info.subcategory ~= '' then return info.subcategory end
+    if isstring(info.category) and info.category ~= '' then return info.category end
+
+    if category == 'jobs' then
+        local job = findDarkRPJob(key)
+        return normalizeJobSubcategory(job and job.category, info.name or key)
+    elseif category == 'shipments' then
+        local shipment = findDarkRPShipment(info.name or key)
+        return normalizeShipmentSubcategory(shipment and shipment.category, info.name or key)
+    elseif category == 'entities' then
+        local ent = findDarkRPEntity(info.name or key)
+        return normalizeEntitySubcategory(ent and ent.category, info.name or key)
+    elseif category == 'bank' then
+        return 'Storage'
+    end
+
+    return 'General'
 end
 
 local function addUnlockRows(rows, z, category, statusFnName, fallbackTable, unlockedFnName, affordFnName, ply)
@@ -54,11 +137,33 @@ local function addUnlockRows(rows, z, category, statusFnName, fallbackTable, unl
             key = tostring(key),
             category = category,
             categoryName = CATEGORY_LABELS[category],
+            subcategory = getUnlockSubcategory(category, key, info),
             name = tostring(info.name or key),
             description = tostring(info.description or ''),
             price = tonumber(info.price) or 0,
             unlocked = unlocked,
             canAfford = unlocked or canAfford(z, affordFnName, ply, key)
+        })
+    end
+end
+
+local function addBankRows(rows, z, ply)
+    if not istable(z.BankPageUnlocks) then return end
+
+    for page, info in pairs(z.BankPageUnlocks) do
+        local unlocked = safeCall(z.HasBankPageUnlock, ply, page) == true
+        local price = tonumber(info.price) or 0
+        table.insert(rows, {
+            id = tostring(page),
+            key = tostring(page),
+            category = 'bank',
+            categoryName = CATEGORY_LABELS.bank,
+            subcategory = getUnlockSubcategory('bank', page, info),
+            name = tostring(info.name or ('Bank Page ' .. tostring(page))),
+            description = tostring(info.description or ''),
+            price = price,
+            unlocked = unlocked,
+            canAfford = unlocked or not ply.canAfford or ply:canAfford(price)
         })
     end
 end
@@ -116,6 +221,7 @@ local function collectZUpgrades(ply)
     addUnlockRows(rows, z, 'jobs', 'GetAllJobsWithStatus', 'JobUnlocks', 'IsJobUnlocked', 'CanAffordJobUnlock', ply)
     addUnlockRows(rows, z, 'shipments', 'GetAllShipmentsWithStatus', 'ShipmentUnlocks', 'IsShipmentUnlocked', 'CanAffordShipmentUnlock', ply)
     addUnlockRows(rows, z, 'entities', 'GetAllEntitiesWithStatus', 'EntityUnlocks', 'IsEntityUnlocked', 'CanAffordEntityUnlock', ply)
+    addBankRows(rows, z, ply)
 
     table.SortByMember(rows, 'name', true)
     return rows
@@ -133,6 +239,8 @@ local function purchaseZUpgrade(ply, category, key)
         return safeCall(z.Purchase.ShipmentUnlock, ply, key)
     elseif category == 'entities' then
         return safeCall(z.Purchase.EntityUnlock, ply, key)
+    elseif category == 'bank' then
+        return safeCall(z.Purchase.BankPageUnlock, ply, tonumber(key))
     end
 
     return false, 'Invalid upgrade category.'
