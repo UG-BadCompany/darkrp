@@ -169,6 +169,19 @@ local function getUpgradeValue(upgrade, keys, fallback)
     return fallback
 end
 
+local UPGRADE_NAME_KEYS = {'name', 'Name', 'title', 'Title', 'label', 'Label', 'displayName', 'DisplayName', 'printName', 'PrintName', 'upgradeName', 'UpgradeName'}
+
+local function readableNameFromID(id)
+    local text = tostring(id or 'Upgrade')
+    text = string.match(text, '([^%.%[%]/]+)$') or text
+    text = string.gsub(text, '[_%-]+', ' ')
+    text = string.gsub(text, '(%l)(%u)', '%1 %2')
+    text = string.Trim(text)
+    if text == '' then return 'Upgrade' end
+
+    return string.upper(string.sub(text, 1, 1)) .. string.sub(text, 2)
+end
+
 local function getUpgradeIdentifier(upgrade, key)
     return getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key)
 end
@@ -217,7 +230,7 @@ local function collectZUpgrades()
         if not istable(upgrade) then return end
 
         local id = getUpgradeIdentifier(upgrade, key)
-        local name = tostring(getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id))
+        local name = tostring(getUpgradeValue(upgrade, UPGRADE_NAME_KEYS, readableNameFromID(id)))
         local desc = tostring(getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, formatUpgradeCost(upgrade)))
         local level = getUpgradeLevel(upgrade, id)
         local maxLevel = tonumber(getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0)) or 0
@@ -259,7 +272,7 @@ local function collectZUpgrades()
                 id = id,
                 sort = tostring(upgrade.name or id),
                 source = upgrade,
-                row = {tostring(upgrade.name or id), tostring(upgrade.description or 'Upgrade available for purchase.'), state, upgrade.price and money(upgrade.price) or 'Free'},
+                row = {tostring(upgrade.name or readableNameFromID(id)), tostring(upgrade.description or 'Upgrade available for purchase.'), state, upgrade.price and money(upgrade.price) or 'Free'},
                 server = true
             })
         end

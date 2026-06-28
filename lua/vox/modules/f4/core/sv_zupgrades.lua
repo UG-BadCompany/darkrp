@@ -89,6 +89,38 @@ local function getUpgradeSource(api)
     return {}
 end
 
+local NAME_KEYS = {'name', 'Name', 'title', 'Title', 'label', 'Label', 'displayName', 'DisplayName', 'printName', 'PrintName', 'upgradeName', 'UpgradeName'}
+local DESC_KEYS = {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}
+
+local function readableNameFromID(id)
+    local text = tostring(id or 'Upgrade')
+    text = string.match(text, '([^%.%[%]/]+)$') or text
+    text = string.gsub(text, '[_%-]+', ' ')
+    text = string.gsub(text, '(%l)(%u)', '%1 %2')
+    text = string.Trim(text)
+    if text == '' then return 'Upgrade' end
+
+    return string.upper(string.sub(text, 1, 1)) .. string.sub(text, 2)
+end
+
+local function getZUpgradeData(upgrade)
+    if istable(upgrade.zupgrade) then return upgrade.zupgrade end
+    if istable(upgrade.ZUpgrade) then return upgrade.ZUpgrade end
+    if istable(upgrade.zUpgrade) then return upgrade.zUpgrade end
+    return upgrade
+end
+
+local function getZUpgradeName(upgrade, zData, id)
+    if isstring(upgrade.zupgrade) and upgrade.zupgrade ~= '' then return upgrade.zupgrade end
+    if isstring(upgrade.ZUpgrade) and upgrade.ZUpgrade ~= '' then return upgrade.ZUpgrade end
+    if isstring(upgrade.zUpgrade) and upgrade.zUpgrade ~= '' then return upgrade.zUpgrade end
+
+    local name = getUpgradeValue(zData, NAME_KEYS, getUpgradeValue(upgrade, NAME_KEYS, nil))
+    if name ~= nil then return tostring(name) end
+
+    return readableNameFromID(id)
+end
+
 local function collectZUpgrades()
     local apis = getZUpgradesAPIs()
     local upgrades = {}
@@ -97,15 +129,15 @@ local function collectZUpgrades()
     local function addUpgrade(key, upgrade)
         if not istable(upgrade) then return end
 
-        local zData = istable(upgrade.zupgrade) and upgrade.zupgrade or istable(upgrade.ZUpgrade) and upgrade.ZUpgrade or istable(upgrade.zUpgrade) and upgrade.zUpgrade or upgrade
+        local zData = getZUpgradeData(upgrade)
         local id = getUpgradeValue(zData, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key))
         id = tostring(id)
         upgradeRegistry[id] = upgrade
 
         table.insert(upgrades, {
             id = id,
-            name = tostring(getUpgradeValue(zData, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id))),
-            description = tostring(getUpgradeValue(zData, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, 'Upgrade available for purchase.'))),
+            name = getZUpgradeName(upgrade, zData, id),
+            description = tostring(getUpgradeValue(zData, DESC_KEYS, getUpgradeValue(upgrade, DESC_KEYS, 'Upgrade available for purchase.'))),
             price = tonumber(getUpgradeValue(zData, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, getUpgradeValue(upgrade, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, 0))) or 0,
             maxLevel = tonumber(getUpgradeValue(zData, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0))) or 0
         })
@@ -188,7 +220,7 @@ local function purchaseRegisteredUpgrade(ply, id)
     local upgrade = upgradeRegistry[tostring(id)]
     if not istable(upgrade) then return false end
 
-    local zData = istable(upgrade.zupgrade) and upgrade.zupgrade or istable(upgrade.ZUpgrade) and upgrade.ZUpgrade or istable(upgrade.zUpgrade) and upgrade.zUpgrade or upgrade
+    local zData = getZUpgradeData(upgrade)
     for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
         if callPurchase(zData, zData[fnName], ply, id) then return true end
     end
