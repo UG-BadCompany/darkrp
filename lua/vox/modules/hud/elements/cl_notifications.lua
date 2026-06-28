@@ -1,5 +1,6 @@
 local hud = vox.hud
 local cache = {}
+hud.notificationCache = cache
 
 local COLOR_BAR = Color( 0, 0, 0, 200 ) -- Only for light themes
 local FONT_TEXT = 'vox.hud.Small'
@@ -27,12 +28,14 @@ local NOTIFICATION_TYPES = {
 }
 
 local function addNotification( text, type, length )
-    table.insert( cache, 1, {
+    local data = {
         text = text,
         type = type,
         endtime = CurTime() + length,
         duration = length
-    } )
+    }
+
+    table.insert( cache, 1, data )
 end
 
 local function overrideNotifications()

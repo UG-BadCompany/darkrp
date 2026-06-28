@@ -301,26 +301,24 @@ local function drawReferenceMain(self, client, sw, sh)
     drawBottomIcons(rowX, y + math.floor(256 * scale), rowW, scale, client)
 end
 
-local notifyCache = {}
-local oldAdd = notification.AddLegacy
-notification.AddLegacy = function(text, typ, len)
-    table.insert(notifyCache, 1, {text = tostring(text or ''), typ = typ or NOTIFY_GENERIC, len = len or 4, start = CurTime()})
-    while #notifyCache > 4 do table.remove(notifyCache) end
-end
-
 local function drawRefNotifications(self, client, sw, sh)
+    local notifyCache = hud.notificationCache
+    if not notifyCache then return end
+
     local x, y = 330, sh - 320
     for i=#notifyCache,1,-1 do
         local n = notifyCache[i]
-        local life = (CurTime() - n.start) / n.len
+        local duration = math.max(n.duration or n.len or 4, .01)
+        local life = n.endtime and (1 - math.Clamp((n.endtime - CurTime()) / duration, 0, 1)) or ((CurTime() - (n.start or CurTime())) / duration)
         if life >= 1 then table.remove(notifyCache,i) else
             local cy = y + (i-1)*60
-            local col = n.typ == NOTIFY_ERROR and C.red or (n.typ == NOTIFY_UNDO and C.green or C.accent)
+            local typ = n.type or n.typ or NOTIFY_GENERIC
+            local col = typ == NOTIFY_ERROR and C.red or (typ == NOTIFY_UNDO and C.green or C.accent)
             glass(x,cy,250,48,8,col)
             rr(x+10,cy+10,28,28,14,ColorAlpha(col,55))
-            draw.SimpleText(n.typ == NOTIFY_ERROR and '!' or '$','VoxRef.Title',x+24,cy+24,col,1,1)
-            draw.SimpleText(n.typ == NOTIFY_ERROR and 'Warning' or 'Notification','VoxRef.Small',x+48,cy+9,C.text,0,0)
-            draw.SimpleText(n.text,'VoxRef.Tiny',x+48,cy+27,C.soft,0,0)
+            draw.SimpleText(typ == NOTIFY_ERROR and '!' or '$','VoxRef.Title',x+24,cy+24,col,1,1)
+            draw.SimpleText(typ == NOTIFY_ERROR and 'Warning' or 'Notification','VoxRef.Small',x+48,cy+9,C.text,0,0)
+            draw.SimpleText(tostring(n.text or ''),'VoxRef.Tiny',x+48,cy+27,C.soft,0,0)
             rr(x,cy+46,250*(1-life),2,1,col)
         end
     end

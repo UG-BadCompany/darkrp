@@ -64,6 +64,40 @@ local function getPlayersStr( players, maxNames )
     return finalStr
 end
 
+local function isHorizontalDoor( ent, hitNormal )
+    if ( hitNormal and math.abs( hitNormal.z ) > .45 ) then return true end
+    if ( not IsValid( ent ) ) then return false end
+
+    local ang = ent:GetAngles()
+    return math.abs( math.AngleDifference( ang.p, 0 ) ) > 35 or math.abs( math.AngleDifference( ang.r, 0 ) ) > 35
+end
+
+local function getUpright3D2DAngle( yaw )
+    return Angle( 0, yaw, 90 )
+end
+
+local function getFacingYaw( fromPos, toPos )
+    return ( toPos - fromPos ):Angle().y
+end
+
+local function getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
+    if ( not IsValid( client ) ) then
+        return Angle( 0, 0, 90 )
+    end
+
+    if ( horizontalDoor ) then
+        -- Horizontal/sloped doors need a vertical sign, so face the player by
+        -- yaw only. Keeping pitch/roll stripped prevents sideways or skewed UI.
+        return getUpright3D2DAngle( getFacingYaw( renderPos, client:EyePos() ) - 90 )
+    end
+
+    -- Upright doors should stay aligned with the traced door face. Do not use
+    -- entity up-vectors here: normal doors also point upward and were being
+    -- misclassified as horizontal/sloped panels.
+    local faceYaw = hitNormal:Angle().y
+    return getUpright3D2DAngle( faceYaw + 90 )
+end
+
 local function drawInfo( ent, client )
     if ( not IsValid( client ) ) then return end
 
@@ -83,8 +117,9 @@ local function drawInfo( ent, client )
 
     if ( length > 6 ) then return end
 
-    local renderPos = hitPos + hitNormal
-    local renderAng = hitNormal:Angle() + Angle( 0, 90, 90 )
+    local horizontalDoor = isHorizontalDoor( ent, hitNormal )
+    local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal * 2 + Vector( 0, 0, 4 ) )
+    local renderAng = getReadable3D2DAngle( hitNormal, renderPos, client, horizontalDoor )
 
     local doorTeams = ent:getKeysDoorTeams()
     local doorGroup = ent:getKeysDoorGroup()
