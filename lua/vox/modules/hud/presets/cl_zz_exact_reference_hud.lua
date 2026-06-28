@@ -98,6 +98,23 @@ local function bar(x,y,w,h,frac,col)
     end
 end
 
+local function getWrappedText(data, key, text, font, maxW)
+    text = tostring(text or '')
+
+    if data[key] ~= text or data[key .. 'MaxW'] ~= maxW then
+        data[key] = text
+        data[key .. 'MaxW'] = maxW
+        data[key .. 'Wrapped'] = DarkRP and DarkRP.textWrap and DarkRP.textWrap(text, font, maxW) or text
+    end
+
+    return data[key .. 'Wrapped']
+end
+
+local function getTextSize(font, text)
+    surface.SetFont(font)
+    return surface.GetTextSize(text)
+end
+
 local smooth = { hp = 1, ar = 0, hu = 1, xp = .65 }
 local modelPanel
 local lastModelData
@@ -305,21 +322,59 @@ local function drawRefNotifications(self, client, sw, sh)
     local notifyCache = hud.notificationCache
     if not notifyCache then return end
 
-    local x, y = 330, sh - 320
+    local scale = math.Clamp(sh / 1080, .82, 1) * (hud.GetScale and hud.GetScale() or 1)
+    local pad = math.floor(10 * scale)
+    local iconSize = math.floor(28 * scale)
+    local gap = math.floor(10 * scale)
+    local textGap = math.floor(10 * scale)
+    local minW = math.floor(260 * scale)
+    local x = math.min(math.floor(330 * scale), math.max(pad, sw - minW - pad))
+    local maxW = math.min(math.floor(460 * scale), sw - x - pad)
+    local y = sh - math.floor(320 * scale)
+    local cy = y
+
     for i=#notifyCache,1,-1 do
         local n = notifyCache[i]
         local duration = math.max(n.duration or n.len or 4, .01)
         local life = n.endtime and (1 - math.Clamp((n.endtime - CurTime()) / duration, 0, 1)) or ((CurTime() - (n.start or CurTime())) / duration)
-        if life >= 1 then table.remove(notifyCache,i) else
-            local cy = y + (i-1)*60
+
+        if life >= 1 then
+            table.remove(notifyCache,i)
+        end
+    end
+
+    maxW = math.max(maxW, minW)
+
+    for i=1,#notifyCache do
+        local n = notifyCache[i]
+        local duration = math.max(n.duration or n.len or 4, .01)
+        local life = n.endtime and (1 - math.Clamp((n.endtime - CurTime()) / duration, 0, 1)) or ((CurTime() - (n.start or CurTime())) / duration)
+        if life < 1 then
             local typ = n.type or n.typ or NOTIFY_GENERIC
             local col = typ == NOTIFY_ERROR and C.red or (typ == NOTIFY_UNDO and C.green or C.accent)
-            glass(x,cy,250,48,8,col)
-            rr(x+10,cy+10,28,28,14,ColorAlpha(col,55))
-            draw.SimpleText(typ == NOTIFY_ERROR and '!' or '$','VoxRef.Title',x+24,cy+24,col,1,1)
-            draw.SimpleText(typ == NOTIFY_ERROR and 'Warning' or 'Notification','VoxRef.Small',x+48,cy+9,C.text,0,0)
-            draw.SimpleText(tostring(n.text or ''),'VoxRef.Tiny',x+48,cy+27,C.soft,0,0)
-            rr(x,cy+46,250*(1-life),2,1,col)
+            local title = typ == NOTIFY_ERROR and 'Warning' or 'Notification'
+            local rawText = tostring(n.text or '')
+            local contentMaxW = maxW - pad * 3 - iconSize - textGap
+            local rawTextW = getTextSize('VoxRef.Tiny', rawText)
+            local titleW, titleH = getTextSize('VoxRef.Small', title)
+            local contentW = math.Clamp(math.max(titleW, rawTextW), minW - pad * 3 - iconSize - textGap, contentMaxW)
+            local w = math.Clamp(pad * 3 + iconSize + textGap + contentW, minW, maxW)
+            local textW = w - pad * 3 - iconSize - textGap
+            local wrappedText = getWrappedText(n, 'voxRefText', rawText, 'VoxRef.Tiny', textW)
+            local _, bodyH = getTextSize('VoxRef.Tiny', wrappedText)
+            local h = math.max(math.floor(50 * scale), pad * 2 + math.max(iconSize, titleH + bodyH + math.floor(4 * scale)))
+            local textX = x + pad * 2 + iconSize + textGap
+
+            glass(x,cy,w,h,8,col)
+            rr(x+pad,cy + h * .5 - iconSize * .5,iconSize,iconSize,iconSize * .5,ColorAlpha(col,55))
+            draw.SimpleText(typ == NOTIFY_ERROR and '!' or '$','VoxRef.Title',x+pad+iconSize*.5,cy+h*.5,col,1,1)
+            draw.SimpleText(title,'VoxRef.Small',textX,cy+pad,C.text,0,0)
+            render.SetScissorRect(textX,cy+pad+titleH+2,textX+textW,cy+h-pad,true)
+                draw.DrawText(wrappedText,'VoxRef.Tiny',textX,cy+pad+titleH+2,C.soft,0)
+            render.SetScissorRect(0,0,0,0,false)
+            rr(x,cy+h-2,w*(1-life),2,1,col)
+
+            cy = cy + h + gap
         end
     end
 end

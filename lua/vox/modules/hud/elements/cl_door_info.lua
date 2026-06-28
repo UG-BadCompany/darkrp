@@ -114,8 +114,9 @@ local function drawInfo( ent, client )
     local hitPos = traceOut.HitPos
     local hitNormal = traceOut.HitNormal
     local length = ( hitPos - screenPos ):Length2D()
+    local isBrushDoor = ent:GetClass() == 'func_door_rotating' or ent:GetClass() == 'func_door'
 
-    if ( length > 6 ) then return end
+    if ( not isBrushDoor and length > 6 ) then return end
 
     local horizontalDoor = isHorizontalDoor( ent, hitNormal )
     local renderPos = horizontalDoor and ( hitPos + Vector( 0, 0, 24 ) ) or ( hitPos + hitNormal * 2 + Vector( 0, 0, 4 ) )
@@ -230,19 +231,41 @@ do
         [ 'func_door_rotating' ] = true,
         [ 'func_door' ] = true,
     }
+
+    local traceDoorOut = {}
+    local traceDoorIn = { output = traceDoorOut, mask = MASK_SHOT }
+
+    local function addNearestDoor( ent, seen )
+        if ( not IsValid( ent ) or seen[ ent ] ) then return end
+        if ( not ent:isDoor() ) then return end
+        if ( ent.getKeysNonOwnable and ent:getKeysNonOwnable() ) then return end
+        if ( not DOORS[ ent:GetClass() ] or ent:GetNoDraw() ) then return end
+
+        seen[ ent ] = true
+        table.insert( nearest, ent )
+    end
+
     timer.Create( 'vox.hud.CatchNearestDoors', 1 / 5, 0, function()
         local client = LocalPlayer()
         if ( IsValid( client ) ) then
-            local entities = ents.FindInCone( client:GetShootPos(), client:GetAimVector(), RANGE, math.cos( math.rad( 45 ) ) )
+            local shootPos = client:GetShootPos()
+            local aimVector = client:GetAimVector()
+            local entities = ents.FindInCone( shootPos, aimVector, RANGE, math.cos( math.rad( 45 ) ) )
+            local seen = {}
 
             nearest = {}
             bindKey = input.LookupBinding( 'gm_showteam' ) or ''
 
             for _, ent in ipairs( entities ) do
-                if ( IsValid( ent ) and ent:isDoor() and not ent:getKeysNonOwnable() and DOORS[ ent:GetClass() ] and not ent:GetNoDraw() ) then
-                    table.insert( nearest, ent )
-                end
+                addNearestDoor( ent, seen )
             end
+
+            traceDoorIn.start = shootPos
+            traceDoorIn.endpos = shootPos + aimVector * RANGE
+            traceDoorIn.filter = client
+            util.TraceLine( traceDoorIn )
+
+            addNearestDoor( traceDoorOut.Entity, seen )
         end
     end )
 end
