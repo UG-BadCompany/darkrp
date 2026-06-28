@@ -7,6 +7,16 @@ local fallbackCategoryColors = {
 
 local font0 = vox.Font('Comfortaa Bold@16')
 
+local function getCategoryColors()
+    if vox.f4 and IsValid(vox.f4.frame) and vox.f4.GetReferenceColors then
+        local ref = vox.f4.GetReferenceColors()
+        return ref.card, ref.card2, ref.accent
+    end
+
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+    return colors.secondary or fallbackCategoryColors.secondary, colors.tertiary or fallbackCategoryColors.tertiary, colors.accent or fallbackCategoryColors.accent
+end
+
 local PANEL = {}
 
 AccessorFunc(PANEL, 'm_Title', 'Title')
@@ -27,13 +37,13 @@ function PANEL:Init()
     self.button:Import('click')
     self.button:Import('hovercolor')
     self.button:SetColorKey('backgroundColor')
-    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    self.button:SetColorIdle(colors.secondary or fallbackCategoryColors.secondary)
-    self.button:SetColorHover(colors.tertiary or fallbackCategoryColors.tertiary)
+    local secondary, tertiary = getCategoryColors()
+    self.button:SetColorIdle(secondary)
+    self.button:SetColorHover(tertiary)
     self.button.textColor = color_white
     self.button.Paint = function(p, w, h)
-        local uiColors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        p:SetColorHover(uiColors.tertiary or fallbackCategoryColors.tertiary)
+        local _, hoverColor, accent = getCategoryColors()
+        p:SetColorHover(hoverColor)
         if (self.m_bSquareCorners and self.canvas:GetTall() > 0) then
             draw.RoundedBoxEx(8, 0, 0, w, h, p.backgroundColor, true, true)
         else
@@ -44,7 +54,7 @@ function PANEL:Init()
         local sz = math.floor(h * .5)
 
         if (self.wimage) then
-            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, fallbackCategoryColors.accent)
+            self.wimage:Draw(h * .5 - sz * .5, h * .5 - sz * .5, sz, sz, accent)
 
             x = h
         end
@@ -80,13 +90,8 @@ function PANEL:GetItems()
 end
 
 function PANEL:SetExpanded(bBool)
-    if (bBool) then
-        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        self.button:SetColorIdle(colors.secondary or fallbackCategoryColors.secondary)
-    else
-        local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        self.button:SetColorIdle(colors.secondary or fallbackCategoryColors.secondary)
-    end
+    local secondary = getCategoryColors()
+    self.button:SetColorIdle(secondary)
 
     self.m_bExpanded = bBool
 

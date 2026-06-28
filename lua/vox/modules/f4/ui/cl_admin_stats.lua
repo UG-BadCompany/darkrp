@@ -11,6 +11,11 @@ local fallbackAdminColors = {
 
 local L = function(...) return vox.lang:Get(...) end
 local function getThemeColors()
+    if vox.f4 and vox.f4.GetReferenceColors then
+        local colors = vox.f4.GetReferenceColors()
+        return colors.bg, colors.card, colors.card2, colors.accent, colors.text, colors.muted
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     return colors.primary or fallbackAdminColors.primary, colors.secondary or fallbackAdminColors.secondary, colors.secondary or fallbackAdminColors.secondary, colors.accent or fallbackAdminColors.accent, colors.textPrimary or fallbackAdminColors.text, colors.textSecondary or fallbackAdminColors.muted
 end
@@ -73,7 +78,13 @@ do
         self.nav:DockMargin(0, 0, vox.ScaleWide(12), 0)
         self.nav.Paint = function(_, w, h)
             local primary, secondary, _, accent, text = getThemeColors()
-            vox.DrawVoxPanel(0, 0, w, h, { primary = primary, secondary = secondary, accent = accent }, 10)
+            if vox.f4 and vox.f4.DrawReferencePanel then
+                vox.f4.DrawReferencePanel(0, 0, w, h, { color = secondary, accent = accent, radius = 8 })
+            else
+                draw.RoundedBox(8, 0, 0, w, h, primary)
+                surface.SetDrawColor(ColorAlpha(accent, 58))
+                surface.DrawOutlinedRect(0, 0, w, h, 1)
+            end
             draw.SimpleText('ADMIN PANEL', vox.Font('Comfortaa Bold@14'), vox.ScaleWide(14), vox.ScaleTall(16), text, 0, 0)
         end
 
@@ -112,7 +123,13 @@ do
         local block = parent:Add('Panel')
         block.Paint = function(_, w, h)
             local primary, secondary, _, accent, text = getThemeColors()
-            vox.DrawVoxPanel(0, 0, w, h, { primary = primary, secondary = secondary, accent = accent }, 10)
+            if vox.f4 and vox.f4.DrawReferencePanel then
+                vox.f4.DrawReferencePanel(0, 0, w, h, { color = secondary, accent = accent, radius = 8 })
+            else
+                draw.RoundedBox(8, 0, 0, w, h, primary)
+                surface.SetDrawColor(ColorAlpha(accent, 58))
+                surface.DrawOutlinedRect(0, 0, w, h, 1)
+            end
             draw.SimpleText(title, vox.Font('Comfortaa Bold@15'), vox.ScaleWide(14), vox.ScaleTall(12), text, 0, 0)
             surface.SetDrawColor(ColorAlpha(accent, 80))
             surface.DrawRect(vox.ScaleWide(14), vox.ScaleTall(36), w - vox.ScaleWide(28), 1)
@@ -148,7 +165,9 @@ do
             row:SetText('')
             row.Paint = function(panel, w, h)
                 local _, secondary, _, accent = getThemeColors()
-                draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(secondary, 230))
+                draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(secondary, panel:IsHovered() and 240 or 210))
+                surface.SetDrawColor(ColorAlpha(accent, panel:IsHovered() and 88 or 35))
+                surface.DrawOutlinedRect(0, 0, w, h, 1)
                 local _, _, _, _, text = getThemeColors()
                 draw.SimpleText(action.label, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(12), h * .5, text, 0, 1)
                 draw.SimpleText('›', vox.Font('Comfortaa Bold@18'), w - vox.ScaleWide(12), h * .5, accent, 2, 1)

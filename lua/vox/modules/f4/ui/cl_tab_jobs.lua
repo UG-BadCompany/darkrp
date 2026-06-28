@@ -12,6 +12,11 @@ local matSearch = Material('vox_f4menu/search.png', 'smooth mips')
 local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
+    if vox.f4 and vox.f4.GetReferenceColors then
+        local colors = vox.f4.GetReferenceColors()
+        return colors.bg, colors.card, colors.card2, colors.accent
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     return colors.primary or fallbackJobTabColors.primary, colors.secondary or fallbackJobTabColors.secondary, colors.secondary or fallbackJobTabColors.secondary, colors.accent or fallbackJobTabColors.accent
 end
@@ -48,10 +53,12 @@ function PANEL:Init()
     self.toolbar:DockMargin(0, 0, 0, vox.ScaleTall(10))
     self.toolbar.Paint = function(panel, w, h)
         local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
-        if vox.DrawVoxPanel then
-            vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
+        if vox.f4 and vox.f4.DrawReferencePanel then
+            vox.f4.DrawReferencePanel(0, 0, w, h, { color = themeSecondary, accent = themeAccent, radius = 8 })
         else
             draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
+            surface.SetDrawColor(ColorAlpha(themeAccent, 58))
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
         end
     end
     self.toolbar.PerformLayout = function(panel, w, h)

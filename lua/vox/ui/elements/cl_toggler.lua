@@ -6,6 +6,11 @@ local fallbackTogglerColors = {
 }
 
 local function getTogglerColors()
+    if vox.f4 and IsValid(vox.f4.frame) and vox.f4.GetReferenceColors then
+        local ref = vox.f4.GetReferenceColors()
+        return ref.bg, ref.card, ref.card2, ref.accent
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     return colors.primary or fallbackTogglerColors.primary, colors.secondary or fallbackTogglerColors.secondary, colors.tertiary or fallbackTogglerColors.tertiary, colors.accent or fallbackTogglerColors.accent
 end
@@ -92,8 +97,9 @@ do
     end
 
     function PANEL:SetBackgroundColor(color)
+        local f4Colors = vox.f4 and IsValid(vox.f4.frame) and vox.f4.GetReferenceColors and vox.f4.GetReferenceColors()
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        local accent = colors.accent or fallbackTogglerColors.accent
+        local accent = (f4Colors and f4Colors.accent) or colors.accent or fallbackTogglerColors.accent
         self.backgroundColorCurrent = color
         self.backgroundColorActive = vox.LerpColor(.66, accent, self.backgroundColorCurrent)
 

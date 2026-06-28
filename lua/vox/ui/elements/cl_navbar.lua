@@ -29,10 +29,11 @@ do
 
     function PANEL:Paint(w, h)
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        local accent = colors.accent or fallbackNavbarColors.accent
-        local textIdle = colors.textSecondary or fallbackNavbarColors.textSecondary
+        local f4Colors = vox.f4 and IsValid(vox.f4.frame) and vox.f4.GetReferenceColors and vox.f4.GetReferenceColors()
+        local accent = (f4Colors and f4Colors.accent) or colors.accent or fallbackNavbarColors.accent
+        local textIdle = (f4Colors and f4Colors.muted) or colors.textSecondary or fallbackNavbarColors.textSecondary
         local x0, y0 = w * .5, h * .5
-        local textColor = self:IsHovered() and (colors.textPrimary or color_white) or textIdle
+        local textColor = self:IsHovered() and ((f4Colors and f4Colors.text) or colors.textPrimary or color_white) or textIdle
         local animActiveFraction = self.animActiveFraction
         local screenX, screenY = self:LocalToScreen(0, 0)
 
@@ -242,8 +243,9 @@ do
 
     function PANEL:PaintOver(w, h)
         local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-        local accent = colors.accent or fallbackNavbarColors.accent
-        local secondary = colors.secondary or fallbackNavbarColors.secondary
+        local f4Colors = vox.f4 and IsValid(vox.f4.frame) and vox.f4.GetReferenceColors and vox.f4.GetReferenceColors()
+        local accent = (f4Colors and f4Colors.accent) or colors.accent or fallbackNavbarColors.accent
+        local secondary = (f4Colors and f4Colors.card) or colors.secondary or fallbackNavbarColors.secondary
         local gradient = vox.LerpColor(.5, accent, secondary)
         local current = self.animLineCurrent
         if (current <= 0) then return end
@@ -265,7 +267,7 @@ do
         surface.SetDrawColor(accent)
         surface.DrawRect(x, h - 2, wide, 2)
 
-        vox.DrawMatGradient(x, h - gradientHeight, wide, gradientHeight, TOP, ColorAlpha(gradient, 25))
+        vox.DrawMatGradient(x, h - gradientHeight, wide, gradientHeight, TOP, ColorAlpha(gradient, f4Colors and 8 or 25))
     end
 
     vox.gui.Register('vox.Navbar', PANEL)

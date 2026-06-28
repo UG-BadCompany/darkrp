@@ -11,6 +11,11 @@ local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
 
 local function getThemeColors()
+    if vox.f4 and vox.f4.GetReferenceColors then
+        local colors = vox.f4.GetReferenceColors()
+        return colors.bg, colors.card, colors.card2, colors.accent
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     return colors.primary or fallbackF4ItemColors.primary, colors.secondary or fallbackF4ItemColors.secondary, colors.secondary or fallbackF4ItemColors.secondary, colors.accent or fallbackF4ItemColors.accent
 end
@@ -134,12 +139,16 @@ function PANEL:Paint(w, h)
     local accent = self.itemColor or themeAccent
     local bg = self.colorBG or themeSecondary
 
-    if vox.DrawVoxPanel then
-        vox.DrawVoxPanel(0, 0, w, h, { primary = bg, secondary = themePrimary, accent = themeAccent }, 8)
+    if vox.f4 and vox.f4.DrawReferencePanel then
+        vox.f4.DrawReferencePanel(0, 0, w, h, {
+            color = bg,
+            accent = accent,
+            radius = 7,
+            borderAlpha = self:IsHovered() and 100 or 42,
+            lineAlpha = self:IsHovered() and 110 or 72
+        })
         if (self:IsHovered()) then
-            draw.RoundedBox(8, 1, 1, w - 2, h - 2, ColorAlpha(themeAccent, 18))
-            surface.SetDrawColor(ColorAlpha(themeAccent, 105))
-            surface.DrawOutlinedRect(1, 1, w - 2, h - 2, 1)
+            draw.RoundedBox(7, 1, 1, w - 2, h - 2, ColorAlpha(accent, 12))
         end
     else
         draw.RoundedBox(8, 0, 0, w, h, colorOutline)
@@ -148,7 +157,7 @@ function PANEL:Paint(w, h)
 
     if (self.gradientEnabled) then
         vox.DrawWithPolyMask(self.mask, function()
-            vox.DrawMatGradient(0, 0, w, h, TOP, self.colorBGGradient)
+            vox.DrawMatGradient(0, 0, w, h, TOP, ColorAlpha(accent, 8))
         end)
     end
 end

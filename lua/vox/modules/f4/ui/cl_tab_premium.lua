@@ -5,6 +5,26 @@ local COLOR_TEXT = Color(238, 244, 255)
 local COLOR_MUTED = Color(145, 160, 178)
 
 local function getThemeColors()
+    local ref = vox.f4 and vox.f4.GetReferenceColors and vox.f4.GetReferenceColors()
+    if ref then
+        return {
+            bg = ref.bg,
+            panel = ref.panel,
+            card = ref.card,
+            card2 = ref.card2,
+            border = ref.border,
+            primary = ref.bg,
+            secondary = ref.card,
+            tertiary = ref.card2,
+            accent = ref.accent,
+            money = ref.money,
+            negative = ref.negative,
+            warning = ref.warning,
+            text = ref.text,
+            muted = ref.muted
+        }
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     return {
         primary = colors.primary or COLOR_PRIMARY,
@@ -26,9 +46,13 @@ end
 local function paintCommandRow(panel, w, h, title, desc, state, action)
     local colors = getThemeColors()
     local hovered = panel:IsHovered()
-    vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
-    draw.RoundedBox(9, 1, 1, w - 2, h - 2, ColorAlpha(colors.primary, 82))
-    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colors.accent, hovered and 18 or 7))
+    if vox.f4 and vox.f4.DrawReferenceRow then
+        vox.f4.DrawReferenceRow(panel, 0, 0, w, h, { colors = colors, color = colors.secondary, accent = colors.accent, radius = 8 })
+    else
+        draw.RoundedBox(8, 0, 0, w, h, colors.secondary)
+        surface.SetDrawColor(ColorAlpha(colors.accent, hovered and 100 or 58))
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+    end
 
     draw.SimpleText(title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(28), vox.ScaleTall(14), colors.text, 0, 0)
     draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(28), vox.ScaleTall(38), colors.muted, 0, 0)
@@ -51,7 +75,13 @@ local function buildHeader(parent, title, subtitle)
     header:DockMargin(0, 0, 0, vox.ScaleTall(10))
     header.Paint = function(_, w, h)
         local colors = getThemeColors()
-        vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary, 245), secondary = colors.secondary, accent = colors.accent }, 12)
+        if vox.f4 and vox.f4.DrawReferencePanel then
+            vox.f4.DrawReferencePanel(0, 0, w, h, { colors = colors, color = ColorAlpha(colors.card or colors.secondary, 232), accent = colors.accent, radius = 8 })
+        else
+            draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(colors.primary, 245))
+            surface.SetDrawColor(ColorAlpha(colors.accent, 80))
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
+        end
         draw.SimpleText(title, vox.Font('Comfortaa Bold@24'), vox.ScaleWide(32), vox.ScaleTall(15), colors.text, 0, 0)
         draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(34), vox.ScaleTall(43), colors.muted, 0, 0)
     end
@@ -132,7 +162,13 @@ local function addMessage(parent, title, body)
     pnl:DockMargin(0, 0, 0, vox.ScaleTall(8))
     pnl.Paint = function(_, w, h)
         local colors = getThemeColors()
-        vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
+        if vox.f4 and vox.f4.DrawReferencePanel then
+            vox.f4.DrawReferencePanel(0, 0, w, h, { colors = colors, color = colors.secondary, accent = colors.accent, radius = 8 })
+        else
+            draw.RoundedBox(8, 0, 0, w, h, colors.secondary)
+            surface.SetDrawColor(ColorAlpha(colors.accent, 58))
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
+        end
         draw.SimpleText(title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(30), vox.ScaleTall(20), colors.text, 0, 0)
         draw.SimpleText(body, vox.Font('Comfortaa@13'), vox.ScaleWide(30), vox.ScaleTall(48), colors.muted, 0, 0)
     end
@@ -160,9 +196,13 @@ local function paintUpgradeRow(panel, w, h, data)
     local actionBg = data.disabled and ColorAlpha(colors.muted, 24) or ColorAlpha(colors.accent, hovered and 70 or 42)
     local actionColor = data.disabled and colors.muted or colors.text
 
-    vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
-    draw.RoundedBox(9, 1, 1, w - 2, h - 2, ColorAlpha(colors.primary, 82))
-    vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(data.disabled and colors.muted or colors.accent, hovered and 18 or 7))
+    if vox.f4 and vox.f4.DrawReferenceRow then
+        vox.f4.DrawReferenceRow(panel, 0, 0, w, h, { colors = colors, color = colors.secondary, accent = data.disabled and colors.muted or colors.accent, radius = 8 })
+    else
+        draw.RoundedBox(8, 0, 0, w, h, colors.secondary)
+        surface.SetDrawColor(ColorAlpha(data.disabled and colors.muted or colors.accent, hovered and 100 or 58))
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+    end
 
     draw.SimpleText(data.title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(28), vox.ScaleTall(13), colors.text, 0, 0)
     draw.SimpleText(data.desc or '', vox.Font('Comfortaa@13'), vox.ScaleWide(28), vox.ScaleTall(38), colors.muted, 0, 0)

@@ -8,6 +8,11 @@ local fallbackJobPreviewColors = {
 local colorBG = vox.OffsetColor(fallbackJobPreviewColors.primary, -3)
 
 local function getThemeColors()
+    if vox.f4 and vox.f4.GetReferenceColors then
+        local colors = vox.f4.GetReferenceColors()
+        return colors.bg, colors.card, colors.card2, colors.accent, colors.money
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     return colors.primary or fallbackJobPreviewColors.primary, colors.secondary or fallbackJobPreviewColors.secondary, colors.secondary or fallbackJobPreviewColors.secondary, colors.accent or fallbackJobPreviewColors.accent, colors.money or fallbackJobPreviewColors.money
 end
@@ -428,14 +433,19 @@ function PANEL:Paint(w, h)
 
     DisableClipping(true)
         render.SetScissorRect(realX, realY, realX + realW, realY + realH, true)
-            vox.DrawVoxPanel(0, Y, W, H, { primary = themeSecondary, secondary = themePrimary, accent = self.colorSlightGradient or themeAccent }, 8)
+            if vox.f4 and vox.f4.DrawReferencePanel then
+                vox.f4.DrawReferencePanel(0, Y, W, H, { color = themeSecondary, accent = themeAccent, radius = 8 })
+            else
+                draw.RoundedBox(8, 0, Y, W, H, themeSecondary)
+                surface.SetDrawColor(ColorAlpha(themeAccent, 58))
+                surface.DrawOutlinedRect(0, Y, W, H, 1)
+            end
 
             local modelX = divModel:GetPos()
             draw.RoundedBox(10, modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, colorBG)
-            draw.RoundedBoxEx(8, 0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), ColorAlpha(self.colorSlightGradient, 38), false, true, false, true)
-            vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorSlightGradient, 85))
+            draw.RoundedBoxEx(8, 0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), ColorAlpha(themeAccent, 18), false, true, false, true)
 
-            surface.SetDrawColor(ColorAlpha(self.colorSlightGradient, 105))
+            surface.SetDrawColor(ColorAlpha(themeAccent, 95))
             surface.DrawLine(vox.ScaleWide(18), Y + vox.ScaleTall(10), self.divInfo:GetWide() - vox.ScaleWide(30), Y + vox.ScaleTall(10))
             surface.DrawLine(modelX + vox.ScaleWide(20), Y + H - vox.ScaleTall(12), W - vox.ScaleWide(18), Y + H - vox.ScaleTall(12))
         render.SetScissorRect(0, 0, 0, 0, false)

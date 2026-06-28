@@ -18,10 +18,19 @@ local function blendColor(a,b,t,alpha)
     )
 end
 local function palette()
+    if vox.f4 and vox.f4.GetReferenceColors then
+        C = vox.f4.GetReferenceColors()
+        C.green = C.money or C.green
+        C.red = C.negative or C.red
+        C.amber = C.warning or C.amber
+        C.soft = C.muted or C.soft
+        return C
+    end
+
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
     local primary = colors.primary or FALLBACK.bg
     local secondary = colors.secondary or FALLBACK.panel
-    local tertiary = colors.tertiary or secondary
+    local tertiary = secondary
     C = {
         bg = blendColor(FALLBACK.bg, primary, .35, 244),
         panel = blendColor(FALLBACK.panel, secondary, .38, 232),
