@@ -210,24 +210,43 @@ end
 
 local function collectZUpgrades()
     local api = getZUpgradesAPI()
-    local source = api and (api.Upgrades or api.upgrades or api.RegisteredUpgrades or api.registeredUpgrades or api.Items or api.items or api.Config and (api.Config.Upgrades or api.Config.upgrades or api.Config.RegisteredUpgrades or api.Config.Items or api.Config.Categories) or api.Categories) or {}
+    local apiTables = api and {api, api.API, api.api, api.Upgrades, api.upgrades, api.Config, api.config} or {}
     local upgrades = {}
 
-    for key, upgrade in pairs(source) do
-        if istable(upgrade) then
-            local id = getUpgradeIdentifier(upgrade, key)
-            local name = tostring(getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id))
-            local desc = tostring(getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, formatUpgradeCost(upgrade)))
-            local level = getUpgradeLevel(upgrade, id)
-            local maxLevel = tonumber(getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0)) or 0
-            local state = maxLevel > 0 and ('LVL ' .. level .. '/' .. maxLevel) or (level > 0 and 'OWNED' or 'AVAILABLE')
+    local function addUpgrade(key, upgrade)
+        if not istable(upgrade) then return end
 
-            table.insert(upgrades, {
-                id = id,
-                sort = tostring(id),
-                source = upgrade,
-                row = {name, desc, state, formatUpgradeCost(upgrade)}
-            })
+        local id = getUpgradeIdentifier(upgrade, key)
+        local name = tostring(getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id))
+        local desc = tostring(getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, formatUpgradeCost(upgrade)))
+        local level = getUpgradeLevel(upgrade, id)
+        local maxLevel = tonumber(getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0)) or 0
+        local state = maxLevel > 0 and ('LVL ' .. level .. '/' .. maxLevel) or (level > 0 and 'OWNED' or 'AVAILABLE')
+
+        table.insert(upgrades, {
+            id = id,
+            sort = tostring(id),
+            source = upgrade,
+            row = {name, desc, state, formatUpgradeCost(upgrade)}
+        })
+    end
+
+    for _, apiTable in ipairs(apiTables) do
+        if istable(apiTable) then
+            local source = apiTable.Upgrades or apiTable.upgrades or apiTable.RegisteredUpgrades or apiTable.registeredUpgrades or apiTable.Items or apiTable.items or apiTable.Categories or apiTable.Shop or apiTable.shop or {}
+            for key, upgrade in pairs(source) do
+                if istable(upgrade) and istable(upgrade.members) then
+                    for memberKey, member in pairs(upgrade.members) do
+                        addUpgrade(memberKey, member)
+                    end
+                elseif istable(upgrade) and istable(upgrade.Members) then
+                    for memberKey, member in pairs(upgrade.Members) do
+                        addUpgrade(memberKey, member)
+                    end
+                else
+                    addUpgrade(key, upgrade)
+                end
+            end
         end
     end
 
@@ -253,7 +272,9 @@ end
 local ZUPGRADE_PURCHASE_FUNCTIONS = {
     'PurchaseUpgrade',
     'BuyUpgrade',
+    'BuyUpgradeLevel',
     'Buy',
+    'Purchase',
     'Upgrade',
     'UnlockUpgrade',
     'Unlock'
@@ -297,13 +318,12 @@ local function purchaseZUpgrade(upgrade)
     local api = getZUpgradesAPI()
 
     if api then
-        for _, fnName in ipairs(ZUPGRADE_PURCHASE_FUNCTIONS) do
-            if callZUpgradesPurchaseFunction(api, api[fnName], upgrade) then return true end
-        end
-
-        if istable(api.Upgrades) then
-            for _, fnName in ipairs(ZUPGRADE_PURCHASE_FUNCTIONS) do
-                if callZUpgradesPurchaseFunction(api.Upgrades, api.Upgrades[fnName], upgrade) then return true end
+        local apiTables = {api, api.API, api.api, api.Upgrades, api.upgrades}
+        for _, apiTable in ipairs(apiTables) do
+            if istable(apiTable) then
+                for _, fnName in ipairs(ZUPGRADE_PURCHASE_FUNCTIONS) do
+                    if callZUpgradesPurchaseFunction(apiTable, apiTable[fnName], upgrade) then return true end
+                end
             end
         end
     end

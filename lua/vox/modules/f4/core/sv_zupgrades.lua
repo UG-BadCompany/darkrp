@@ -13,11 +13,20 @@ local function isZUpgradesTable(name, tbl)
     return istable(tbl.Upgrades) or istable(tbl.upgrades) or isfunction(tbl.GetUpgrades)
 end
 
+local CHILD_API_KEYS = {'API', 'api', 'Upgrades', 'upgrades', 'Config', 'config'}
+
 local function addAPI(apis, seen, api)
     if not istable(api) or seen[api] then return end
 
     seen[api] = true
     table.insert(apis, api)
+
+    for _, key in ipairs(CHILD_API_KEYS) do
+        if istable(api[key]) and not seen[api[key]] then
+            seen[api[key]] = true
+            table.insert(apis, api[key])
+        end
+    end
 end
 
 local function getZUpgradesAPIs()
@@ -49,7 +58,7 @@ local function getUpgradeValue(upgrade, keys, fallback)
 end
 
 local SOURCE_KEYS = {'Upgrades', 'upgrades', 'RegisteredUpgrades', 'registeredUpgrades', 'Items', 'items', 'Shop', 'shop'}
-local SOURCE_FUNCTIONS = {'GetUpgrades', 'GetUpgradeList', 'GetRegisteredUpgrades', 'GetItems'}
+local SOURCE_FUNCTIONS = {'GetUpgrades', 'GetUpgradeList', 'GetRegisteredUpgrades', 'GetItems', 'GetShopItems', 'GetCategories'}
 
 local function getUpgradeSource(api)
     if not api then return {} end
@@ -116,7 +125,7 @@ local function collectZUpgrades()
     return upgrades
 end
 
-local PURCHASE_FUNCTIONS = {'PurchaseUpgrade', 'BuyUpgrade', 'Buy', 'Upgrade', 'UnlockUpgrade', 'Unlock'}
+local PURCHASE_FUNCTIONS = {'PurchaseUpgrade', 'BuyUpgrade', 'BuyUpgradeLevel', 'Buy', 'Purchase', 'Upgrade', 'UnlockUpgrade', 'Unlock'}
 
 local function callPurchase(owner, fn, ply, id)
     if not isfunction(fn) then return false end
