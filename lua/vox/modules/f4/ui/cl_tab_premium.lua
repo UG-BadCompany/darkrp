@@ -98,25 +98,34 @@ local UPGRADE_TABS = {
 }
 
 local REFRESH_DELAYS = { .2, .75, 1.5 }
+local zupgradeRows = {}
+local zupgradeByCategory = {}
+local zupgradeLoaded = false
+local sortRows
 
-local function getZUpgrades()
-    if (type(ZUpgrades) ~= 'table') then return nil end
-    return ZUpgrades
+local function rebuildZUpgradeCache(rows)
+    zupgradeRows = istable(rows) and rows or {}
+    zupgradeByCategory = {
+        props = {},
+        jobs = {},
+        shipments = {},
+        entities = {}
+    }
+
+    for _, row in ipairs(zupgradeRows) do
+        if (istable(row) and zupgradeByCategory[row.category]) then
+            table.insert(zupgradeByCategory[row.category], row)
+        end
+    end
+
+    for _, rowsByCategory in pairs(zupgradeByCategory) do
+        sortRows(rowsByCategory)
+    end
 end
 
-local function safeCall(fn, ...)
-    if (not fn) then return nil end
-
-    local ok, result = pcall(fn, ...)
-    if (ok) then return result end
-
-    return nil
-end
-
-local function getPlayer()
-    local ply = LocalPlayer()
-    if (not IsValid(ply)) then return nil end
-    return ply
+local function requestZUpgrades()
+    net.Start('vox.f4.zupgrades.request')
+    net.SendToServer()
 end
 
 local function addMessage(parent, title, body)
@@ -179,24 +188,26 @@ local function paintUpgradeRow(panel, w, h, data)
     draw.SimpleText(actionText, vox.Font('Comfortaa Bold@11'), actionX + actionW * .5, vox.ScaleTall(29), actionColor, 1, 1)
 end
 
-local function sortRows(rows)
+function sortRows(rows)
     table.sort(rows, function(a, b)
-        return string.lower(a.title or '') < string.lower(b.title or '')
+        return string.lower(a.title or a.name or '') < string.lower(b.title or b.name or '')
     end)
 end
 
-local function collectUnlockRows(statusTable, sectionId, buyFn, pendingOwner, canAffordFn, ply)
+local function purchaseUpgrade(category, key)
+    net.Start('vox.f4.zupgrades.purchase')
+    net.WriteString(category or '')
+    net.WriteString(key or '')
+    net.SendToServer()
+end
+
+local function collectUnlockRows(statusRows, sectionId, pendingOwner)
     local rows = {}
 
-    for key, info in pairs(statusTable or {}) do
+    for _, info in ipairs(statusRows or {}) do
+        local key = tostring(info.key or info.id or '')
         local pendingKey = sectionId .. ':' .. tostring(key)
         local unlocked = info.unlocked == true
-        local affordable = true
-
-        if (not unlocked and canAffordFn) then
-            affordable = safeCall(canAffordFn, ply, key)
-            if (affordable == nil) then affordable = true end
-        end
 
         rows[#rows + 1] = {
             key = key,
@@ -204,12 +215,12 @@ local function collectUnlockRows(statusTable, sectionId, buyFn, pendingOwner, ca
             title = info.name or tostring(key),
             desc = info.description or '',
             price = unlocked and nil or money(info.price or 0),
-            affordable = affordable,
+            affordable = info.canAfford ~= false,
             action = unlocked and 'UNLOCKED' or 'BUY',
             disabled = unlocked,
             pending = getPending(pendingOwner, pendingKey),
             onClick = function()
-                if (buyFn) then buyFn(key) end
+                purchaseUpgrade(info.category or sectionId, key)
             end
         }
     end
@@ -217,6 +228,12 @@ local function collectUnlockRows(statusTable, sectionId, buyFn, pendingOwner, ca
     sortRows(rows)
     return rows
 end
+
+net.Receive('vox.f4.zupgrades.sync', function()
+    rebuildZUpgradeCache(util.JSONToTable(net.ReadString()) or {})
+    zupgradeLoaded = true
+    hook.Run('vox.f4.zupgrades.updated')
+end)
 
 local function addUpgradeRows(panel, rows)
     local list = addRowList(panel)
@@ -265,6 +282,7 @@ function UP:Init()
     self:DockPadding(vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14), vox.ScaleTall(14))
     self.pendingUntil = {}
     self.activeUpgradeTab = 'props'
+    self.zupgradesHook = 'vox.f4.zupgrades.updated.' .. tostring(self)
 
     buildHeader(self, 'ZUpgrades', 'Buy prop, job, shipment, and entity upgrades from the server upgrade system.')
 
@@ -301,6 +319,16 @@ function UP:Init()
     end
 
     self:SelectUpgradeTab('props', true)
+    requestZUpgrades()
+
+    hook.Add('vox.f4.zupgrades.updated', self.zupgradesHook, function()
+        if (not IsValid(self)) then
+            hook.Remove('vox.f4.zupgrades.updated', self.zupgradesHook)
+            return
+        end
+
+        self:BuildActiveUpgradeTab()
+    end)
 
     timer.Create('vox_f4_zupgrades_refresh', 1, 0, function()
         if (not IsValid(self)) then
@@ -308,23 +336,25 @@ function UP:Init()
             return
         end
 
-        if (self.activeUpgradeTab == 'props') then
-            self:BuildActiveUpgradeTab()
-        end
+        requestZUpgrades()
     end)
 end
 
 function UP:OnRemove()
     timer.Remove('vox_f4_zupgrades_refresh')
+    if (self.zupgradesHook) then
+        hook.Remove('vox.f4.zupgrades.updated', self.zupgradesHook)
+    end
 end
 
 function UP:RefreshSoon()
     self:BuildActiveUpgradeTab()
+    requestZUpgrades()
 
     for _, delay in ipairs(REFRESH_DELAYS) do
         timer.Simple(delay, function()
             if (IsValid(self)) then
-                self:BuildActiveUpgradeTab()
+                requestZUpgrades()
             end
         end)
     end
@@ -343,30 +373,33 @@ function UP:BuildActiveUpgradeTab()
     self.content:Clear()
     self.content.ownerPanel = self
 
-    local z = getZUpgrades()
-    local ply = getPlayer()
+    if (not zupgradeLoaded) then
+        addMessage(self.content, 'Loading ZUpgrades', 'Fetching upgrade data from the server.')
+        requestZUpgrades()
+        return
+    end
 
-    if (not z or not ply) then
+    if (#zupgradeRows == 0) then
         addMessage(self.content, 'ZUpgrades Not Loaded', 'Install and enable ZUpgrades to use this F4 upgrade tab.')
         return
     end
 
     if (self.activeUpgradeTab == 'props') then
-        self:BuildPropsTab(z, ply)
+        self:BuildPropsTab(zupgradeByCategory.props or {})
     elseif (self.activeUpgradeTab == 'jobs') then
-        self:BuildUnlockTab('jobs', z.GetAllJobsWithStatus, z.BuyJobUnlock, z.CanAffordJobUnlock)
+        self:BuildUnlockTab('jobs')
     elseif (self.activeUpgradeTab == 'shipments') then
-        self:BuildUnlockTab('shipments', z.GetAllShipmentsWithStatus, z.BuyShipmentUnlock, z.CanAffordShipmentUnlock)
+        self:BuildUnlockTab('shipments')
     elseif (self.activeUpgradeTab == 'entities') then
-        self:BuildUnlockTab('entities', z.GetAllEntitiesWithStatus, z.BuyEntityUnlock, z.CanAffordEntityUnlock)
+        self:BuildUnlockTab('entities')
     end
 end
 
-function UP:BuildPropsTab(z, ply)
-    local info = safeCall(z.GetPropUpgradeInfo, ply)
+function UP:BuildPropsTab(rows)
+    local info = rows and rows[1]
 
-    if (not info or not z.BuyPropUpgrade) then
-        addMessage(self.content, 'Props Unavailable', 'ZUpgrades did not expose prop upgrade data on the client.')
+    if (not info) then
+        addMessage(self.content, 'Props Unavailable', 'ZUpgrades did not expose prop upgrade data on the server.')
         return
     end
 
@@ -377,8 +410,8 @@ function UP:BuildPropsTab(z, ply)
     local currentLimit = tonumber(info.limit) or 0
     local maxLimit = tonumber(info.maxLimit) or 0
     local nextCost = tonumber(info.nextCost) or 0
-    local canAfford = safeCall(z.CanAffordPropUpgrade, ply)
-    local perUpgrade = (z.Config and tonumber(z.Config.PropLimitPerUpgrade)) or 0
+    local canAfford = info.canAfford ~= false
+    local perUpgrade = tonumber(info.propLimitPerUpgrade) or 0
 
     addUpgradeRows(self.content, {
         {
@@ -392,22 +425,21 @@ function UP:BuildPropsTab(z, ply)
             disabled = maxed,
             pending = getPending(self, pendingKey),
             onClick = function()
-                z.BuyPropUpgrade()
+                purchaseUpgrade('props', info.key or info.id or 'prop_limit')
             end
         }
     })
 end
 
-function UP:BuildUnlockTab(sectionId, getStatusFn, buyFn, canAffordFn)
-    local ply = getPlayer()
-    local status = safeCall(getStatusFn, ply)
+function UP:BuildUnlockTab(sectionId)
+    local status = zupgradeByCategory[sectionId] or {}
 
-    if (not status or not buyFn) then
-        addMessage(self.content, 'Upgrades Unavailable', 'ZUpgrades did not expose data for this upgrade type.')
+    if (#status == 0) then
+        addMessage(self.content, 'Upgrades Unavailable', 'ZUpgrades did not expose data for this upgrade type on the server.')
         return
     end
 
-    addUpgradeRows(self.content, collectUnlockRows(status, sectionId, buyFn, self, canAffordFn, ply))
+    addUpgradeRows(self.content, collectUnlockRows(status, sectionId, self))
 end
 vox.gui.Register('vox.f4.Upgrades', UP)
 

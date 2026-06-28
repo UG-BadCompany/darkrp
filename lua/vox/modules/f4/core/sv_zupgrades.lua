@@ -2,95 +2,6 @@ util.AddNetworkString('vox.f4.zupgrades.request')
 util.AddNetworkString('vox.f4.zupgrades.purchase')
 util.AddNetworkString('vox.f4.zupgrades.sync')
 
-local upgradeRegistry = {}
-
-local API_NAMES = {'ZUpgrades', 'zUpgrades', 'zupgrades', 'ZUPGRADES', 'ZUpgrade', 'zUpgrade', 'zupgrade', 'ZUPGRADE', 'ZUpgradesAPI', 'zUpgradesAPI'}
-
-local function isZUpgradesTable(name, tbl)
-    if not istable(tbl) then return false end
-
-    local lowerName = isstring(name) and string.lower(name) or ''
-    if string.find(lowerName, 'zupgrade', 1, true) or string.find(lowerName, 'z_upgrade', 1, true) then return true end
-
-    return istable(tbl.Upgrades) or istable(tbl.upgrades) or isfunction(tbl.GetUpgrades)
-end
-
-local CHILD_API_KEYS = {'API', 'api', 'Upgrades', 'upgrades', 'Config', 'config'}
-
-local function addAPI(apis, seen, api)
-    if not istable(api) or seen[api] then return end
-
-    seen[api] = true
-    table.insert(apis, api)
-
-    for _, key in ipairs(CHILD_API_KEYS) do
-        if istable(api[key]) and not seen[api[key]] then
-            seen[api[key]] = true
-            table.insert(apis, api[key])
-        end
-    end
-end
-
-local function getZUpgradesAPIs()
-    local apis = {}
-    local seen = {}
-
-    for _, name in ipairs(API_NAMES) do
-        addAPI(apis, seen, _G[name])
-    end
-
-    for name, value in pairs(_G) do
-        if isZUpgradesTable(name, value) then
-            addAPI(apis, seen, value)
-        end
-    end
-
-    return apis
-end
-
-local function getUpgradeValue(upgrade, keys, fallback)
-    if not istable(upgrade) then return fallback end
-
-    for _, key in ipairs(keys) do
-        local value = upgrade[key]
-        if value ~= nil and not isfunction(value) then return value end
-    end
-
-    return fallback
-end
-
-local SOURCE_KEYS = {'Upgrades', 'upgrades', 'RegisteredUpgrades', 'registeredUpgrades', 'Items', 'items', 'Shop', 'shop'}
-local SOURCE_FUNCTIONS = {'GetUpgrades', 'GetUpgradeList', 'GetRegisteredUpgrades', 'GetItems', 'GetShopItems', 'GetCategories'}
-
-local function getUpgradeSource(api)
-    if not api then return {} end
-
-    for _, fnName in ipairs(SOURCE_FUNCTIONS) do
-        local fn = api[fnName]
-        if isfunction(fn) then
-            local ok, result = pcall(fn, api)
-            if ok and istable(result) then return result end
-        end
-    end
-
-    for _, key in ipairs(SOURCE_KEYS) do
-        if istable(api[key]) then return api[key] end
-    end
-
-    if istable(api.Config) then
-        for _, key in ipairs(SOURCE_KEYS) do
-            if istable(api.Config[key]) then return api.Config[key] end
-        end
-    end
-
-    if istable(api.Categories) then return api.Categories end
-    if istable(api.Config) and istable(api.Config.Categories) then return api.Config.Categories end
-
-    return {}
-end
-
-
-local CATEGORY_ORDER = {'props', 'jobs', 'shipments', 'entities'}
 local CATEGORY_LABELS = {
     props = 'Props',
     jobs = 'Job',
@@ -98,193 +9,138 @@ local CATEGORY_LABELS = {
     entities = 'Entities'
 }
 
-local function normalizeUpgradeCategory(...)
-    local haystack = string.lower(table.concat({...}, ' '))
-
-    if string.find(haystack, 'shipment', 1, true) or string.find(haystack, 'shipments', 1, true) then return 'shipments' end
-    if string.find(haystack, 'entity', 1, true) or string.find(haystack, 'entities', 1, true) then return 'entities' end
-    if string.find(haystack, 'prop', 1, true) or string.find(haystack, 'props', 1, true) then return 'props' end
-    if string.find(haystack, ' job', 1, true) or string.find(haystack, 'jobs', 1, true) or string.sub(haystack, 1, 3) == 'job' then return 'jobs' end
+local function getZUpgrades()
+    return istable(ZUpgrades) and ZUpgrades or nil
 end
 
-local NAME_KEYS = {'name', 'Name', 'title', 'Title', 'label', 'Label', 'displayName', 'DisplayName', 'printName', 'PrintName', 'upgradeName', 'UpgradeName'}
-local DESC_KEYS = {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}
+local function safeCall(fn, ...)
+    if not isfunction(fn) then return nil end
 
-local function readableNameFromID(id)
-    local text = tostring(id or 'Upgrade')
-    text = string.match(text, '([^%.%[%]/]+)$') or text
-    text = string.gsub(text, '[_%-]+', ' ')
-    text = string.gsub(text, '(%l)(%u)', '%1 %2')
-    text = string.Trim(text)
-    if text == '' then return 'Upgrade' end
+    local ok, result = pcall(fn, ...)
+    if ok then return result end
 
-    return string.upper(string.sub(text, 1, 1)) .. string.sub(text, 2)
+    return nil
 end
 
-local function getZUpgradeData(upgrade)
-    if istable(upgrade.zupgrade) then return upgrade.zupgrade end
-    if istable(upgrade.ZUpgrade) then return upgrade.ZUpgrade end
-    if istable(upgrade.zUpgrade) then return upgrade.zUpgrade end
-    return upgrade
+local function canAfford(z, fnName, ply, key)
+    local result = safeCall(z[fnName], ply, key)
+    if result == nil then return true end
+
+    return result == true
 end
 
-local function getZUpgradeName(upgrade, zData, id)
-    if isstring(upgrade.zupgrade) and upgrade.zupgrade ~= '' then return upgrade.zupgrade end
-    if isstring(upgrade.ZUpgrade) and upgrade.ZUpgrade ~= '' then return upgrade.ZUpgrade end
-    if isstring(upgrade.zUpgrade) and upgrade.zUpgrade ~= '' then return upgrade.zUpgrade end
+local function addUnlockRows(rows, z, category, statusFnName, fallbackTable, unlockedFnName, affordFnName, ply)
+    local status = safeCall(z[statusFnName], ply)
 
-    local name = getUpgradeValue(zData, NAME_KEYS, getUpgradeValue(upgrade, NAME_KEYS, nil))
-    if name ~= nil then return tostring(name) end
+    if not istable(status) and istable(z[fallbackTable]) then
+        status = {}
+        for key, info in pairs(z[fallbackTable]) do
+            local unlocked = safeCall(z[unlockedFnName], ply, key)
+            status[key] = {
+                name = info.name or tostring(key),
+                price = tonumber(info.price) or 0,
+                description = info.description or '',
+                unlocked = unlocked == true
+            }
+        end
+    end
 
-    return readableNameFromID(id)
-end
+    if not istable(status) then return end
 
-local function collectZUpgrades()
-    local apis = getZUpgradesAPIs()
-    local upgrades = {}
-    upgradeRegistry = {}
-
-    local function addUpgrade(key, upgrade, categoryHint)
-        if not istable(upgrade) then return end
-
-        local zData = getZUpgradeData(upgrade)
-        local id = getUpgradeValue(zData, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key))
-        id = tostring(id)
-
-        local category = normalizeUpgradeCategory(
-            tostring(categoryHint or ''),
-            tostring(getUpgradeValue(zData, {'category', 'Category', 'type', 'Type', 'tab', 'Tab', 'section', 'Section'}, '')),
-            tostring(getUpgradeValue(upgrade, {'category', 'Category', 'type', 'Type', 'tab', 'Tab', 'section', 'Section'}, '')),
-            id,
-            getZUpgradeName(upgrade, zData, id)
-        )
-        if not category then return end
-
-        upgradeRegistry[id] = upgrade
-
-        table.insert(upgrades, {
-            id = id,
+    for key, info in pairs(status) do
+        local unlocked = info.unlocked == true
+        table.insert(rows, {
+            id = tostring(key),
+            key = tostring(key),
             category = category,
             categoryName = CATEGORY_LABELS[category],
-            name = getZUpgradeName(upgrade, zData, id),
-            description = tostring(getUpgradeValue(zData, DESC_KEYS, getUpgradeValue(upgrade, DESC_KEYS, 'Upgrade available for purchase.'))),
-            price = tonumber(getUpgradeValue(zData, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, getUpgradeValue(upgrade, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, 0))) or 0,
-            maxLevel = tonumber(getUpgradeValue(zData, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0))) or 0
+            name = tostring(info.name or key),
+            description = tostring(info.description or ''),
+            price = tonumber(info.price) or 0,
+            unlocked = unlocked,
+            canAfford = unlocked or canAfford(z, affordFnName, ply, key)
         })
     end
-
-    for _, api in ipairs(apis) do
-        local source = getUpgradeSource(api)
-        for key, upgrade in pairs(source) do
-            if istable(upgrade) and istable(upgrade.members) then
-                for memberKey, member in pairs(upgrade.members) do
-                    addUpgrade(memberKey, member, key)
-                end
-            elseif istable(upgrade) and istable(upgrade.Members) then
-                for memberKey, member in pairs(upgrade.Members) do
-                    addUpgrade(memberKey, member, key)
-                end
-            else
-                addUpgrade(key, upgrade, key)
-            end
-        end
-    end
-
-    if #upgrades <= 0 then
-        local seen = {}
-        local found = 0
-
-        local function scanTable(tbl, path, depth)
-            if found >= 256 or depth > 4 or not istable(tbl) or seen[tbl] then return end
-            seen[tbl] = true
-
-            for key, value in pairs(tbl) do
-                if found >= 256 then return end
-
-                local keyText = tostring(key)
-                local lowerKey = string.lower(keyText)
-                if string.find(lowerKey, 'zupgrade', 1, true) or string.find(lowerKey, 'z_upgrade', 1, true) then
-                    if istable(value) then
-                        addUpgrade(path .. '.' .. keyText, value, path .. '.' .. keyText)
-                    else
-                        addUpgrade(path .. '.' .. keyText, tbl, path .. '.' .. keyText)
-                    end
-                    found = found + 1
-                elseif istable(value) then
-                    if istable(value.zupgrade) or istable(value.ZUpgrade) or istable(value.zUpgrade) then
-                        addUpgrade(path .. '.' .. keyText, value, path .. '.' .. keyText)
-                        found = found + 1
-                    else
-                        scanTable(value, path .. '.' .. keyText, depth + 1)
-                    end
-                end
-            end
-        end
-
-        scanTable(_G, '_G', 0)
-    end
-
-    table.SortByMember(upgrades, 'name', true)
-    return upgrades
 end
 
-local PURCHASE_FUNCTIONS = {'PurchaseUpgrade', 'BuyUpgrade', 'BuyUpgradeLevel', 'Buy', 'Purchase', 'Upgrade', 'UnlockUpgrade', 'Unlock'}
+local function addPropRow(rows, z, ply)
+    local cfg = z.Config or {}
+    local info = safeCall(z.GetPropUpgradeInfo, ply)
 
-local function callPurchase(owner, fn, ply, id)
-    if not isfunction(fn) then return false end
+    if not istable(info) then
+        local level = tonumber(safeCall(z.GetPlayerPropLevel, ply)) or ply:GetNWInt('ZUpgrades_PropLevel', 0)
+        local maxLevel = tonumber(cfg.MaxPropUpgrades) or 0
+        local perUpgrade = tonumber(cfg.PropLimitPerUpgrade) or 0
+        local baseLimit = tonumber(cfg.BasePropLimit) or 0
+        local limit = tonumber(safeCall(z.GetPropLimit, ply)) or (baseLimit + level * perUpgrade)
+        local maxed = maxLevel > 0 and level >= maxLevel
 
-    local ok = pcall(fn, owner, ply, id)
-    if ok then return true end
+        info = {
+            level = level,
+            maxLevel = maxLevel,
+            limit = limit,
+            maxLimit = baseLimit + maxLevel * perUpgrade,
+            nextCost = not maxed and safeCall(z.GetUpgradeCost, level) or nil,
+            maxed = maxed
+        }
+    end
 
-    ok = pcall(fn, owner, id, ply)
-    if ok then return true end
-
-    ok = pcall(fn, ply, id)
-    if ok then return true end
-
-    ok = pcall(fn, id, ply)
-    return ok == true
+    local maxed = info.maxed == true
+    table.insert(rows, {
+        id = 'prop_limit',
+        key = 'prop_limit',
+        category = 'props',
+        categoryName = CATEGORY_LABELS.props,
+        name = 'Prop Limit',
+        description = 'Increase your personal prop limit.',
+        price = tonumber(info.nextCost) or 0,
+        unlocked = maxed,
+        maxed = maxed,
+        canAfford = maxed or canAfford(z, 'CanAffordPropUpgrade', ply),
+        level = tonumber(info.level) or 0,
+        maxLevel = tonumber(info.maxLevel) or 0,
+        limit = tonumber(info.limit) or 0,
+        maxLimit = tonumber(info.maxLimit) or 0,
+        nextCost = tonumber(info.nextCost) or 0,
+        propLimitPerUpgrade = tonumber(cfg.PropLimitPerUpgrade) or 0
+    })
 end
 
-local function purchaseRegisteredUpgrade(ply, id)
-    local upgrade = upgradeRegistry[tostring(id)]
-    if not istable(upgrade) then return false end
+local function collectZUpgrades(ply)
+    local z = getZUpgrades()
+    local rows = {}
 
-    local zData = getZUpgradeData(upgrade)
-    for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
-        if callPurchase(zData, zData[fnName], ply, id) then return true end
-    end
+    if not z then return rows end
 
-    local command = getUpgradeValue(zData, {'command', 'Command', 'cmd', 'Cmd'}, getUpgradeValue(upgrade, {'command', 'Command', 'cmd', 'Cmd'}, nil))
-    if isstring(command) and command ~= '' then
-        ply:ConCommand(command)
-        return true
-    end
+    addPropRow(rows, z, ply)
+    addUnlockRows(rows, z, 'jobs', 'GetAllJobsWithStatus', 'JobUnlocks', 'IsJobUnlocked', 'CanAffordJobUnlock', ply)
+    addUnlockRows(rows, z, 'shipments', 'GetAllShipmentsWithStatus', 'ShipmentUnlocks', 'IsShipmentUnlocked', 'CanAffordShipmentUnlock', ply)
+    addUnlockRows(rows, z, 'entities', 'GetAllEntitiesWithStatus', 'EntityUnlocks', 'IsEntityUnlocked', 'CanAffordEntityUnlock', ply)
 
-    return false
+    table.SortByMember(rows, 'name', true)
+    return rows
 end
 
-local function purchaseZUpgrade(ply, id)
-    if purchaseRegisteredUpgrade(ply, id) then return true end
+local function purchaseZUpgrade(ply, category, key)
+    local z = getZUpgrades()
+    if not z or not istable(z.Purchase) then return false, 'ZUpgrades is not loaded.' end
 
-    for _, api in ipairs(getZUpgradesAPIs()) do
-        for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
-            if callPurchase(api, api[fnName], ply, id) then return true end
-        end
-
-        if istable(api.Upgrades) then
-            for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
-                if callPurchase(api.Upgrades, api.Upgrades[fnName], ply, id) then return true end
-            end
-        end
+    if category == 'props' then
+        return safeCall(z.Purchase.PropUpgrade, ply)
+    elseif category == 'jobs' then
+        return safeCall(z.Purchase.JobUnlock, ply, key)
+    elseif category == 'shipments' then
+        return safeCall(z.Purchase.ShipmentUnlock, ply, key)
+    elseif category == 'entities' then
+        return safeCall(z.Purchase.EntityUnlock, ply, key)
     end
 
-    return false
+    return false, 'Invalid upgrade category.'
 end
 
 local function sendZUpgrades(ply)
     net.Start('vox.f4.zupgrades.sync')
-    net.WriteString(util.TableToJSON(collectZUpgrades()) or '[]')
+    net.WriteString(util.TableToJSON(collectZUpgrades(ply)) or '[]')
     net.Send(ply)
 end
 
@@ -293,10 +149,12 @@ net.Receive('vox.f4.zupgrades.request', function(_, ply)
 end)
 
 net.Receive('vox.f4.zupgrades.purchase', function(_, ply)
-    local id = net.ReadString()
-    if id == '' then return end
+    local category = net.ReadString()
+    local key = net.ReadString()
 
-    purchaseZUpgrade(ply, id)
+    if category == '' then return end
+
+    purchaseZUpgrade(ply, category, key)
     timer.Simple(.2, function()
         if IsValid(ply) then sendZUpgrades(ply) end
     end)
