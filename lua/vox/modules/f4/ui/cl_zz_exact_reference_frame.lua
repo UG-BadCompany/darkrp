@@ -165,7 +165,7 @@ end
 function PANEL:BuildContent()
     self.content:Clear()
     local c=self.content
-    c.Paint=function(_,w,h) palette(); softCard(0,0,w,h,12,ColorAlpha(C.bg,225)) end
+    c.Paint=function(_,w,h) palette(); softCard(0,0,w,h,12,ColorAlpha(C.bg,225)); vox.DrawVoxCornerTicks(8,8,w-16,h-16,ColorAlpha(C.accent,80),16) end
     local search=c:Add('DTextEntry'); self.search=search; search:SetPos(18,14); search:SetSize(math.max(c:GetWide()-36,220),30); search:SetText(''); search:SetPlaceholderText('Search the menu...'); if search.SetTextInset then search:SetTextInset(28,0) end
     search.Paint=function(p,w,h) palette(); rr(0,0,w,h,7,ColorAlpha(C.panel,230)); outline(0,0,w,h,7,ColorAlpha(C.accent,p:IsHovered() and 110 or 65)); drawIcon(ICON.search,10,h*.5-6,12,12,C.soft); p:DrawTextEntryText(C.text,C.accent,C.text) end
     c.PerformLayout=function(_,w,h)

@@ -36,7 +36,7 @@ vox.f4:RegisterTab('inventory', {
 vox.f4:RegisterTab('upgrades', {
     order = 5,
     name = 'UPGRADES',
-    desc = 'Progression and command perks',
+    desc = 'Props, jobs, shipments, entities',
     mat = Material('vox_f4menu/stats.png', 'smooth mips'),
     class = 'vox.f4.Upgrades'
 })

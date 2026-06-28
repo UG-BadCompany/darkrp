@@ -7,7 +7,6 @@ local function drawMinimalEdge( self, client, scrW, scrH )
     local health = math.Clamp( client:Health() / math.max( client:GetMaxHealth(), 1 ), 0, 1 )
     local railW = hud.ScaleWide( 8 )
 
-    helpers.DrawPresetBackdrop( space + hud.ScaleWide( 18 ), scrH - space - hud.ScaleTall( 42 ), hud.ScaleWide( 320 ), hud.ScaleTall( 42 ), colors, teamColor, 8 )
     vox.DrawVoxAngledAccentBlade( space, space, railW, scrH - space * 2, colors.accent )
     vox.DrawVoxAngledAccentBlade( scrW - space - railW, space, railW, scrH - space * 2, teamColor )
     vox.DrawVoxRow( space + hud.ScaleWide( 18 ), scrH - space - hud.ScaleTall( 42 ), hud.ScaleWide( 320 ), hud.ScaleTall( 42 ), colors, { accent = teamColor, selected = true } )
