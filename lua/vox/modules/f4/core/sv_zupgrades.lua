@@ -6,18 +6,35 @@ local API_NAMES = {'ZUpgrades', 'zUpgrades', 'zupgrades', 'ZUPGRADES', 'ZUpgrade
 
 local function isZUpgradesTable(name, tbl)
     if not istable(tbl) then return false end
-    if isstring(name) and string.find(string.lower(name), 'upgrade', 1, true) then return true end
+
+    local lowerName = isstring(name) and string.lower(name) or ''
+    if string.find(lowerName, 'zupgrade', 1, true) or string.find(lowerName, 'z_upgrade', 1, true) then return true end
+
     return istable(tbl.Upgrades) or istable(tbl.upgrades) or isfunction(tbl.GetUpgrades)
 end
 
-local function getZUpgradesAPI()
+local function addAPI(apis, seen, api)
+    if not istable(api) or seen[api] then return end
+
+    seen[api] = true
+    table.insert(apis, api)
+end
+
+local function getZUpgradesAPIs()
+    local apis = {}
+    local seen = {}
+
     for _, name in ipairs(API_NAMES) do
-        if istable(_G[name]) then return _G[name] end
+        addAPI(apis, seen, _G[name])
     end
 
     for name, value in pairs(_G) do
-        if isZUpgradesTable(name, value) then return value end
+        if isZUpgradesTable(name, value) then
+            addAPI(apis, seen, value)
+        end
     end
+
+    return apis
 end
 
 local function getUpgradeValue(upgrade, keys, fallback)
@@ -62,8 +79,7 @@ local function getUpgradeSource(api)
 end
 
 local function collectZUpgrades()
-    local api = getZUpgradesAPI()
-    local source = getUpgradeSource(api)
+    local apis = getZUpgradesAPIs()
     local upgrades = {}
 
     local function addUpgrade(key, upgrade)
@@ -79,17 +95,20 @@ local function collectZUpgrades()
         })
     end
 
-    for key, upgrade in pairs(source) do
-        if istable(upgrade) and istable(upgrade.members) then
-            for memberKey, member in pairs(upgrade.members) do
-                addUpgrade(memberKey, member)
+    for _, api in ipairs(apis) do
+        local source = getUpgradeSource(api)
+        for key, upgrade in pairs(source) do
+            if istable(upgrade) and istable(upgrade.members) then
+                for memberKey, member in pairs(upgrade.members) do
+                    addUpgrade(memberKey, member)
+                end
+            elseif istable(upgrade) and istable(upgrade.Members) then
+                for memberKey, member in pairs(upgrade.Members) do
+                    addUpgrade(memberKey, member)
+                end
+            else
+                addUpgrade(key, upgrade)
             end
-        elseif istable(upgrade) and istable(upgrade.Members) then
-            for memberKey, member in pairs(upgrade.Members) do
-                addUpgrade(memberKey, member)
-            end
-        else
-            addUpgrade(key, upgrade)
         end
     end
 
@@ -116,16 +135,15 @@ local function callPurchase(owner, fn, ply, id)
 end
 
 local function purchaseZUpgrade(ply, id)
-    local api = getZUpgradesAPI()
-    if not api then return false end
-
-    for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
-        if callPurchase(api, api[fnName], ply, id) then return true end
-    end
-
-    if istable(api.Upgrades) then
+    for _, api in ipairs(getZUpgradesAPIs()) do
         for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
-            if callPurchase(api.Upgrades, api.Upgrades[fnName], ply, id) then return true end
+            if callPurchase(api, api[fnName], ply, id) then return true end
+        end
+
+        if istable(api.Upgrades) then
+            for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
+                if callPurchase(api.Upgrades, api.Upgrades[fnName], ply, id) then return true end
+            end
         end
     end
 
