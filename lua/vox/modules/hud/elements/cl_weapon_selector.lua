@@ -8,6 +8,7 @@ local slotsCache = {}
 local selectorData = {
     selectedSlot = 1,
     selectedPos = 0,
+    selectedWeapon = NULL,
     activeWeapon = NULL
 }
 
@@ -21,6 +22,76 @@ local function resetSlotsCache()
     slotsCache = {}
     for index = 1, MAX_SLOTS do
         slotsCache[ index ] = {}
+    end
+end
+
+local function getWeaponSlotIndex( wep )
+    if ( not IsValid( wep ) ) then return 1 end
+    return math.Clamp( ( wep:GetSlot() or 0 ) + 1, 1, MAX_SLOTS )
+end
+
+local function getWeaponSlotPos( wep )
+    if ( not IsValid( wep ) ) then return 0 end
+    return tonumber( wep:GetSlotPos() ) or 0
+end
+
+local function setSelectedWeaponPosition( slotIndex, pos )
+    local slotWeapons = slotsCache[ slotIndex ]
+    local weapon = slotWeapons and slotWeapons[ pos ]
+
+    if ( not IsValid( weapon ) ) then return false end
+
+    selectorData.selectedSlot = slotIndex
+    selectorData.selectedPos = pos
+    selectorData.selectedWeapon = weapon
+
+    return true
+end
+
+local function syncSelectionToWeapon( weapon )
+    if ( not IsValid( weapon ) ) then return false end
+
+    for slotIndex, slotWeapons in ipairs( slotsCache ) do
+        for pos, slotWeapon in ipairs( slotWeapons ) do
+            if ( slotWeapon == weapon ) then
+                return setSelectedWeaponPosition( slotIndex, pos )
+            end
+        end
+    end
+
+    return false
+end
+
+local function rebuildSlotsCache( client )
+    resetSlotsCache()
+
+    if ( not IsValid( client ) ) then return end
+
+    selectorData.activeWeapon = client:GetActiveWeapon()
+
+    for _, wep in ipairs( client:GetWeapons() ) do
+        if ( IsValid( wep ) ) then
+            table.insert( slotsCache[ getWeaponSlotIndex( wep ) ], wep )
+        end
+    end
+
+    for _, cacheList in ipairs( slotsCache ) do
+        table.sort( cacheList, function( a, b )
+            local slotPosA = getWeaponSlotPos( a )
+            local slotPosB = getWeaponSlotPos( b )
+
+            if ( slotPosA == slotPosB ) then
+                return tostring( a:GetClass() ) < tostring( b:GetClass() )
+            end
+
+            return slotPosA < slotPosB
+        end )
+    end
+
+    if ( not toggleState and syncSelectionToWeapon( selectorData.activeWeapon ) ) then return end
+
+    if ( not syncSelectionToWeapon( selectorData.selectedWeapon ) ) then
+        syncSelectionToWeapon( selectorData.activeWeapon )
     end
 end
 
@@ -38,16 +109,7 @@ local function toggleWeaponSelector( state, bScroll )
         end )
 
         if ( bScroll and not oldState and toggleFraction == 0 ) then
-            local activeWeapon = selectorData.activeWeapon
-            for slotIndex, slotWeapons in ipairs( slotsCache ) do
-                for pos, weapon in ipairs( slotWeapons ) do
-                    if ( weapon == activeWeapon ) then
-                        selectorData.selectedSlot = slotIndex
-                        selectorData.selectedPos = pos
-                        break
-                    end
-                end
-            end
+            syncSelectionToWeapon( selectorData.activeWeapon )
         end
     end
 end
@@ -200,6 +262,7 @@ do
             local weapon = slotWeapons[ data.selectedPos ]
             if ( IsValid( weapon ) ) then
                 lastWeapon = LocalPlayer():GetActiveWeapon()
+                data.selectedWeapon = weapon
                 input.SelectWeapon( weapon )
                 toggleWeaponSelector( false )
             end
@@ -209,26 +272,30 @@ do
     local function cycleWeapons( slot )
         local data = selectorData
         local wasActive = toggleState
-        local prevSlot = data.selectedSlot
 
+        rebuildSlotsCache( LocalPlayer() )
         toggleWeaponSelector( true )
 
+        local prevSlot = data.selectedSlot
         if ( not wasActive and prevSlot == slot and not quickSwitchEnabled ) then return end
 
-        local slotData = slotsCache[ slot ]
+        local slotData = slotsCache[ slot ] or {}
         local pos = data.selectedPos or 0
         local weaponsAmount = #slotData
+
+        if ( weaponsAmount == 0 ) then return end
 
         if ( prevSlot ~= slot ) then
             pos = 0
         end
 
-        data.selectedSlot = slot
-        data.selectedPos = pos + 1
+        local nextPos = pos + 1
 
-        if ( data.selectedPos > weaponsAmount ) then
-            data.selectedPos = 1
+        if ( nextPos > weaponsAmount ) then
+            nextPos = 1
         end
+
+        setSelectedWeaponPosition( slot, nextPos )
 
         if ( quickSwitchEnabled ) then
             selectWeapon()
@@ -236,18 +303,19 @@ do
     end
 
     local function scrollWeapons( delta )
+        rebuildSlotsCache( LocalPlayer() )
         toggleWeaponSelector( true, true )
 
         local data = selectorData
         local slot = data.selectedSlot or 1
-        local slotData = slotsCache[ slot ]
+        local slotData = slotsCache[ slot ] or {}
         local pos = data.selectedPos or 0
         local weaponsAmount = #slotData
 
-        data.selectedPos = pos + delta
+        local nextPos = pos + delta
 
-        local bNext = data.selectedPos > weaponsAmount
-        local bPrev = data.selectedPos < 1
+        local bNext = nextPos > weaponsAmount
+        local bPrev = nextPos < 1
 
         if ( bNext or bPrev ) then
             local newSlot = data.selectedSlot
@@ -259,11 +327,12 @@ do
                 local amount = #slotsCache[ newSlot ]
 
                 if ( amount > 0 ) then
-                    data.selectedPos = ( bPrev and amount or 1 )
-                    data.selectedSlot = newSlot
+                    setSelectedWeaponPosition( newSlot, bPrev and amount or 1 )
                     break
                 end
             end
+        else
+            setSelectedWeaponPosition( slot, nextPos )
         end
 
         if ( quickSwitchEnabled ) then
@@ -316,27 +385,5 @@ hook.Add( 'HUDShouldDraw', 'vox.hud.HideWeaponSelector', function( name )
 end )
 
 hook.Add( 'Think', 'vox.hud.UpdateWeaponSelector', function()
-    local client = LocalPlayer()
-    if ( not IsValid( client ) ) then return end
-
-    local weaponsList = client:GetWeapons()
-
-    resetSlotsCache()
-
-    selectorData.activeWeapon = client:GetActiveWeapon()
-
-    for _, wep in ipairs( weaponsList ) do
-        if ( IsValid( wep ) ) then
-            local slotIndex = math.Clamp( wep:GetSlot() + 1, 1, MAX_SLOTS )
-            local slotWeapons = slotsCache[ slotIndex ]
-            assert( slotWeapons, string.format( 'invalid slot index %d', slotIndex ) )
-            table.insert( slotWeapons, wep )
-        end
-    end
-
-    for index, cacheList in ipairs( slotsCache ) do
-        table.sort( cacheList, function( a, b )
-            return a:GetSlotPos() < b:GetSlotPos()
-        end )
-    end
+    rebuildSlotsCache( LocalPlayer() )
 end )

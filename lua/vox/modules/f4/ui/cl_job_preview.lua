@@ -21,6 +21,29 @@ local colorFavoriteIconActive = Color(255, 241, 93)
 
 local L = function(...) return vox.lang:Get(...) end
 
+local function collectModelPaths(modelData)
+    local models = {}
+    local seen = {}
+
+    local function addModel(modelPath)
+        modelPath = tostring(modelPath or ''):Trim()
+        if (modelPath == '' or seen[modelPath]) then return end
+
+        models[#models + 1] = modelPath
+        seen[modelPath] = true
+    end
+
+    if (istable(modelData)) then
+        for _, modelPath in ipairs(modelData) do
+            addModel(modelPath)
+        end
+    else
+        addModel(modelData)
+    end
+
+    return models
+end
+
 local function generateDescHTML(desc)
     -- white-space: pre-wrap -- supports /t aswell
     local size = vox.ScaleTall(12)
@@ -100,13 +123,23 @@ function PANEL:Init()
     self.iconModel.PerformLayout = function(panel, w, h)
         local children = panel.slots
         local amount = #children
-        local columns = 2
-        local rows = math.ceil(amount / columns)
-        local size = vox.ScaleTall(36)
+        if (amount == 0) then return end
+
         local padding = vox.ScaleTall(10)
         local space = vox.ScaleTall(5)
-        local X = w - size * columns - padding - space
-        local Y = h - size * rows - padding - space * (rows - 1)
+        local maxSize = vox.ScaleTall(36)
+        local minSize = vox.ScaleTall(22)
+        local availableW = math.max(w - padding * 2, minSize)
+        local availableH = math.max(h - padding * 2, minSize)
+        local columns = math.Clamp(math.ceil(amount / math.max(1, math.floor(availableH / (maxSize + space)))), 2, math.min(amount, 6))
+        local rows = math.ceil(amount / columns)
+        local size = math.min(maxSize, math.floor((availableW - space * (columns - 1)) / columns), math.floor((availableH - space * (rows - 1)) / rows))
+        size = math.max(minSize, size)
+
+        local totalW = size * columns + space * (columns - 1)
+        local totalH = size * rows + space * (rows - 1)
+        local X = w - totalW - padding
+        local Y = math.max(padding, h - totalH - padding)
 
         local x = X
         for index = 1, amount do
@@ -257,9 +290,9 @@ function PANEL:Init()
 end
 
 function PANEL:SetupJob(job)
-    local models = job.model
-    local multipleModels = istable(models) and #models > 1
-    local model = istable(models) and models[1] or models
+    local models = collectModelPaths(job.model)
+    local multipleModels = #models > 1
+    local model = models[1] or LocalPlayer():GetModel()
     local desc = job.description:Trim()
     local weaponsList = job.weapons or {}
     local teamIndex = job.team
@@ -305,8 +338,6 @@ function PANEL:SetupJob(job)
     if (multipleModels) then
         local oldActiveModel
         for index, model in ipairs(models) do
-            if (index > 14) then break end
-
             local button = self.iconModel:Add('DButton')
             button:SetText('')
             button.active = index == 1

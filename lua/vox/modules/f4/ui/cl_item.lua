@@ -10,6 +10,22 @@ local fontDesc = vox.Font('Comfortaa@16')
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
 
+local function normalizeModelPath(modelPath)
+    if (istable(modelPath)) then
+        for _, candidate in ipairs(modelPath) do
+            candidate = normalizeModelPath(candidate)
+            if (candidate) then return candidate end
+        end
+
+        return nil
+    end
+
+    modelPath = tostring(modelPath or ''):Trim()
+    if (modelPath == '') then return nil end
+
+    return modelPath
+end
+
 local function getThemeColors()
     if vox.f4 and vox.f4.GetReferenceColors then
         local colors = vox.f4.GetReferenceColors()
@@ -163,6 +179,9 @@ function PANEL:Paint(w, h)
 end
 
 function PANEL:SetModel(modelPath)
+    modelPath = normalizeModelPath(modelPath)
+    if (not modelPath) then return end
+
     self.iconModel:SetModel(modelPath)
 end
 
