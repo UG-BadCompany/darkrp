@@ -2,6 +2,8 @@ util.AddNetworkString('vox.f4.zupgrades.request')
 util.AddNetworkString('vox.f4.zupgrades.purchase')
 util.AddNetworkString('vox.f4.zupgrades.sync')
 
+local upgradeRegistry = {}
+
 local API_NAMES = {'ZUpgrades', 'zUpgrades', 'zupgrades', 'ZUPGRADES', 'ZUpgrade', 'zUpgrade', 'zupgrade', 'ZUPGRADE', 'ZUpgradesAPI', 'zUpgradesAPI'}
 
 local function isZUpgradesTable(name, tbl)
@@ -90,17 +92,22 @@ end
 local function collectZUpgrades()
     local apis = getZUpgradesAPIs()
     local upgrades = {}
+    upgradeRegistry = {}
 
     local function addUpgrade(key, upgrade)
         if not istable(upgrade) then return end
 
-        local id = getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key)
+        local zData = istable(upgrade.zupgrade) and upgrade.zupgrade or istable(upgrade.ZUpgrade) and upgrade.ZUpgrade or istable(upgrade.zUpgrade) and upgrade.zUpgrade or upgrade
+        local id = getUpgradeValue(zData, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key))
+        id = tostring(id)
+        upgradeRegistry[id] = upgrade
+
         table.insert(upgrades, {
-            id = tostring(id),
-            name = tostring(getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id)),
-            description = tostring(getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, 'Upgrade available for purchase.')),
-            price = tonumber(getUpgradeValue(upgrade, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, 0)) or 0,
-            maxLevel = tonumber(getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0)) or 0
+            id = id,
+            name = tostring(getUpgradeValue(zData, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, getUpgradeValue(upgrade, {'name', 'Name', 'title', 'Title', 'label', 'Label'}, id))),
+            description = tostring(getUpgradeValue(zData, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, 'Upgrade available for purchase.'))),
+            price = tonumber(getUpgradeValue(zData, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, getUpgradeValue(upgrade, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, 0))) or 0,
+            maxLevel = tonumber(getUpgradeValue(zData, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0))) or 0
         })
     end
 
@@ -119,6 +126,40 @@ local function collectZUpgrades()
                 addUpgrade(key, upgrade)
             end
         end
+    end
+
+    if #upgrades <= 0 then
+        local seen = {}
+        local found = 0
+
+        local function scanTable(tbl, path, depth)
+            if found >= 256 or depth > 4 or not istable(tbl) or seen[tbl] then return end
+            seen[tbl] = true
+
+            for key, value in pairs(tbl) do
+                if found >= 256 then return end
+
+                local keyText = tostring(key)
+                local lowerKey = string.lower(keyText)
+                if string.find(lowerKey, 'zupgrade', 1, true) or string.find(lowerKey, 'z_upgrade', 1, true) then
+                    if istable(value) then
+                        addUpgrade(path .. '.' .. keyText, value)
+                    else
+                        addUpgrade(path .. '.' .. keyText, tbl)
+                    end
+                    found = found + 1
+                elseif istable(value) then
+                    if istable(value.zupgrade) or istable(value.ZUpgrade) or istable(value.zUpgrade) then
+                        addUpgrade(path .. '.' .. keyText, value)
+                        found = found + 1
+                    else
+                        scanTable(value, path .. '.' .. keyText, depth + 1)
+                    end
+                end
+            end
+        end
+
+        scanTable(_G, '_G', 0)
     end
 
     table.SortByMember(upgrades, 'name', true)
@@ -143,7 +184,27 @@ local function callPurchase(owner, fn, ply, id)
     return ok == true
 end
 
+local function purchaseRegisteredUpgrade(ply, id)
+    local upgrade = upgradeRegistry[tostring(id)]
+    if not istable(upgrade) then return false end
+
+    local zData = istable(upgrade.zupgrade) and upgrade.zupgrade or istable(upgrade.ZUpgrade) and upgrade.ZUpgrade or istable(upgrade.zUpgrade) and upgrade.zUpgrade or upgrade
+    for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
+        if callPurchase(zData, zData[fnName], ply, id) then return true end
+    end
+
+    local command = getUpgradeValue(zData, {'command', 'Command', 'cmd', 'Cmd'}, getUpgradeValue(upgrade, {'command', 'Command', 'cmd', 'Cmd'}, nil))
+    if isstring(command) and command ~= '' then
+        ply:ConCommand(command)
+        return true
+    end
+
+    return false
+end
+
 local function purchaseZUpgrade(ply, id)
+    if purchaseRegisteredUpgrade(ply, id) then return true end
+
     for _, api in ipairs(getZUpgradesAPIs()) do
         for _, fnName in ipairs(PURCHASE_FUNCTIONS) do
             if callPurchase(api, api[fnName], ply, id) then return true end
