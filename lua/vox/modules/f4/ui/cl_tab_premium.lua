@@ -169,6 +169,23 @@ local function getUpgradeValue(upgrade, keys, fallback)
     return fallback
 end
 
+
+local UPGRADE_CATEGORIES = {
+    {id = 'props', name = 'Props'},
+    {id = 'jobs', name = 'Job'},
+    {id = 'shipments', name = 'Shipment'},
+    {id = 'entities', name = 'Entities'}
+}
+
+local function normalizeUpgradeCategory(...)
+    local haystack = string.lower(table.concat({...}, ' '))
+
+    if string.find(haystack, 'shipment', 1, true) then return 'shipments' end
+    if string.find(haystack, 'entity', 1, true) or string.find(haystack, 'entities', 1, true) then return 'entities' end
+    if string.find(haystack, 'prop', 1, true) then return 'props' end
+    if string.find(haystack, ' job', 1, true) or string.find(haystack, 'jobs', 1, true) or string.sub(haystack, 1, 3) == 'job' then return 'jobs' end
+end
+
 local UPGRADE_NAME_KEYS = {'name', 'Name', 'title', 'Title', 'label', 'Label', 'displayName', 'DisplayName', 'printName', 'PrintName', 'upgradeName', 'UpgradeName'}
 
 local function readableNameFromID(id)
@@ -226,11 +243,19 @@ local function collectZUpgrades()
     local apiTables = api and {api, api.API, api.api, api.Upgrades, api.upgrades, api.Config, api.config} or {}
     local upgrades = {}
 
-    local function addUpgrade(key, upgrade)
+    local function addUpgrade(key, upgrade, categoryHint)
         if not istable(upgrade) then return end
 
         local id = getUpgradeIdentifier(upgrade, key)
         local name = tostring(getUpgradeValue(upgrade, UPGRADE_NAME_KEYS, readableNameFromID(id)))
+        local category = normalizeUpgradeCategory(
+            tostring(categoryHint or ''),
+            tostring(getUpgradeValue(upgrade, {'category', 'Category', 'type', 'Type', 'tab', 'Tab', 'section', 'Section'}, '')),
+            tostring(id),
+            name
+        )
+        if not category then return end
+
         local desc = tostring(getUpgradeValue(upgrade, {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}, formatUpgradeCost(upgrade)))
         local level = getUpgradeLevel(upgrade, id)
         local maxLevel = tonumber(getUpgradeValue(upgrade, {'max', 'Max', 'maxLevel', 'MaxLevel', 'levels', 'Levels'}, 0)) or 0
@@ -238,6 +263,7 @@ local function collectZUpgrades()
 
         table.insert(upgrades, {
             id = id,
+            category = category,
             sort = tostring(id),
             source = upgrade,
             row = {name, desc, state, formatUpgradeCost(upgrade)}
@@ -250,14 +276,14 @@ local function collectZUpgrades()
             for key, upgrade in pairs(source) do
                 if istable(upgrade) and istable(upgrade.members) then
                     for memberKey, member in pairs(upgrade.members) do
-                        addUpgrade(memberKey, member)
+                        addUpgrade(memberKey, member, key)
                     end
                 elseif istable(upgrade) and istable(upgrade.Members) then
                     for memberKey, member in pairs(upgrade.Members) do
-                        addUpgrade(memberKey, member)
+                        addUpgrade(memberKey, member, key)
                     end
                 else
-                    addUpgrade(key, upgrade)
+                    addUpgrade(key, upgrade, key)
                 end
             end
         end
@@ -266,15 +292,19 @@ local function collectZUpgrades()
     if #upgrades <= 0 and istable(vox.f4.zupgrades.upgrades) then
         for _, upgrade in ipairs(vox.f4.zupgrades.upgrades) do
             local id = tostring(upgrade.id or upgrade.name)
-            local state = (tonumber(upgrade.maxLevel) or 0) > 0 and ('LVL 0/' .. upgrade.maxLevel) or 'AVAILABLE'
+            local category = normalizeUpgradeCategory(tostring(upgrade.category or ''), tostring(upgrade.categoryName or ''), id, tostring(upgrade.name or ''))
+            if category then
+                local state = (tonumber(upgrade.maxLevel) or 0) > 0 and ('LVL 0/' .. upgrade.maxLevel) or 'AVAILABLE'
 
-            table.insert(upgrades, {
-                id = id,
-                sort = tostring(upgrade.name or id),
-                source = upgrade,
-                row = {tostring(upgrade.name or readableNameFromID(id)), tostring(upgrade.description or 'Upgrade available for purchase.'), state, upgrade.price and money(upgrade.price) or 'Free'},
-                server = true
-            })
+                table.insert(upgrades, {
+                    id = id,
+                    category = category,
+                    sort = tostring(upgrade.name or id),
+                    source = upgrade,
+                    row = {tostring(upgrade.name or readableNameFromID(id)), tostring(upgrade.description or 'Upgrade available for purchase.'), state, upgrade.price and money(upgrade.price) or 'Free'},
+                    server = true
+                })
+            end
         end
     end
 
@@ -376,14 +406,31 @@ function UP:Rebuild()
         return
     end
 
-    local rows = {}
+    local upgradesByCategory = {}
     local rowsByRef = {}
-    for _, upgrade in ipairs(upgrades) do
-        table.insert(rows, upgrade.row)
-        rowsByRef[upgrade.row] = upgrade
+    for _, category in ipairs(UPGRADE_CATEGORIES) do
+        upgradesByCategory[category.id] = {}
     end
 
-    addRows(self, rows, function(row)
+    for _, upgrade in ipairs(upgrades) do
+        if upgradesByCategory[upgrade.category] then
+            table.insert(upgradesByCategory[upgrade.category], upgrade.row)
+            rowsByRef[upgrade.row] = upgrade
+        end
+    end
+
+    local navbar = self:Add('vox.Navbar')
+    navbar:Dock(TOP)
+    navbar:SetTall(vox.ScaleTall(44))
+    navbar:DockMargin(0, 0, 0, vox.ScaleTall(8))
+
+    local tabContent = self:Add('Panel')
+    tabContent:Dock(FILL)
+
+    navbar:SetContainer(tabContent)
+    navbar:SetKeepTabContent(true)
+
+    local function onUpgradeClick(row)
         local upgrade = rowsByRef[row]
         if not upgrade then return end
 
@@ -391,7 +438,27 @@ function UP:Rebuild()
         if not purchased and notification and notification.AddLegacy then
             notification.AddLegacy('ZUpgrades purchase API was not detected for ' .. tostring(upgrade.id) .. '.', NOTIFY_ERROR, 5)
         end
-    end)
+    end
+
+    for _, category in ipairs(UPGRADE_CATEGORIES) do
+        local tab = navbar:AddTab({
+            name = category.name,
+            class = 'Panel',
+            onBuild = function(content)
+                content:DockPadding(0, vox.ScaleTall(10), 0, 0)
+                local rows = upgradesByCategory[category.id]
+                if #rows <= 0 then
+                    rows = {{'No ' .. category.name .. ' upgrades', 'ZUpgrades did not send upgrades for this category.', 'EMPTY', 'WAITING'}}
+                end
+
+                addRows(content, rows, onUpgradeClick)
+            end
+        })
+
+        if category.id == 'props' then
+            navbar:SelectTab(tab, true)
+        end
+    end
 end
 vox.gui.Register('vox.f4.Upgrades', UP)
 

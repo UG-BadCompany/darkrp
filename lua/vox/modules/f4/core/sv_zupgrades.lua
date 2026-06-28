@@ -89,6 +89,24 @@ local function getUpgradeSource(api)
     return {}
 end
 
+
+local CATEGORY_ORDER = {'props', 'jobs', 'shipments', 'entities'}
+local CATEGORY_LABELS = {
+    props = 'Props',
+    jobs = 'Job',
+    shipments = 'Shipment',
+    entities = 'Entities'
+}
+
+local function normalizeUpgradeCategory(...)
+    local haystack = string.lower(table.concat({...}, ' '))
+
+    if string.find(haystack, 'shipment', 1, true) or string.find(haystack, 'shipments', 1, true) then return 'shipments' end
+    if string.find(haystack, 'entity', 1, true) or string.find(haystack, 'entities', 1, true) then return 'entities' end
+    if string.find(haystack, 'prop', 1, true) or string.find(haystack, 'props', 1, true) then return 'props' end
+    if string.find(haystack, ' job', 1, true) or string.find(haystack, 'jobs', 1, true) or string.sub(haystack, 1, 3) == 'job' then return 'jobs' end
+end
+
 local NAME_KEYS = {'name', 'Name', 'title', 'Title', 'label', 'Label', 'displayName', 'DisplayName', 'printName', 'PrintName', 'upgradeName', 'UpgradeName'}
 local DESC_KEYS = {'description', 'Description', 'desc', 'Desc', 'summary', 'Summary'}
 
@@ -126,16 +144,28 @@ local function collectZUpgrades()
     local upgrades = {}
     upgradeRegistry = {}
 
-    local function addUpgrade(key, upgrade)
+    local function addUpgrade(key, upgrade, categoryHint)
         if not istable(upgrade) then return end
 
         local zData = getZUpgradeData(upgrade)
         local id = getUpgradeValue(zData, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, getUpgradeValue(upgrade, {'id', 'ID', 'uniqueID', 'uniqueId', 'uid', 'key', 'class', 'name'}, key))
         id = tostring(id)
+
+        local category = normalizeUpgradeCategory(
+            tostring(categoryHint or ''),
+            tostring(getUpgradeValue(zData, {'category', 'Category', 'type', 'Type', 'tab', 'Tab', 'section', 'Section'}, '')),
+            tostring(getUpgradeValue(upgrade, {'category', 'Category', 'type', 'Type', 'tab', 'Tab', 'section', 'Section'}, '')),
+            id,
+            getZUpgradeName(upgrade, zData, id)
+        )
+        if not category then return end
+
         upgradeRegistry[id] = upgrade
 
         table.insert(upgrades, {
             id = id,
+            category = category,
+            categoryName = CATEGORY_LABELS[category],
             name = getZUpgradeName(upgrade, zData, id),
             description = tostring(getUpgradeValue(zData, DESC_KEYS, getUpgradeValue(upgrade, DESC_KEYS, 'Upgrade available for purchase.'))),
             price = tonumber(getUpgradeValue(zData, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, getUpgradeValue(upgrade, {'price', 'Price', 'cost', 'Cost', 'money', 'Money'}, 0))) or 0,
@@ -148,14 +178,14 @@ local function collectZUpgrades()
         for key, upgrade in pairs(source) do
             if istable(upgrade) and istable(upgrade.members) then
                 for memberKey, member in pairs(upgrade.members) do
-                    addUpgrade(memberKey, member)
+                    addUpgrade(memberKey, member, key)
                 end
             elseif istable(upgrade) and istable(upgrade.Members) then
                 for memberKey, member in pairs(upgrade.Members) do
-                    addUpgrade(memberKey, member)
+                    addUpgrade(memberKey, member, key)
                 end
             else
-                addUpgrade(key, upgrade)
+                addUpgrade(key, upgrade, key)
             end
         end
     end
@@ -175,14 +205,14 @@ local function collectZUpgrades()
                 local lowerKey = string.lower(keyText)
                 if string.find(lowerKey, 'zupgrade', 1, true) or string.find(lowerKey, 'z_upgrade', 1, true) then
                     if istable(value) then
-                        addUpgrade(path .. '.' .. keyText, value)
+                        addUpgrade(path .. '.' .. keyText, value, path .. '.' .. keyText)
                     else
-                        addUpgrade(path .. '.' .. keyText, tbl)
+                        addUpgrade(path .. '.' .. keyText, tbl, path .. '.' .. keyText)
                     end
                     found = found + 1
                 elseif istable(value) then
                     if istable(value.zupgrade) or istable(value.ZUpgrade) or istable(value.zUpgrade) then
-                        addUpgrade(path .. '.' .. keyText, value)
+                        addUpgrade(path .. '.' .. keyText, value, path .. '.' .. keyText)
                         found = found + 1
                     else
                         scanTable(value, path .. '.' .. keyText, depth + 1)
