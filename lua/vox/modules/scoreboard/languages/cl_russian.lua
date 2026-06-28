@@ -34,6 +34,8 @@ LANG['scoreboard_btn_return'] = 'Вернуть'
 LANG['scoreboard_btn_respawn'] = 'Возродить'
 LANG['scoreboard_btn_slay'] = 'Убить'
 
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
+
 -- Words
 LANG['rank_id'] = 'Идентификатор ранга'
 LANG['name'] = 'Название'

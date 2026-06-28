@@ -39,6 +39,8 @@ LANG['scoreboard_btn_respawn'] = 'Yeniden Dogur'
 LANG['scoreboard_btn_slay'] = 'Öldür'
 LANG['scoreboard_btn_spectate'] = 'İzle'
 
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
+
 -- Words
 LANG['rank_id'] = 'Yetki Tanımlayıcı'
 LANG['name'] = 'İsim'

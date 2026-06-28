@@ -13,7 +13,7 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or fallbackJobTabColors.primary, colors.secondary or fallbackJobTabColors.secondary, colors.tertiary or fallbackJobTabColors.tertiary, colors.accent or fallbackJobTabColors.accent
+    return colors.primary or fallbackJobTabColors.primary, colors.secondary or fallbackJobTabColors.secondary, colors.secondary or fallbackJobTabColors.secondary, colors.accent or fallbackJobTabColors.accent
 end
 
 
@@ -50,7 +50,6 @@ function PANEL:Init()
         local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
         if vox.DrawVoxPanel then
             vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
-            draw.RoundedBox(3, 0, vox.ScaleTall(8), vox.ScaleWide(5), h - vox.ScaleTall(16), themeAccent)
         else
             draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
         end

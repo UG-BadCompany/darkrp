@@ -12,7 +12,53 @@ local fallbackAdminColors = {
 local L = function(...) return vox.lang:Get(...) end
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or fallbackAdminColors.primary, colors.secondary or fallbackAdminColors.secondary, colors.tertiary or fallbackAdminColors.tertiary, colors.accent or fallbackAdminColors.accent, colors.textPrimary or fallbackAdminColors.text, colors.textSecondary or fallbackAdminColors.muted
+    return colors.primary or fallbackAdminColors.primary, colors.secondary or fallbackAdminColors.secondary, colors.secondary or fallbackAdminColors.secondary, colors.accent or fallbackAdminColors.accent, colors.textPrimary or fallbackAdminColors.text, colors.textSecondary or fallbackAdminColors.muted
+end
+
+local ADMIN_ACTIONS = {
+    { label = 'Bring', id = 'bring' },
+    { label = 'Goto', id = 'goto' },
+    { label = 'Return', id = 'returnply' },
+    { label = 'Freeze', id = 'freeze' },
+    { label = 'Warn', id = 'warn', prompt = true, desc = 'Enter a warning reason.' },
+    { label = 'Kick', id = 'kick', prompt = true, desc = 'Enter a kick reason.' },
+    {
+        label = 'DRC Compliance',
+        id = 'drc_compliance',
+        prompt = true,
+        desc = 'Enter DRC reason and optional seconds. Example: failrp 180',
+        fallbackReason = 'general',
+        fallbackDuration = 180
+    },
+    { label = 'Slay', id = 'slay' }
+}
+
+local function notifyActionError(text)
+    if notification and notification.AddLegacy then
+        notification.AddLegacy(text, NOTIFY_ERROR, 4)
+    end
+end
+
+local function runAdminAction(panel, action)
+    local ply = panel.selectedPlayer
+    if not IsValid(ply) then
+        notifyActionError('Select a player first.')
+        return
+    end
+
+    if vox.admin and vox.admin.OpenPlayerAction then
+        vox.admin.OpenPlayerAction(ply, action.id, {
+            prompt = action.prompt,
+            title = action.label,
+            desc = action.desc and (action.desc .. ' Target: ' .. ply:Nick()) or ('Run ' .. action.label .. ' on ' .. ply:Nick() .. '?'),
+            fallbackReason = action.fallbackReason,
+            fallbackDuration = action.fallbackDuration,
+            acceptText = action.label
+        })
+        return
+    end
+
+    RunConsoleCommand('vox_admin_action', action.id, ply:SteamID(), '', '0')
 end
 
 do
@@ -47,7 +93,7 @@ do
             end
             btn.DoClick = function()
                 self.activeSection = label
-                if label == 'Player Management' then
+                if label == 'Player Management' or label == 'Player Actions' then
                     self:BuildPlayerManagement()
                 elseif label == 'Settings' then
                     self:BuildSettings()
@@ -77,6 +123,7 @@ do
     function PANEL:BuildPlayerManagement()
         local content = self.content
         content:Clear()
+        self.selectedPlayer = IsValid(self.selectedPlayer) and self.selectedPlayer or player.GetAll()[1]
 
         local header = self:AddAdminBlock(content, 'Player Management')
         header:Dock(TOP)
@@ -86,14 +133,14 @@ do
             local _, _, _, accent, _, muted = getThemeColors()
             draw.SimpleText('Online staff tools, player status, and moderation shortcuts.', vox.Font('Comfortaa@13'), vox.ScaleWide(14), vox.ScaleTall(46), muted, 0, 0)
             draw.SimpleText(#player.GetAll() .. ' ONLINE', vox.Font('Comfortaa Bold@12'), w - vox.ScaleWide(16), vox.ScaleTall(22), accent, 2, 1)
+            draw.SimpleText(IsValid(self.selectedPlayer) and ('TARGET: ' .. self.selectedPlayer:Nick()) or 'NO TARGET SELECTED', vox.Font('Comfortaa Bold@11'), w - vox.ScaleWide(16), vox.ScaleTall(48), muted, 2, 1)
         end
 
         local actions = self:AddAdminBlock(content, 'Player Actions')
         actions:Dock(RIGHT)
         actions:SetWide(vox.ScaleWide(230))
         actions:DockMargin(vox.ScaleWide(10), 0, 0, 0)
-        local actionRows = {'Kick Player', 'Warn Player', 'Bring / Goto', 'Freeze Player', 'Open Reports'}
-        for index, label in ipairs(actionRows) do
+        for index, action in ipairs(ADMIN_ACTIONS) do
             local row = actions:Add('DButton')
             row:Dock(TOP)
             row:DockMargin(vox.ScaleWide(12), index == 1 and vox.ScaleTall(48) or 0, vox.ScaleWide(12), vox.ScaleTall(7))
@@ -103,10 +150,10 @@ do
                 local _, secondary, _, accent = getThemeColors()
                 draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(secondary, 230))
                 local _, _, _, _, text = getThemeColors()
-                draw.SimpleText(label, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(12), h * .5, text, 0, 1)
+                draw.SimpleText(action.label, vox.Font('Comfortaa Bold@12'), vox.ScaleWide(12), h * .5, text, 0, 1)
                 draw.SimpleText('›', vox.Font('Comfortaa Bold@18'), w - vox.ScaleWide(12), h * .5, accent, 2, 1)
             end
-            row.DoClick = function() RunConsoleCommand('say', '/' .. string.lower(label:gsub(' / ', ' '):gsub(' ', ''))) end
+            row.DoClick = function() runAdminAction(self, action) end
         end
 
         local list = self:AddAdminBlock(content, 'Players')
@@ -116,13 +163,22 @@ do
         scroll:DockMargin(vox.ScaleWide(12), vox.ScaleTall(48), vox.ScaleWide(12), vox.ScaleTall(12))
 
         for _, ply in ipairs(player.GetAll()) do
-            local row = scroll:Add('Panel')
+            local row = scroll:Add('DButton')
             row:Dock(TOP)
             row:DockMargin(0, 0, 0, vox.ScaleTall(7))
             row:SetTall(vox.ScaleTall(44))
-            row.Paint = function(_, w, h)
+            row:SetText('')
+            row.DoClick = function()
+                self.selectedPlayer = ply
+            end
+            row.Paint = function(panel, w, h)
                 local _, secondary, _, accent = getThemeColors()
-                draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(secondary, 235))
+                local selected = self.selectedPlayer == ply
+                draw.RoundedBox(8, 0, 0, w, h, selected and ColorAlpha(accent, 42) or ColorAlpha(secondary, panel:IsHovered() and 245 or 235))
+                if selected or panel:IsHovered() then
+                    surface.SetDrawColor(ColorAlpha(accent, selected and 140 or 80))
+                    surface.DrawOutlinedRect(0, 0, w, h, 1)
+                end
                 draw.RoundedBox(6, vox.ScaleWide(10), vox.ScaleTall(9), vox.ScaleTall(26), vox.ScaleTall(26), ColorAlpha(accent, 35))
                 draw.SimpleText(string.sub(ply:Nick() or '?', 1, 1), vox.Font('Comfortaa Bold@14'), vox.ScaleWide(23), h * .5, fallbackAdminColors.text, 1, 1)
                 draw.SimpleText(ply:Nick(), vox.Font('Comfortaa Bold@13'), vox.ScaleWide(46), vox.ScaleTall(10), fallbackAdminColors.text, 0, 0)

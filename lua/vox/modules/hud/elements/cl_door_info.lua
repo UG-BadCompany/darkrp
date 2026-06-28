@@ -208,12 +208,9 @@ local function drawInfo( ent, client )
         surface.SetMaterial( MAT_DOOR )
         surface.DrawTexturedRect( x + 42, y + 50, 66, 100 )
 
-        draw.RoundedBox( 46, x + w - 106, y - 18, 92, 92, ColorAlpha( theme.card, 238 ) )
-        surface.SetDrawColor( accentColor.r, accentColor.g, accentColor.b, 225 )
-        surface.DrawOutlinedRect( x + w - 106, y - 18, 92, 92, 2 )
         surface.SetDrawColor( accentColor.r, accentColor.g, accentColor.b, 230 )
         surface.SetMaterial( MAT_LOCK )
-        surface.DrawTexturedRect( x + w - 73, y + 11, 28, 28 )
+        surface.DrawTexturedRect( x + w - 58, y + 24, 24, 24 )
 
         draw.DrawText( title, titleFont == FONT_NAME and FONT_SMALL_NAME or titleFont, x + 142, y + 48, theme.text, TEXT_ALIGN_LEFT )
         draw.DrawText( subtitleLine, FONT_HELP, x + 142, y + 93, theme.muted, TEXT_ALIGN_LEFT )

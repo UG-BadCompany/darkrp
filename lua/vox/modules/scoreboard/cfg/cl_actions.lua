@@ -14,6 +14,24 @@ local TYPE_NAME = 1
 local TYPE_STEAMID64 = 2
 local TYPE_STEAMID32 = 3
 
+local function runVoxAdminAction(ply, actionID, cmdData)
+    cmdData = cmdData or {}
+
+    if cmdData.prompt and vox.admin and vox.admin.OpenPlayerAction then
+        vox.admin.OpenPlayerAction(ply, actionID, {
+            prompt = true,
+            title = cmdData.title or actionID,
+            desc = cmdData.desc or ('Enter a reason for ' .. ply:Nick() .. '.'),
+            fallbackReason = cmdData.fallbackReason,
+            fallbackDuration = cmdData.fallbackDuration,
+            acceptText = cmdData.acceptText or cmdData.title or actionID
+        })
+        return
+    end
+
+    RunConsoleCommand('vox_admin_action', actionID, ply:SteamID(), cmdData.reason or '', tostring(cmdData.duration or 0))
+end
+
 local function adminModeHandler(uniqueID, priority, validator, data)
     table.insert(adminHandlers, {
         uniqueID = uniqueID,
@@ -40,7 +58,7 @@ local function registerAdminButton(cmd, cmdData)
             end
 
             if ( handler.uniqueID == 'vox_admin_action' ) then
-                RunConsoleCommand('vox_admin_action', command == 'return' and 'returnply' or command, ply:SteamID())
+                runVoxAdminAction(ply, command == 'return' and 'returnply' or command, cmdData)
             else
                 RunConsoleCommand(handler.uniqueID, command, targetID)
             end
@@ -98,8 +116,34 @@ registerAdminButton('bring', {})
 registerAdminButton('return', {})
 registerAdminButton('respawn', {})
 registerAdminButton('slay', {})
-registerAdminButton('kick', {})
-registerAdminButton('warn', {})
+registerAdminButton('kick', {
+    prompt = true,
+    title = 'Kick',
+    desc = 'Enter a kick reason.',
+    acceptText = 'Kick'
+})
+registerAdminButton('warn', {
+    prompt = true,
+    title = 'Warn',
+    desc = 'Enter a warning reason.',
+    acceptText = 'Warn'
+})
+
+vox.scoreboard:RegisterButton('drc_compliance', {
+    callback = function(ply)
+        runVoxAdminAction(ply, 'drc_compliance', {
+            prompt = true,
+            title = 'DRC Compliance',
+            desc = 'Enter DRC reason and optional seconds. Example: failrp 180',
+            fallbackReason = 'general',
+            fallbackDuration = 180,
+            acceptText = 'DRC Compliance'
+        })
+    end,
+    getVisible = function(client)
+        return IsValid(client) and client:IsAdmin()
+    end
+})
 
 --[[------------------------------
 Admin modes

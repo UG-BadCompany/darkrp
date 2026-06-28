@@ -19,6 +19,48 @@ local function getQuickActions()
     return {}
 end
 
+function vox.admin.ParseReasonDuration(value, fallbackReason, fallbackDuration)
+    value = tostring(value or ''):Trim()
+
+    local duration = tonumber(value:match('%s(%d+)$') or value:match('^(%d+)$')) or fallbackDuration or 0
+    local reason = value
+
+    if duration > 0 then
+        reason = value:gsub('%s*%d+$', ''):Trim()
+    end
+
+    if reason == '' then
+        reason = fallbackReason or 'No reason provided'
+    end
+
+    return reason, duration
+end
+
+function vox.admin.RunPlayerAction(actionID, ply, reason, duration)
+    if not IsValid(ply) then return end
+
+    RunConsoleCommand('vox_admin_action', actionID, ply:SteamID(), tostring(reason or ''), tostring(duration or 0))
+end
+
+function vox.admin.OpenPlayerAction(ply, actionID, options)
+    if not IsValid(ply) then return end
+
+    options = options or {}
+
+    if not options.prompt then
+        vox.admin.RunPlayerAction(actionID, ply, options.reason or '', options.duration or 0)
+        return
+    end
+
+    local title = options.title or 'Player Action'
+    local desc = options.desc or ('Enter a reason for ' .. ply:Nick() .. '.')
+
+    vox.SimpleQuery(title, desc, true, function(value)
+        local reason, duration = vox.admin.ParseReasonDuration(value, options.fallbackReason, options.fallbackDuration)
+        vox.admin.RunPlayerAction(actionID, ply, reason, duration)
+    end, options.acceptText or title, nil, 'Cancel')
+end
+
 net.Receive( 'VoxUI.Admin.Logs', function()
     local rows = net.ReadUInt( 8 )
     local lines = {}

@@ -9,7 +9,7 @@ local colorBG = vox.OffsetColor(fallbackJobPreviewColors.primary, -3)
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or fallbackJobPreviewColors.primary, colors.secondary or fallbackJobPreviewColors.secondary, colors.tertiary or fallbackJobPreviewColors.tertiary, colors.accent or fallbackJobPreviewColors.accent, colors.money or fallbackJobPreviewColors.money
+    return colors.primary or fallbackJobPreviewColors.primary, colors.secondary or fallbackJobPreviewColors.secondary, colors.secondary or fallbackJobPreviewColors.secondary, colors.accent or fallbackJobPreviewColors.accent, colors.money or fallbackJobPreviewColors.money
 end
 local colorFavoriteIconIdle = Color(235, 235, 235)
 local colorFavoriteIconActive = Color(255, 241, 93)
@@ -432,7 +432,6 @@ function PANEL:Paint(w, h)
 
             local modelX = divModel:GetPos()
             draw.RoundedBox(10, modelX - vox.ScaleWide(24), Y, divModel:GetWide() + padding + vox.ScaleWide(24), H, colorBG)
-            draw.RoundedBox(4, modelX - vox.ScaleWide(12), Y + vox.ScaleTall(18), vox.ScaleWide(8), H - vox.ScaleTall(36), themeAccent)
             draw.RoundedBoxEx(8, 0, Y, self.divInfo:GetWide() * .58, vox.ScaleTall(58), ColorAlpha(self.colorSlightGradient, 38), false, true, false, true)
             vox.DrawMatGradient(0, Y, self.divInfo:GetWide(), H * .5, BOTTOM, ColorAlpha(self.colorSlightGradient, 85))
 

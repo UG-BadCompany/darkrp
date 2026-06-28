@@ -246,6 +246,14 @@ reg('noclip', function(a,t) t:SetMoveType(t:GetMoveType()==MOVETYPE_NOCLIP and M
 reg('god', function(a,t) if t:HasGodMode() then t:GodDisable() else t:GodEnable() end return true end)
 reg('ban', function(a,t,r,d) if runULX('ban', t, d, r) then return true end if runSAM('ban', t, d, r) then return true end return 'No ULX/SAM ban command is available on this server.' end)
 reg('jail', function(a,t,r,d) if runULX('jail', t, d, r) then return true end if runSAM('jail', t, d, r) then return true end return 'No ULX/SAM jail command is available on this server.' end)
+reg('drc_compliance', function(a,t,r,d)
+    if not DRC or not DRC.JailPlayer then return 'DRC Compliance addon is not loaded.' end
+    if not DRC.JailPoint or not DRC.JailPoint.pos then return 'No DRC jail point set. Use /drc_setjail in the compliance room.' end
+
+    local duration = tonumber(d) or (DRC.Config and DRC.Config.DefaultHoldSeconds) or 180
+    DRC.JailPlayer(a, t, r, duration)
+    return true
+end)
 reg('unjail', function(a,t) if runULX('unjail', t) then return true end if runSAM('unjail', t) then return true end return 'No ULX/SAM unjail command is available on this server.' end)
 reg('setjob', function(a,t,r,d) local name = tostring(r or '') if name == '' or name == 'No reason provided' then return 'Provide a job/team name as the reason.' end for id, data in pairs(RPExtraTeams or {}) do if string.lower(data.name or '') == string.lower(name) or tostring(id) == name then t:changeTeam(id, true, true) return true end end return 'Unknown DarkRP job: ' .. name end)
 reg('setmoney', function(a,t,r,d) local amount = tonumber(r) or tonumber(d) if not amount then return 'Provide a numeric money amount as the reason.' end local current = t.getDarkRPVar and (t:getDarkRPVar('money') or 0) or 0 if t.addMoney then t:addMoney(amount - current) elseif t.setDarkRPVar then t:setDarkRPVar('money', amount) else return 'DarkRP money API unavailable.' end return true end)

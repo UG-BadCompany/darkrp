@@ -40,6 +40,8 @@ LANG['scoreboard_btn_slay'] = 'Töten'
 LANG['scoreboard_btn_spectate'] = 'Zuschauen'
 
 -- Wörter
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
+
 LANG['rank_id'] = 'Rang-Identifikator'
 LANG['name'] = 'Name'
 LANG['effect'] = 'Effekt'

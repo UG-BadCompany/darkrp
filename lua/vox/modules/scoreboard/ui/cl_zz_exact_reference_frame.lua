@@ -53,6 +53,76 @@ local function safeJob(ply) return IsValid(ply) and (ply:getDarkRPVar('job') or 
 local function teamColor(ply) return (IsValid(ply) and team.GetColor(ply:Team())) or C.accent end
 local function level(ply) return (IsValid(ply) and ((ply.getDarkRPVar and ply:getDarkRPVar('level')) or (ply.GetLevel and ply:GetLevel()))) or 0 end
 
+local function runScoreboardAdminAction(ply, actionID, options)
+    if not IsValid(ply) then return end
+
+    options = options or {}
+    if vox.admin and vox.admin.OpenPlayerAction then
+        vox.admin.OpenPlayerAction(ply, actionID, options)
+        return
+    end
+
+    RunConsoleCommand('vox_admin_action', actionID, ply:SteamID(), options.reason or '', tostring(options.duration or 0))
+end
+
+local function addAdminOption(menu, label, material, ply, actionID, options)
+    local opt = menu:AddOption(label, function()
+        runScoreboardAdminAction(ply, actionID, options)
+    end)
+    opt:SetMaterial(material)
+end
+
+local function openPlayerMenu(ply)
+    if not IsValid(ply) then return end
+
+    local menu = vgui.Create('vox.Menu')
+    menu:SetMinimumWidth(vox.ScaleWide(170))
+
+    local options = {
+        {'View Profile', ICON.players, function() ply:ShowProfile() end},
+        {'Message', ICON.arrow, function() RunConsoleCommand('say', '/pm ' .. ply:Nick() .. ' ') end},
+        {'Add Friend', ICON.ranks, function() gui.OpenURL('steam://friends/add/' .. ply:SteamID64()) end},
+        {'Report Player', Material('vox_scoreboard/death.png', 'smooth mips'), function() RunConsoleCommand('say', '@ Reporting ' .. ply:Nick() .. ': ') end},
+        {'Mute', ICON.microphoneMuted, function() ply:SetMuted(not ply:IsMuted()) end}
+    }
+
+    for _, data in ipairs(options) do
+        local opt = menu:AddOption(data[1], data[3])
+        opt:SetMaterial(data[2])
+    end
+
+    local client = LocalPlayer()
+    if IsValid(client) and client:IsAdmin() then
+        addAdminOption(menu, 'Bring', ICON.arrow, ply, 'bring')
+        addAdminOption(menu, 'Goto', ICON.arrow, ply, 'goto')
+        addAdminOption(menu, 'Return', ICON.arrow, ply, 'returnply')
+        addAdminOption(menu, 'Freeze', ICON.admin, ply, ply:IsFlagSet(FL_FROZEN) and 'unfreeze' or 'freeze')
+        addAdminOption(menu, 'Warn', Material('vox_scoreboard/death.png', 'smooth mips'), ply, 'warn', {
+            prompt = true,
+            title = 'Warn',
+            desc = 'Enter a warning reason. Target: ' .. ply:Nick(),
+            acceptText = 'Warn'
+        })
+        addAdminOption(menu, 'Kick', Material('vox_scoreboard/slay.png', 'smooth mips'), ply, 'kick', {
+            prompt = true,
+            title = 'Kick',
+            desc = 'Enter a kick reason. Target: ' .. ply:Nick(),
+            acceptText = 'Kick'
+        })
+        addAdminOption(menu, 'DRC Compliance', ICON.admin, ply, 'drc_compliance', {
+            prompt = true,
+            title = 'DRC Compliance',
+            desc = 'Enter DRC reason and optional seconds. Example: failrp 180',
+            fallbackReason = 'general',
+            fallbackDuration = 180,
+            acceptText = 'DRC Compliance'
+        })
+    end
+
+    menu:ToCursor()
+    menu:Open()
+end
+
 local function getCategory(ply)
     if not IsValid(ply) then return 'Other' end
     local job = string.lower(safeJob(ply))
@@ -235,29 +305,11 @@ function PANEL:BuildRows()
         row.avatar = row:Add('AvatarImage')
         row.avatar:SetPlayer(ply, 64)
         row.avatar:SetPaintedManually(true)
+        row.DoClick = function()
+            openPlayerMenu(ply)
+        end
         row.DoRightClick = function()
-            if not IsValid(ply) then return end
-
-            local m = vgui.Create('vox.Menu')
-            m:SetMinimumWidth(vox.ScaleWide(150))
-            local options = {
-                {'View Profile', ICON.players, function() ply:ShowProfile() end},
-                {'Message', ICON.arrow, function() RunConsoleCommand('say', '/pm ' .. ply:Nick() .. ' ') end},
-                {'Add Friend', ICON.ranks, function() gui.OpenURL('steam://friends/add/' .. ply:SteamID64()) end},
-                {'Report Player', Material('vox_scoreboard/death.png', 'smooth mips'), function() RunConsoleCommand('say', '@ Reporting ' .. ply:Nick() .. ': ') end},
-                {'Mute', ICON.microphoneMuted, function() ply:SetMuted(not ply:IsMuted()) end},
-                {'Kick Player', Material('vox_scoreboard/slay.png', 'smooth mips'), function()
-                    vox.SimpleQuery('Kick Player', 'Are you sure you want to kick ' .. ply:Nick() .. ' from the server?', true, function(reason)
-                        RunConsoleCommand('say', '!kick ' .. ply:SteamID() .. ' ' .. (reason ~= '' and reason or 'No reason provided'))
-                    end, 'Kick Player', nil, 'Cancel')
-                end}
-            }
-            for _, data in ipairs(options) do
-                local opt = m:AddOption(data[1], data[3])
-                opt:SetMaterial(data[2])
-            end
-            m:ToCursor()
-            m:Open()
+            openPlayerMenu(ply)
         end
         row.Paint = function(panel, rw, rh) self:PaintPlayerRow(panel, rw, rh) end
         y = y + 46

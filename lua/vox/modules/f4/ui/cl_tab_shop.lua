@@ -23,7 +23,7 @@ local L = function(...) return vox.lang:Get(...) end
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or fallbackShopTabColors.primary, colors.secondary or fallbackShopTabColors.secondary, colors.tertiary or fallbackShopTabColors.tertiary, colors.accent or fallbackShopTabColors.accent
+    return colors.primary or fallbackShopTabColors.primary, colors.secondary or fallbackShopTabColors.secondary, colors.secondary or fallbackShopTabColors.secondary, colors.accent or fallbackShopTabColors.accent
 end
 
 
@@ -48,7 +48,6 @@ function PANEL:Init()
         local themePrimary, themeSecondary, themeTertiary, themeAccent = getThemeColors()
         if vox.DrawVoxPanel then
             vox.DrawVoxPanel(0, 0, w, h, { primary = themeSecondary, secondary = themeTertiary, accent = themeAccent }, 8)
-            draw.RoundedBox(3, 0, vox.ScaleTall(10), vox.ScaleWide(6), h - vox.ScaleTall(20), themeAccent)
         else
             draw.RoundedBox(8, 0, 0, w, h, themeSecondary)
         end

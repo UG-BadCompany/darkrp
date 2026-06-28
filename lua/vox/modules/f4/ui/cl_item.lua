@@ -12,7 +12,7 @@ local colorFavoriteIconActive = Color(255, 241, 93)
 
 local function getThemeColors()
     local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
-    return colors.primary or fallbackF4ItemColors.primary, colors.secondary or fallbackF4ItemColors.secondary, colors.tertiary or fallbackF4ItemColors.tertiary, colors.accent or fallbackF4ItemColors.accent
+    return colors.primary or fallbackF4ItemColors.primary, colors.secondary or fallbackF4ItemColors.secondary, colors.secondary or fallbackF4ItemColors.secondary, colors.accent or fallbackF4ItemColors.accent
 end
 
 local PANEL = {}

@@ -41,6 +41,7 @@ LANG['scoreboard_btn_slay'] = 'Slay'
 LANG['scoreboard_btn_spectate'] = 'Spectate'
 LANG['scoreboard_btn_kick'] = 'Kick'
 LANG['scoreboard_btn_warn'] = 'Warn'
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
 
 -- Words
 LANG['rank_id'] = 'Rank Identifier'

@@ -1,6 +1,5 @@
 local COLOR_PRIMARY = vox:Config('colors.primary')
 local COLOR_SECONDARY = vox:Config('colors.secondary')
-local COLOR_TERTIARY = vox:Config('colors.tertiary')
 local COLOR_ACCENT = vox:Config('colors.accent')
 local COLOR_TEXT = Color(238, 244, 255)
 local COLOR_MUTED = Color(145, 160, 178)
@@ -10,7 +9,7 @@ local function getThemeColors()
     return {
         primary = colors.primary or COLOR_PRIMARY,
         secondary = colors.secondary or COLOR_SECONDARY,
-        tertiary = colors.tertiary or COLOR_TERTIARY,
+        tertiary = colors.secondary or COLOR_SECONDARY,
         accent = colors.accent or Color(70, 135, 255),
         money = colors.money or Color(35, 225, 120),
         negative = colors.negative or Color(255, 75, 95),
@@ -30,7 +29,6 @@ local function paintCommandRow(panel, w, h, title, desc, state, action)
     vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
     draw.RoundedBox(9, 1, 1, w - 2, h - 2, ColorAlpha(colors.primary, 82))
     vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(colors.accent, hovered and 18 or 7))
-    draw.RoundedBox(2, vox.ScaleWide(12), vox.ScaleTall(13), vox.ScaleWide(4), h - vox.ScaleTall(26), colors.accent)
 
     draw.SimpleText(title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(28), vox.ScaleTall(14), colors.text, 0, 0)
     draw.SimpleText(desc, vox.Font('Comfortaa@13'), vox.ScaleWide(28), vox.ScaleTall(38), colors.muted, 0, 0)
@@ -54,7 +52,6 @@ local function buildHeader(parent, title, subtitle)
     header.Paint = function(_, w, h)
         local colors = getThemeColors()
         vox.DrawVoxPanel(0, 0, w, h, { primary = ColorAlpha(colors.primary, 245), secondary = colors.secondary, accent = colors.accent }, 12)
-        draw.RoundedBox(3, vox.ScaleWide(14), vox.ScaleTall(13), vox.ScaleWide(5), h - vox.ScaleTall(26), colors.accent)
         draw.SimpleText(title, vox.Font('Comfortaa Bold@24'), vox.ScaleWide(32), vox.ScaleTall(15), colors.text, 0, 0)
         draw.SimpleText(subtitle, vox.Font('Comfortaa@14'), vox.ScaleWide(34), vox.ScaleTall(43), colors.muted, 0, 0)
     end
@@ -136,7 +133,6 @@ local function addMessage(parent, title, body)
     pnl.Paint = function(_, w, h)
         local colors = getThemeColors()
         vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
-        draw.RoundedBox(2, vox.ScaleWide(14), vox.ScaleTall(18), vox.ScaleWide(4), h - vox.ScaleTall(36), colors.negative)
         draw.SimpleText(title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(30), vox.ScaleTall(20), colors.text, 0, 0)
         draw.SimpleText(body, vox.Font('Comfortaa@13'), vox.ScaleWide(30), vox.ScaleTall(48), colors.muted, 0, 0)
     end
@@ -167,7 +163,6 @@ local function paintUpgradeRow(panel, w, h, data)
     vox.DrawVoxPanel(0, 0, w, h, { primary = colors.secondary, secondary = colors.tertiary, accent = colors.accent }, 9)
     draw.RoundedBox(9, 1, 1, w - 2, h - 2, ColorAlpha(colors.primary, 82))
     vox.DrawMatGradient(0, 0, w, h, RIGHT, ColorAlpha(data.disabled and colors.muted or colors.accent, hovered and 18 or 7))
-    draw.RoundedBox(2, vox.ScaleWide(12), vox.ScaleTall(13), vox.ScaleWide(4), h - vox.ScaleTall(26), data.disabled and colors.muted or colors.accent)
 
     draw.SimpleText(data.title, vox.Font('Comfortaa Bold@17'), vox.ScaleWide(28), vox.ScaleTall(13), colors.text, 0, 0)
     draw.SimpleText(data.desc or '', vox.Font('Comfortaa@13'), vox.ScaleWide(28), vox.ScaleTall(38), colors.muted, 0, 0)
