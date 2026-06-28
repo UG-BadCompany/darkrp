@@ -247,7 +247,6 @@ local function drawReferenceMain(self, client, sw, sh)
     local job = client:getDarkRPVar('job') or team.GetName(client:Team()) or 'Citizen'
 
     glass(x,y,w,h,math.max(hud.GetRoundness and hud.GetRoundness() or 14 * scale, 12 * scale),C.accent)
-    draw.SimpleText('IN-GAME HUD','VoxRef.Tiny',x+w/2,y-13 * scale,C.text,1,1)
 
     local avSize = math.floor(70 * scale)
     local avX, avY = x + math.floor(10 * scale), y + math.floor(17 * scale)

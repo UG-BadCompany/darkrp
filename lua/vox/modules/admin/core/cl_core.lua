@@ -42,6 +42,203 @@ function vox.admin.RunPlayerAction(actionID, ply, reason, duration)
     RunConsoleCommand('vox_admin_action', actionID, ply:SteamID(), tostring(reason or ''), tostring(duration or 0))
 end
 
+local function getAdminPromptColors()
+    local colors = vox.GetUIThemeColors and vox.GetUIThemeColors() or {}
+
+    return {
+        bg = colors.primary or Color(5, 15, 31),
+        panel = colors.secondary or Color(8, 25, 47),
+        card = colors.tertiary or Color(11, 35, 65),
+        accent = colors.accent or Color(0, 174, 255),
+        text = colors.textPrimary or color_white,
+        muted = colors.textSecondary or Color(155, 172, 195),
+        negative = colors.negative or Color(255, 75, 95)
+    }
+end
+
+local function notifyPromptError(text)
+    if notification and notification.AddLegacy then
+        notification.AddLegacy(text, NOTIFY_ERROR, 4)
+    end
+end
+
+local function addPromptLabel(parent, text, color)
+    local label = parent:Add('vox.Label')
+    label:Dock(TOP)
+    label:SetTall(vox.ScaleTall(18))
+    label:Font('Comfortaa Bold@12')
+    label:SetText(text)
+    label:SetTextColor(color)
+    return label
+end
+
+local function paintPromptEntry(entry, colors)
+    entry:SetTextColor(colors.text)
+    entry:SetPlaceholderColor(ColorAlpha(colors.muted, 190))
+    entry:SetColorIdle(ColorAlpha(colors.bg, 248))
+    entry:SetColorHover(ColorAlpha(colors.bg, 248))
+end
+
+local function addReasonChip(parent, label, value, reasonEntry, colors)
+    local chip = parent:Add('DButton')
+    chip:Dock(LEFT)
+    chip:DockMargin(0, 0, vox.ScaleWide(6), 0)
+    chip:SetWide(vox.ScaleWide(72))
+    chip:SetText('')
+    chip.Paint = function(panel, w, h)
+        draw.RoundedBox(7, 0, 0, w, h, ColorAlpha(colors.accent, panel:IsHovered() and 52 or 24))
+        surface.SetDrawColor(ColorAlpha(colors.accent, panel:IsHovered() and 145 or 72))
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.SimpleText(label, vox.Font('Comfortaa Bold@11'), w * .5, h * .5, colors.text, 1, 1)
+    end
+    chip.DoClick = function()
+        reasonEntry:SetValue(value)
+        if reasonEntry.textEntry and reasonEntry.textEntry.RequestFocus then
+            reasonEntry.textEntry:RequestFocus()
+        end
+    end
+end
+
+function vox.admin.OpenDRCJailPrompt(ply, actionID, options)
+    if not IsValid(ply) then return end
+
+    options = options or {}
+    local colors = getAdminPromptColors()
+    local frameW = math.min(vox.ScaleWide(560), ScrW() - vox.ScaleWide(80))
+    local frameH = math.min(vox.ScaleTall(300), ScrH() - vox.ScaleTall(80))
+    local margin = vox.ScaleTall(18)
+    local gap = vox.ScaleTall(10)
+
+    if IsValid(vox.admin.DRCJailPrompt) then
+        vox.admin.DRCJailPrompt:Remove()
+    end
+
+    local frame = vgui.Create('vox.Frame')
+    vox.admin.DRCJailPrompt = frame
+    frame:SetTitle('DRC Compliance (Jail)')
+    frame:SetSize(frameW, frameH)
+    frame:Center()
+    frame:MakePopup()
+    frame:ShowCloseButton(false)
+    frame:Focus()
+    frame.Paint = function(panel, w, h)
+        draw.RoundedBox(10, 0, 0, w, h, ColorAlpha(colors.bg, 248))
+        draw.RoundedBox(10, 1, 1, w - 2, h - 2, ColorAlpha(colors.panel, 220))
+        if vox.DrawMatGradient then
+            vox.DrawMatGradient(1, 1, w - 2, h - 2, RIGHT, ColorAlpha(colors.accent, 26))
+        end
+        surface.SetDrawColor(ColorAlpha(colors.accent, 150))
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+    end
+
+    local content = frame:Add('Panel')
+    content:Dock(FILL)
+    content:DockMargin(margin, margin, margin, margin)
+
+    local header = content:Add('Panel')
+    header:Dock(TOP)
+    header:SetTall(vox.ScaleTall(46))
+    header:DockMargin(0, 0, 0, gap)
+    header.Paint = function(_, w, h)
+        draw.RoundedBox(8, 0, 0, w, h, ColorAlpha(colors.bg, 185))
+        surface.SetDrawColor(ColorAlpha(colors.accent, 70))
+        surface.DrawOutlinedRect(0, 0, w, h, 1)
+        draw.SimpleText('TARGET', vox.Font('Comfortaa Bold@10'), vox.ScaleWide(14), vox.ScaleTall(9), colors.muted, 0, 0)
+        draw.SimpleText(ply:Nick(), vox.Font('Comfortaa Bold@16'), vox.ScaleWide(14), vox.ScaleTall(25), colors.text, 0, 1)
+        draw.SimpleText(ply:SteamID(), vox.Font('Comfortaa@11'), w - vox.ScaleWide(14), vox.ScaleTall(25), colors.muted, 2, 1)
+    end
+
+    local fields = content:Add('Panel')
+    fields:Dock(TOP)
+    fields:SetTall(vox.ScaleTall(66))
+    fields:DockMargin(0, 0, 0, gap)
+
+    local durationWrap = fields:Add('Panel')
+    durationWrap:Dock(RIGHT)
+    durationWrap:SetWide(vox.ScaleWide(124))
+
+    addPromptLabel(durationWrap, 'Time', colors.muted)
+    local durationEntry = durationWrap:Add('vox.TextEntry')
+    durationEntry:Dock(FILL)
+    durationEntry:SetPlaceholderText('180')
+    durationEntry:SetValue(tostring(options.fallbackDuration or 180))
+    durationEntry:SetNumeric(true)
+    paintPromptEntry(durationEntry, colors)
+
+    local reasonWrap = fields:Add('Panel')
+    reasonWrap:Dock(FILL)
+    reasonWrap:DockMargin(0, 0, vox.ScaleWide(10), 0)
+
+    addPromptLabel(reasonWrap, 'Reason', colors.muted)
+    local reasonEntry = reasonWrap:Add('vox.TextEntry')
+    reasonEntry:Dock(FILL)
+    reasonEntry:SetPlaceholderText('failrp, rdm, nlr, prop, mic, general')
+    reasonEntry:SetValue(options.fallbackReason or 'general')
+    paintPromptEntry(reasonEntry, colors)
+
+    local chips = content:Add('Panel')
+    chips:Dock(TOP)
+    chips:SetTall(vox.ScaleTall(28))
+    chips:DockMargin(0, 0, 0, gap)
+    addReasonChip(chips, 'FailRP', 'failrp', reasonEntry, colors)
+    addReasonChip(chips, 'RDM', 'rdm', reasonEntry, colors)
+    addReasonChip(chips, 'NLR', 'nlr', reasonEntry, colors)
+    addReasonChip(chips, 'Props', 'prop', reasonEntry, colors)
+    addReasonChip(chips, 'Mic', 'mic', reasonEntry, colors)
+    addReasonChip(chips, 'General', 'general', reasonEntry, colors)
+
+    local footer = content:Add('Panel')
+    footer:Dock(BOTTOM)
+    footer:SetTall(vox.ScaleTall(36))
+
+    local cancel = footer:Add('vox.Button')
+    cancel:Dock(RIGHT)
+    cancel:SetWide(vox.ScaleWide(150))
+    cancel:SetText('Cancel')
+    cancel:Font('Comfortaa Bold@14')
+    cancel:SetColorIdle(ColorAlpha(colors.bg, 235))
+    cancel:SetColorHover(ColorAlpha(colors.card, 245))
+    cancel.DoClick = function()
+        frame:Remove()
+    end
+
+    local confirm = footer:Add('vox.Button')
+    confirm:Dock(FILL)
+    confirm:DockMargin(0, 0, vox.ScaleWide(10), 0)
+    confirm:SetText('Send to DRC')
+    confirm:Font('Comfortaa Bold@14')
+    confirm:SetMasking(true)
+    confirm:SetGradientColor(ColorAlpha(colors.accent, 180))
+    confirm:SetColorIdle(ColorAlpha(colors.accent, 225))
+
+    local function submit()
+        local reason = tostring(reasonEntry:GetValue() or ''):Trim()
+        local durationText = tostring(durationEntry:GetValue() or ''):Trim()
+        local duration = durationText ~= '' and tonumber(durationText) or tonumber(options.fallbackDuration) or 180
+
+        if reason == '' then reason = options.fallbackReason or 'general' end
+        if not duration or duration <= 0 then
+            durationEntry:Highlight(colors.negative, 2)
+            notifyPromptError('Enter a DRC jail time in seconds.')
+            return false
+        end
+
+        duration = math.Clamp(math.floor(duration), 10, 3600)
+        vox.admin.RunPlayerAction(actionID, ply, reason, duration)
+        frame:Remove()
+    end
+
+    confirm.DoClick = submit
+    reasonEntry.OnEnter = submit
+    durationEntry.OnEnter = submit
+
+    if reasonEntry.textEntry and reasonEntry.textEntry.RequestFocus then
+        reasonEntry.textEntry:RequestFocus()
+    end
+
+    return frame
+end
+
 function vox.admin.OpenPlayerAction(ply, actionID, options)
     if not IsValid(ply) then return end
 
@@ -50,6 +247,10 @@ function vox.admin.OpenPlayerAction(ply, actionID, options)
     if not options.prompt then
         vox.admin.RunPlayerAction(actionID, ply, options.reason or '', options.duration or 0)
         return
+    end
+
+    if actionID == 'drc_compliance' then
+        return vox.admin.OpenDRCJailPrompt(ply, actionID, options)
     end
 
     local title = options.title or 'Player Action'
