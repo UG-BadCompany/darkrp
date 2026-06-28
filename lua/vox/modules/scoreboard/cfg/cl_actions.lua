@@ -133,11 +133,11 @@ vox.scoreboard:RegisterButton('drc_compliance', {
     callback = function(ply)
         runVoxAdminAction(ply, 'drc_compliance', {
             prompt = true,
-            title = 'DRC Compliance',
-            desc = 'Enter DRC reason and optional seconds. Example: failrp 180',
+            title = 'DRC Compliance (Jail)',
+            desc = 'Enter DRC jail reason and optional seconds. Example: failrp 180',
             fallbackReason = 'general',
             fallbackDuration = 180,
-            acceptText = 'DRC Compliance'
+            acceptText = 'DRC Compliance (Jail)'
         })
     end,
     getVisible = function(client)

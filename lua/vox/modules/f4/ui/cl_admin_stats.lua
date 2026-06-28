@@ -28,10 +28,10 @@ local ADMIN_ACTIONS = {
     { label = 'Warn', id = 'warn', prompt = true, desc = 'Enter a warning reason.' },
     { label = 'Kick', id = 'kick', prompt = true, desc = 'Enter a kick reason.' },
     {
-        label = 'DRC Compliance',
+        label = 'DRC Compliance (Jail)',
         id = 'drc_compliance',
         prompt = true,
-        desc = 'Enter DRC reason and optional seconds. Example: failrp 180',
+        desc = 'Enter DRC jail reason and optional seconds. Example: failrp 180',
         fallbackReason = 'general',
         fallbackDuration = 180
     },

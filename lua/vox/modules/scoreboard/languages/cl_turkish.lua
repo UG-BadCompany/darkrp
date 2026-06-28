@@ -39,7 +39,7 @@ LANG['scoreboard_btn_respawn'] = 'Yeniden Dogur'
 LANG['scoreboard_btn_slay'] = 'Öldür'
 LANG['scoreboard_btn_spectate'] = 'İzle'
 
-LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance (Jail)'
 
 -- Words
 LANG['rank_id'] = 'Yetki Tanımlayıcı'

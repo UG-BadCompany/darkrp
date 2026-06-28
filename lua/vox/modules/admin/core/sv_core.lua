@@ -230,6 +230,120 @@ local function runSAM(command, target, duration, reason)
     return true
 end
 
+local DRC_REASON_MAP_DEFAULTS = {
+    rdm = 'RDM',
+    randomdeathmatch = 'RDM',
+    ['random death match'] = 'RDM',
+    failrp = 'FAILRP',
+    fail = 'FAILRP',
+    fearrp = 'FEARRP',
+    fear = 'FEARRP',
+    nlr = 'NLR',
+    newlife = 'NLR',
+    ['new life rule'] = 'NLR',
+    meta = 'META',
+    metagame = 'META',
+    metagaming = 'META',
+    prop = 'PROP',
+    props = 'PROP',
+    propspam = 'PROP',
+    ['prop spam'] = 'PROP',
+    propblock = 'PROP',
+    ['prop block'] = 'PROP',
+    proppush = 'PROP',
+    ['prop push'] = 'PROP',
+    mic = 'MIC',
+    micspam = 'MIC',
+    ['mic spam'] = 'MIC',
+    chatspam = 'MIC',
+    combatlog = 'COMBATLOG',
+    ['combat logging'] = 'COMBATLOG',
+    disconnect = 'COMBATLOG',
+    build = 'BUILD',
+    building = 'BUILD',
+    job = 'JOB',
+    jobabuse = 'JOB',
+    abuse = 'JOB',
+    general = 'GENERAL',
+    other = 'GENERAL'
+}
+
+local DRC_ESTIMATED_DURATION_DEFAULTS = {
+    INTRO = 9,
+    RDM = 10,
+    FAILRP = 10,
+    FEARRP = 10,
+    NLR = 10,
+    META = 10,
+    PROP = 10,
+    MIC = 10,
+    COMBATLOG = 10,
+    BUILD = 10,
+    JOB = 10,
+    GENERAL = 9,
+    FUNNY = 9,
+    STORIES = 65,
+    PAPERWORK = 18,
+    HOLD = 14,
+    RUMORS = 18,
+    COFFEE = 18,
+    RANDOM = 12,
+    ADMIN = 16,
+    IDLE = 10,
+    OBSERVATIONS = 14,
+    JUMP = 7,
+    CROUCH = 7,
+    DOOR = 7,
+    SPAMJUMP = 9,
+    SPAMDOOR = 9,
+    PATIENT = 12,
+    END = 10
+}
+
+local function ensureDRCComplianceConfig()
+    if not DRC then return end
+
+    DRC.Config = DRC.Config or {}
+    local config = DRC.Config
+
+    config.DefaultHoldSeconds = tonumber(config.DefaultHoldSeconds) or 180
+    config.MinHoldSeconds = tonumber(config.MinHoldSeconds) or 10
+    config.MaxHoldSeconds = tonumber(config.MaxHoldSeconds) or 3600
+    config.IntroStartDelay = tonumber(config.IntroStartDelay) or 3
+    config.AfterIntroDelay = tonumber(config.AfterIntroDelay) or 9
+    config.AfterReasonDelay = tonumber(config.AfterReasonDelay) or 10
+    config.QueueGapSeconds = tonumber(config.QueueGapSeconds) or 1
+    config.FillerMinDelay = tonumber(config.FillerMinDelay) or 10
+    config.FillerMaxDelay = tonumber(config.FillerMaxDelay) or 24
+    config.EndDelayAfterSpawn = tonumber(config.EndDelayAfterSpawn) or 1.25
+
+    if type(config.ReasonMap) ~= 'table' then config.ReasonMap = {} end
+    for key, value in pairs(DRC_REASON_MAP_DEFAULTS) do
+        if config.ReasonMap[key] == nil then
+            config.ReasonMap[key] = value
+        end
+    end
+
+    if type(config.EstimatedDurations) ~= 'table' then config.EstimatedDurations = {} end
+    for key, value in pairs(DRC_ESTIMATED_DURATION_DEFAULTS) do
+        if config.EstimatedDurations[key] == nil then
+            config.EstimatedDurations[key] = value
+        end
+    end
+
+    if type(config.SequencePattern) ~= 'table' or #config.SequencePattern == 0 then
+        config.SequencePattern = {'FUNNY', 'PAPERWORK', 'STORIES', 'HOLD', 'COFFEE', 'RUMORS', 'OBSERVATIONS', 'ADMIN'}
+    end
+
+    if type(config.ActionCooldown) ~= 'table' then config.ActionCooldown = {} end
+    config.ActionCooldown.JUMP = tonumber(config.ActionCooldown.JUMP) or 8
+    config.ActionCooldown.CROUCH = tonumber(config.ActionCooldown.CROUCH) or 10
+    config.ActionCooldown.DOOR = tonumber(config.ActionCooldown.DOOR) or 8
+    config.ActionCooldown.SPAMJUMP = tonumber(config.ActionCooldown.SPAMJUMP) or 16
+    config.ActionCooldown.SPAMDOOR = tonumber(config.ActionCooldown.SPAMDOOR) or 16
+    config.ActionCooldown.PATIENT = tonumber(config.ActionCooldown.PATIENT) or 50
+end
+
 reg('bring', function(a,t) t.VoxAdminReturnPos=t:GetPos(); t:SetPos(a:GetPos()+a:GetForward()*80); return true end)
 reg('goto', function(a,t) a.VoxAdminReturnPos=a:GetPos(); a:SetPos(t:GetPos()+t:GetForward()*80); return true end)
 reg('returnply', function(a,t) if not t.VoxAdminReturnPos then return 'No return position.' end t:SetPos(t.VoxAdminReturnPos); return true end)
@@ -248,10 +362,12 @@ reg('ban', function(a,t,r,d) if runULX('ban', t, d, r) then return true end if r
 reg('jail', function(a,t,r,d) if runULX('jail', t, d, r) then return true end if runSAM('jail', t, d, r) then return true end return 'No ULX/SAM jail command is available on this server.' end)
 reg('drc_compliance', function(a,t,r,d)
     if not DRC or not DRC.JailPlayer then return 'DRC Compliance addon is not loaded.' end
+    ensureDRCComplianceConfig()
     if not DRC.JailPoint or not DRC.JailPoint.pos then return 'No DRC jail point set. Use /drc_setjail in the compliance room.' end
 
     local duration = tonumber(d) or (DRC.Config and DRC.Config.DefaultHoldSeconds) or 180
-    DRC.JailPlayer(a, t, r, duration)
+    local ok, err = pcall(DRC.JailPlayer, a, t, r, duration)
+    if not ok then return 'DRC Compliance jail failed: ' .. tostring(err) end
     return true
 end)
 reg('unjail', function(a,t) if runULX('unjail', t) then return true end if runSAM('unjail', t) then return true end return 'No ULX/SAM unjail command is available on this server.' end)

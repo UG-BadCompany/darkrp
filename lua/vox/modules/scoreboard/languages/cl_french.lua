@@ -32,7 +32,7 @@ LANG['scoreboard_btn_bring'] = 'Bring'
 LANG['scoreboard_btn_return'] = 'Return'
 LANG['scoreboard_btn_respawn'] = 'Respawn'
 LANG['scoreboard_btn_slay'] = 'Slay'
-LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance (Jail)'
 
 -- Words
 LANG['rank_id'] = 'Rank Identifier'

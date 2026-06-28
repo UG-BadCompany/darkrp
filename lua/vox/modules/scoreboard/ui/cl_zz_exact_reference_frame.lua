@@ -109,13 +109,13 @@ local function openPlayerMenu(ply)
             desc = 'Enter a kick reason. Target: ' .. ply:Nick(),
             acceptText = 'Kick'
         })
-        addAdminOption(menu, 'DRC Compliance', ICON.admin, ply, 'drc_compliance', {
+        addAdminOption(menu, 'DRC Compliance (Jail)', ICON.admin, ply, 'drc_compliance', {
             prompt = true,
-            title = 'DRC Compliance',
-            desc = 'Enter DRC reason and optional seconds. Example: failrp 180',
+            title = 'DRC Compliance (Jail)',
+            desc = 'Enter DRC jail reason and optional seconds. Example: failrp 180',
             fallbackReason = 'general',
             fallbackDuration = 180,
-            acceptText = 'DRC Compliance'
+            acceptText = 'DRC Compliance (Jail)'
         })
     end
 

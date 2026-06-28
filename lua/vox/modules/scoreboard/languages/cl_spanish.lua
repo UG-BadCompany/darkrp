@@ -31,7 +31,7 @@ LANG['scoreboard_btn_bring'] = 'Traer'
 LANG['scoreboard_btn_return'] = 'Regresar'
 LANG['scoreboard_btn_respawn'] = 'Regenerar'
 LANG['scoreboard_btn_slay'] = 'Asesinar'
-LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance'
+LANG['scoreboard_btn_drc_compliance'] = 'DRC Compliance (Jail)'
 
 -- Words
 LANG['rank_id'] = 'ID de rango'
