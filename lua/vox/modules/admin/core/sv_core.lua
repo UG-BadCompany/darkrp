@@ -268,8 +268,8 @@ local DRC_REASON_MAP_DEFAULTS = {
     other = 'GENERAL'
 }
 
-local DRC_ESTIMATED_DURATION_DEFAULTS = {
-    INTRO = 9,
+local DRC_DURATION_DEFAULTS = {
+    INTRO = 10,
     RDM = 10,
     FAILRP = 10,
     FEARRP = 10,
@@ -279,10 +279,10 @@ local DRC_ESTIMATED_DURATION_DEFAULTS = {
     MIC = 10,
     COMBATLOG = 10,
     BUILD = 10,
-    JOB = 10,
-    GENERAL = 9,
-    FUNNY = 9,
-    STORIES = 65,
+    JOB = 12,
+    GENERAL = 10,
+    FUNNY = 10,
+    STORIES = 75,
     PAPERWORK = 18,
     HOLD = 14,
     RUMORS = 18,
@@ -294,13 +294,71 @@ local DRC_ESTIMATED_DURATION_DEFAULTS = {
     JUMP = 7,
     CROUCH = 7,
     DOOR = 7,
+    SPRAY = 8,
+    VOICEBLOCKED = 8,
+    PROPBLOCKED = 8,
     SPAMJUMP = 9,
     SPAMDOOR = 9,
+    SPAMSPRAY = 9,
     PATIENT = 12,
     END = 10
 }
 
-local function ensureDRCComplianceConfig()
+local DRC_DIRECTOR_CATEGORY_DEFAULTS = {'STORIES', 'FUNNY', 'COFFEE', 'RUMORS', 'PAPERWORK', 'HOLD', 'OBSERVATIONS', 'JOB', 'RANDOM', 'IDLE', 'ADMIN'}
+
+local DRC_ACTION_COOLDOWN_DEFAULTS = {
+    JUMP = 6,
+    DOOR = 6,
+    CROUCH = 8,
+    SPRAY = 3,
+    VOICEBLOCKED = 4,
+    PROPBLOCKED = 3,
+    SPAMJUMP = 12,
+    SPAMDOOR = 12,
+    SPAMSPRAY = 10,
+    PATIENT = 50
+}
+
+local function fillTableDefaults(target, defaults)
+    if type(target) ~= 'table' then return end
+
+    for key, value in pairs(defaults) do
+        if target[key] == nil then
+            target[key] = value
+        end
+    end
+end
+
+local function ensureDRC2ComplianceConfig()
+    if not DRC2 then return end
+
+    DRC2.Config = DRC2.Config or {}
+    local config = DRC2.Config
+
+    config.JailCommand = tostring(config.JailCommand or '/j')
+    config.DefaultSeconds = tonumber(config.DefaultSeconds) or tonumber(config.DefaultHoldSeconds) or 180
+    config.MinSeconds = tonumber(config.MinSeconds) or tonumber(config.MinHoldSeconds) or 10
+    config.MaxSeconds = tonumber(config.MaxSeconds) or tonumber(config.MaxHoldSeconds) or 3600
+    config.StartDelay = tonumber(config.StartDelay) or tonumber(config.IntroStartDelay) or 3
+    config.EndDelayAfterSpawn = tonumber(config.EndDelayAfterSpawn) or 1
+    config.AudioGapSeconds = tonumber(config.AudioGapSeconds) or 2
+    config.DefaultClipLength = tonumber(config.DefaultClipLength) or 10
+
+    if type(config.ReasonMap) ~= 'table' then config.ReasonMap = {} end
+    fillTableDefaults(config.ReasonMap, DRC_REASON_MAP_DEFAULTS)
+
+    if type(config.FallbackDurations) ~= 'table' then config.FallbackDurations = {} end
+    fillTableDefaults(config.FallbackDurations, DRC_DURATION_DEFAULTS)
+
+    if type(config.DirectorCategories) ~= 'table' or #config.DirectorCategories == 0 then
+        config.DirectorCategories = table.Copy(DRC_DIRECTOR_CATEGORY_DEFAULTS)
+    end
+
+    if type(config.ActionCooldowns) ~= 'table' then config.ActionCooldowns = {} end
+    fillTableDefaults(config.ActionCooldowns, DRC_ACTION_COOLDOWN_DEFAULTS)
+end
+
+local function ensureLegacyDRCComplianceConfig()
     if not DRC then return end
 
     DRC.Config = DRC.Config or {}
@@ -325,23 +383,50 @@ local function ensureDRCComplianceConfig()
     end
 
     if type(config.EstimatedDurations) ~= 'table' then config.EstimatedDurations = {} end
-    for key, value in pairs(DRC_ESTIMATED_DURATION_DEFAULTS) do
-        if config.EstimatedDurations[key] == nil then
-            config.EstimatedDurations[key] = value
-        end
-    end
+    fillTableDefaults(config.EstimatedDurations, DRC_DURATION_DEFAULTS)
 
     if type(config.SequencePattern) ~= 'table' or #config.SequencePattern == 0 then
         config.SequencePattern = {'FUNNY', 'PAPERWORK', 'STORIES', 'HOLD', 'COFFEE', 'RUMORS', 'OBSERVATIONS', 'ADMIN'}
     end
 
     if type(config.ActionCooldown) ~= 'table' then config.ActionCooldown = {} end
-    config.ActionCooldown.JUMP = tonumber(config.ActionCooldown.JUMP) or 8
-    config.ActionCooldown.CROUCH = tonumber(config.ActionCooldown.CROUCH) or 10
-    config.ActionCooldown.DOOR = tonumber(config.ActionCooldown.DOOR) or 8
-    config.ActionCooldown.SPAMJUMP = tonumber(config.ActionCooldown.SPAMJUMP) or 16
-    config.ActionCooldown.SPAMDOOR = tonumber(config.ActionCooldown.SPAMDOOR) or 16
-    config.ActionCooldown.PATIENT = tonumber(config.ActionCooldown.PATIENT) or 50
+    fillTableDefaults(config.ActionCooldown, DRC_ACTION_COOLDOWN_DEFAULTS)
+end
+
+local function runDRC2Compliance(admin, target, reason, duration)
+    if not DRC2 or not isfunction(DRC2.JailPlayer) then return false end
+
+    ensureDRC2ComplianceConfig()
+    if not DRC2.JailPoint or not DRC2.JailPoint.pos then
+        return 'No DRC jail point set. Use /drc_setjail in the compliance room.'
+    end
+
+    local config = DRC2.Config or {}
+    duration = tonumber(duration) or tonumber(config.DefaultSeconds) or 180
+    duration = math.Clamp(math.floor(duration), tonumber(config.MinSeconds) or 10, tonumber(config.MaxSeconds) or 3600)
+
+    local ok, err = pcall(DRC2.JailPlayer, admin, target, reason, duration)
+    if not ok then return 'DRC Compliance jail failed: ' .. tostring(err) end
+
+    return true
+end
+
+local function runLegacyDRCCompliance(admin, target, reason, duration)
+    if not DRC or not isfunction(DRC.JailPlayer) then return false end
+
+    ensureLegacyDRCComplianceConfig()
+    if not DRC.JailPoint or not DRC.JailPoint.pos then
+        return 'No DRC jail point set. Use /drc_setjail in the compliance room.'
+    end
+
+    local config = DRC.Config or {}
+    duration = tonumber(duration) or tonumber(config.DefaultHoldSeconds) or 180
+    duration = math.Clamp(math.floor(duration), tonumber(config.MinHoldSeconds) or 10, tonumber(config.MaxHoldSeconds) or 3600)
+
+    local ok, err = pcall(DRC.JailPlayer, admin, target, reason, duration)
+    if not ok then return 'DRC Compliance jail failed: ' .. tostring(err) end
+
+    return true
 end
 
 reg('bring', function(a,t) t.VoxAdminReturnPos=t:GetPos(); t:SetPos(a:GetPos()+a:GetForward()*80); return true end)
@@ -361,14 +446,13 @@ reg('god', function(a,t) if t:HasGodMode() then t:GodDisable() else t:GodEnable(
 reg('ban', function(a,t,r,d) if runULX('ban', t, d, r) then return true end if runSAM('ban', t, d, r) then return true end return 'No ULX/SAM ban command is available on this server.' end)
 reg('jail', function(a,t,r,d) if runULX('jail', t, d, r) then return true end if runSAM('jail', t, d, r) then return true end return 'No ULX/SAM jail command is available on this server.' end)
 reg('drc_compliance', function(a,t,r,d)
-    if not DRC or not DRC.JailPlayer then return 'DRC Compliance addon is not loaded.' end
-    ensureDRCComplianceConfig()
-    if not DRC.JailPoint or not DRC.JailPoint.pos then return 'No DRC jail point set. Use /drc_setjail in the compliance room.' end
+    local result = runDRC2Compliance(a, t, r, d)
+    if result ~= false then return result end
 
-    local duration = tonumber(d) or (DRC.Config and DRC.Config.DefaultHoldSeconds) or 180
-    local ok, err = pcall(DRC.JailPlayer, a, t, r, duration)
-    if not ok then return 'DRC Compliance jail failed: ' .. tostring(err) end
-    return true
+    result = runLegacyDRCCompliance(a, t, r, d)
+    if result ~= false then return result end
+
+    return 'DRC Compliance addon is not loaded.'
 end)
 reg('unjail', function(a,t) if runULX('unjail', t) then return true end if runSAM('unjail', t) then return true end return 'No ULX/SAM unjail command is available on this server.' end)
 reg('setjob', function(a,t,r,d) local name = tostring(r or '') if name == '' or name == 'No reason provided' then return 'Provide a job/team name as the reason.' end for id, data in pairs(RPExtraTeams or {}) do if string.lower(data.name or '') == string.lower(name) or tostring(id) == name then t:changeTeam(id, true, true) return true end end return 'Unknown DarkRP job: ' .. name end)

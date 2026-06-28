@@ -31,7 +31,7 @@ local ADMIN_ACTIONS = {
         label = 'DRC Compliance (Jail)',
         id = 'drc_compliance',
         prompt = true,
-        desc = 'Enter DRC jail reason and optional seconds. Example: failrp 180',
+        desc = 'Choose a DRC jail reason and length in seconds.',
         fallbackReason = 'general',
         fallbackDuration = 180
     },

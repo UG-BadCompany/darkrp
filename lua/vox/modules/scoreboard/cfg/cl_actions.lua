@@ -134,7 +134,7 @@ vox.scoreboard:RegisterButton('drc_compliance', {
         runVoxAdminAction(ply, 'drc_compliance', {
             prompt = true,
             title = 'DRC Compliance (Jail)',
-            desc = 'Enter DRC jail reason and optional seconds. Example: failrp 180',
+            desc = 'Choose a DRC jail reason and length in seconds.',
             fallbackReason = 'general',
             fallbackDuration = 180,
             acceptText = 'DRC Compliance (Jail)'

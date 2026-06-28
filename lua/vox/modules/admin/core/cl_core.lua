@@ -79,6 +79,17 @@ local function paintPromptEntry(entry, colors)
     entry:SetColorHover(ColorAlpha(colors.bg, 248))
 end
 
+local function getDRCJailDurationConfig(options)
+    options = options or {}
+
+    local config = (DRC2 and DRC2.Config) or (DRC and DRC.Config) or {}
+    local default = tonumber(config.DefaultSeconds) or tonumber(config.DefaultHoldSeconds) or tonumber(options.fallbackDuration) or 180
+    local min = tonumber(config.MinSeconds) or tonumber(config.MinHoldSeconds) or 10
+    local max = tonumber(config.MaxSeconds) or tonumber(config.MaxHoldSeconds) or 3600
+
+    return default, min, max
+end
+
 local function addReasonChip(parent, label, value, reasonEntry, colors)
     local chip = parent:Add('DButton')
     chip:Dock(LEFT)
@@ -104,6 +115,7 @@ function vox.admin.OpenDRCJailPrompt(ply, actionID, options)
 
     options = options or {}
     local colors = getAdminPromptColors()
+    local defaultDuration, minDuration, maxDuration = getDRCJailDurationConfig(options)
     local frameW = math.min(vox.ScaleWide(560), ScrW() - vox.ScaleWide(80))
     local frameH = math.min(vox.ScaleTall(300), ScrH() - vox.ScaleTall(80))
     local margin = vox.ScaleTall(18)
@@ -160,8 +172,8 @@ function vox.admin.OpenDRCJailPrompt(ply, actionID, options)
     addPromptLabel(durationWrap, 'Time', colors.muted)
     local durationEntry = durationWrap:Add('vox.TextEntry')
     durationEntry:Dock(FILL)
-    durationEntry:SetPlaceholderText('180')
-    durationEntry:SetValue(tostring(options.fallbackDuration or 180))
+    durationEntry:SetPlaceholderText(tostring(defaultDuration))
+    durationEntry:SetValue(tostring(defaultDuration))
     durationEntry:SetNumeric(true)
     paintPromptEntry(durationEntry, colors)
 
@@ -214,7 +226,7 @@ function vox.admin.OpenDRCJailPrompt(ply, actionID, options)
     local function submit()
         local reason = tostring(reasonEntry:GetValue() or ''):Trim()
         local durationText = tostring(durationEntry:GetValue() or ''):Trim()
-        local duration = durationText ~= '' and tonumber(durationText) or tonumber(options.fallbackDuration) or 180
+        local duration = durationText ~= '' and tonumber(durationText) or defaultDuration
 
         if reason == '' then reason = options.fallbackReason or 'general' end
         if not duration or duration <= 0 then
@@ -223,7 +235,7 @@ function vox.admin.OpenDRCJailPrompt(ply, actionID, options)
             return false
         end
 
-        duration = math.Clamp(math.floor(duration), 10, 3600)
+        duration = math.Clamp(math.floor(duration), minDuration, maxDuration)
         vox.admin.RunPlayerAction(actionID, ply, reason, duration)
         frame:Remove()
     end
