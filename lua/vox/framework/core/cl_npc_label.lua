@@ -1,2 +1,0 @@
--- NPC label hooks intentionally live in HUD overhead elements.
--- Keep this client file present so the framework core folder include remains valid.

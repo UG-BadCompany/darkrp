@@ -1,6 +1,0 @@
-{
-  "title": "Vox UI",
-  "type": "servercontent",
-  "tags": ["roleplay", "realism", "darkrp", "ui"],
-  "ignore": ["Doc/*", "old/*", ".git/*"]
-}
