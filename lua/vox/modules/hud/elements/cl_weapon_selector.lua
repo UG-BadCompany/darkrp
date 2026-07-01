@@ -301,6 +301,7 @@ do
 
     local function cycleWeapons( slot )
         local data = selectorData
+        local wasActive = toggleState
 
         rebuildSlotsCache( LocalPlayer() )
 
@@ -311,7 +312,7 @@ do
 
         if ( weaponsAmount == 0 ) then return end
 
-        if ( prevSlot ~= slot ) then
+        if ( not wasActive or prevSlot ~= slot ) then
             pos = 0
         end
 
