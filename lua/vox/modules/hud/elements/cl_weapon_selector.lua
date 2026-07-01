@@ -204,6 +204,7 @@ local function drawWeaponSelector( client, scrW, scrH )
 
     local slotX = x
     local selectionTarget = nil
+    local rowLabels = {}
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
         local slotW = slotWidths[ slotIndex ]
@@ -222,7 +223,7 @@ local function drawWeaponSelector( client, scrW, scrH )
                 local borderColor = ColorAlpha( active and colorAccent or colorSecondaryText, active and 110 or 24 )
 
                 draw.RoundedBox( vox.hud.ScaleTall( 4 ), slotX, rowY, slotW, rowH, rowColor )
-                vox.DrawMatGradient( slotX, rowY, slotW, rowH, RIGHT, ColorAlpha( colorSecondary, selected and 34 or 18 ) )
+                vox.DrawMatGradient( slotX, rowY, slotW, rowH, RIGHT, ColorAlpha( colorSecondary, 18 ) )
                 surface.SetDrawColor( borderColor )
                 surface.DrawOutlinedRect( slotX, rowY, slotW, rowH, 1 )
 
@@ -235,13 +236,15 @@ local function drawWeaponSelector( client, scrW, scrH )
                     }
                 end
 
-                local textInset = vox.hud.ScaleWide( 7 )
-                local rightPad = active and vox.hud.ScaleWide( 14 ) or vox.hud.ScaleWide( 7 )
-                drawClippedText( getWeaponName( weapon ), selected and vox.hud.fonts.ExtraTinyBold or vox.hud.fonts.ExtraTinyBold, slotX + slotW * .5, rowY + rowH * .5, selected and colorPrimaryText or colorSecondaryText, 1, 1, slotX + textInset, rowY, slotW - textInset - rightPad, rowH )
-
-                if ( active ) then
-                    draw.RoundedBox( 2, slotX + slotW - vox.hud.ScaleWide( 10 ), rowY + rowH * .5 - vox.hud.ScaleTall( 2 ), vox.hud.ScaleWide( 4 ), vox.hud.ScaleTall( 4 ), colorAccent )
-                end
+                rowLabels[ #rowLabels + 1 ] = {
+                    x = slotX,
+                    y = rowY,
+                    w = slotW,
+                    h = rowH,
+                    weapon = weapon,
+                    selected = selected,
+                    active = active
+                }
             end
         end
 
@@ -273,6 +276,17 @@ local function drawWeaponSelector( client, scrW, scrH )
         selectorAnim.initialized = false
     end
 
+    for _, rowData in ipairs( rowLabels ) do
+        local textInset = vox.hud.ScaleWide( 7 )
+        local rightPad = rowData.active and vox.hud.ScaleWide( 14 ) or vox.hud.ScaleWide( 7 )
+
+        drawClippedText( getWeaponName( rowData.weapon ), vox.hud.fonts.ExtraTinyBold, rowData.x + rowData.w * .5, rowData.y + rowData.h * .5, rowData.selected and colorPrimaryText or colorSecondaryText, 1, 1, rowData.x + textInset, rowData.y, rowData.w - textInset - rightPad, rowData.h )
+
+        if ( rowData.active ) then
+            draw.RoundedBox( 2, rowData.x + rowData.w - vox.hud.ScaleWide( 10 ), rowData.y + rowData.h * .5 - vox.hud.ScaleTall( 2 ), vox.hud.ScaleWide( 4 ), vox.hud.ScaleTall( 4 ), colorAccent )
+        end
+    end
+
     surface.SetAlphaMultiplier( prevAlpha )
 end
 
@@ -283,6 +297,8 @@ do
     end
 
     local lastWeapon = NULL
+    local lastSlotBind = nil
+    local lastSlotBindTime = 0
 
     local function selectWeapon()
         local data = selectorData
@@ -373,8 +389,15 @@ do
         local slot = binds[ bind ]
 
         if ( ply:InVehicle() ) then return end
+        if ( not pressed ) then return end
 
         if ( slot ) then
+            local now = RealTime()
+            if ( bind == lastSlotBind and now - lastSlotBindTime < .08 ) then return true end
+
+            lastSlotBind = bind
+            lastSlotBindTime = now
+
             cycleWeapons( slot )
             return true
         elseif ( bind == '+attack' and not quickSwitchEnabled ) then
