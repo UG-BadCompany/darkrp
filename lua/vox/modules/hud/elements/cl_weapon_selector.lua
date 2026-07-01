@@ -11,6 +11,13 @@ local selectorData = {
     selectedWeapon = NULL,
     activeWeapon = NULL
 }
+local selectorAnim = {
+    initialized = false,
+    x = 0,
+    y = 0,
+    w = 0,
+    h = 0
+}
 
 local quickSwitchEnabled = GetConVar( 'hud_fastswitch' ):GetBool()
 
@@ -107,6 +114,7 @@ local function toggleWeaponSelector( state )
 
     if ( not state ) then
         toggleFraction = 0
+        selectorAnim.initialized = false
         timer.Remove( 'vox.hud.HideWeaponSelector' )
     else
         timer.Create( 'vox.hud.HideWeaponSelector', SHOW_DURATION, 1, function()
@@ -195,6 +203,7 @@ local function drawWeaponSelector( client, scrW, scrH )
     end
 
     local slotX = x
+    local selectionTarget = nil
     for slotIndex = 1, MAX_SLOTS do
         local slotWeapons = slotsCache[ slotIndex ] or {}
         local slotW = slotWidths[ slotIndex ]
@@ -209,17 +218,21 @@ local function drawWeaponSelector( client, scrW, scrH )
                 local rowY = y + headerH + gapY + ( weaponIndex - 1 ) * ( rowH + gapY )
                 local selected = selectorData.selectedSlot == slotIndex and selectorData.selectedPos == weaponIndex
                 local active = selectorData.activeWeapon == weapon
-                local rowColor = selected and ColorAlpha( colorAccent, 62 ) or ColorAlpha( colorPrimary, active and 178 or 155 )
-                local borderColor = selected and ColorAlpha( colorAccent, 225 ) or ColorAlpha( active and colorAccent or colorSecondaryText, active and 110 or 24 )
+                local rowColor = ColorAlpha( colorPrimary, active and 178 or 155 )
+                local borderColor = ColorAlpha( active and colorAccent or colorSecondaryText, active and 110 or 24 )
 
                 draw.RoundedBox( vox.hud.ScaleTall( 4 ), slotX, rowY, slotW, rowH, rowColor )
-                vox.DrawMatGradient( slotX, rowY, slotW, rowH, RIGHT, ColorAlpha( colorSecondary, selected and 44 or 18 ) )
+                vox.DrawMatGradient( slotX, rowY, slotW, rowH, RIGHT, ColorAlpha( colorSecondary, selected and 34 or 18 ) )
                 surface.SetDrawColor( borderColor )
                 surface.DrawOutlinedRect( slotX, rowY, slotW, rowH, 1 )
 
                 if ( selected ) then
-                    surface.SetDrawColor( colorAccent )
-                    surface.DrawRect( slotX, rowY, slotW, 2 )
+                    selectionTarget = {
+                        x = slotX,
+                        y = rowY,
+                        w = slotW,
+                        h = rowH
+                    }
                 end
 
                 local textInset = vox.hud.ScaleWide( 7 )
@@ -233,6 +246,31 @@ local function drawWeaponSelector( client, scrW, scrH )
         end
 
         slotX = slotX + slotW + gapX
+    end
+
+    if ( selectionTarget ) then
+        local speed = math.Clamp( FrameTime() * 18, 0, 1 )
+
+        if ( not selectorAnim.initialized ) then
+            selectorAnim.x = selectionTarget.x
+            selectorAnim.y = selectionTarget.y
+            selectorAnim.w = selectionTarget.w
+            selectorAnim.h = selectionTarget.h
+            selectorAnim.initialized = true
+        else
+            selectorAnim.x = Lerp( speed, selectorAnim.x, selectionTarget.x )
+            selectorAnim.y = Lerp( speed, selectorAnim.y, selectionTarget.y )
+            selectorAnim.w = Lerp( speed, selectorAnim.w, selectionTarget.w )
+            selectorAnim.h = Lerp( speed, selectorAnim.h, selectionTarget.h )
+        end
+
+        draw.RoundedBox( vox.hud.ScaleTall( 4 ), selectorAnim.x, selectorAnim.y, selectorAnim.w, selectorAnim.h, ColorAlpha( colorAccent, 48 ) )
+        vox.DrawMatGradient( selectorAnim.x, selectorAnim.y, selectorAnim.w, selectorAnim.h, RIGHT, ColorAlpha( colorSecondary, 40 ) )
+        surface.SetDrawColor( ColorAlpha( colorAccent, 230 ) )
+        surface.DrawOutlinedRect( selectorAnim.x, selectorAnim.y, selectorAnim.w, selectorAnim.h, 1 )
+        surface.DrawRect( selectorAnim.x, selectorAnim.y, selectorAnim.w, 2 )
+    else
+        selectorAnim.initialized = false
     end
 
     surface.SetAlphaMultiplier( prevAlpha )
