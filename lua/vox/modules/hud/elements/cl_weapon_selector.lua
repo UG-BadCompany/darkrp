@@ -102,9 +102,7 @@ local function rebuildSlotsCache( client )
     end
 end
 
-local function toggleWeaponSelector( state, bScroll )
-    local oldState = toggleState
-
+local function toggleWeaponSelector( state )
     toggleState = state
 
     if ( not state ) then
@@ -114,10 +112,6 @@ local function toggleWeaponSelector( state, bScroll )
         timer.Create( 'vox.hud.HideWeaponSelector', SHOW_DURATION, 1, function()
             toggleWeaponSelector( false )
         end )
-
-        if ( bScroll and not oldState and toggleFraction == 0 ) then
-            syncSelectionToWeapon( selectorData.activeWeapon )
-        end
     end
 end
 
@@ -198,14 +192,10 @@ local function drawWeaponSelector( client, scrW, scrH )
     surface.SetAlphaMultiplier( toggleFraction )
 
     local screenPadding = vox.hud.GetScreenPadding()
-    local panelW = math.min( vox.hud.ScaleWide( 520 ), scrW - screenPadding * 2 )
-    local panelH = vox.hud.ScaleTall( 104 )
-    local x = scrW * .5 - panelW * .5
-    local y = screenPadding + vox.hud.ScaleTall( 18 )
-    local pad = vox.hud.ScaleWide( 12 )
-    local headerH = vox.hud.ScaleTall( 22 )
-    local currentH = vox.hud.ScaleTall( 42 )
-    local navH = vox.hud.ScaleTall( 22 )
+    local pad = vox.hud.ScaleWide( 10 )
+    local panelW = math.min( vox.hud.ScaleWide( 340 ), scrW - screenPadding * 2 )
+    local headerH = vox.hud.ScaleTall( 24 )
+    local rowH = vox.hud.ScaleTall( 36 )
     local gap = vox.hud.ScaleTall( 5 )
     local weapons = getFlatWeaponList()
     local selectedWeapon = getSelectedWeapon()
@@ -224,80 +214,100 @@ local function drawWeaponSelector( client, scrW, scrH )
         selectedWeapon = weapons[ selectedIndex ].weapon
     end
 
-    draw.RoundedBox( vox.hud.ScaleTall( 5 ), x, y, panelW, panelH, ColorAlpha( colorPrimary, 224 ) )
-    vox.DrawMatGradient( x, y, panelW, panelH, RIGHT, ColorAlpha( colorSecondary, 58 ) )
-    vox.DrawMatGradient( x, y, panelW, panelH, BOTTOM, ColorAlpha( colorAccent, 16 ) )
+    local rows = {}
+    local selectedData = nil
+
+    if ( #weapons > 0 and IsValid( selectedWeapon ) ) then
+        selectedData = getWrappedWeaponData( weapons, selectedIndex )
+
+        if ( #weapons > 2 ) then
+            rows[ #rows + 1 ] = {
+                label = 'PREV',
+                data = getWrappedWeaponData( weapons, selectedIndex - 1 )
+            }
+        end
+
+        rows[ #rows + 1 ] = {
+            label = 'NOW',
+            data = selectedData,
+            current = true
+        }
+
+        if ( #weapons > 1 ) then
+            rows[ #rows + 1 ] = {
+                label = #weapons == 2 and 'OTHER' or 'NEXT',
+                data = getWrappedWeaponData( weapons, selectedIndex + 1 )
+            }
+        end
+    end
+
+    local rowCount = math.max( #rows, 1 )
+    local panelH = headerH + pad + rowCount * rowH + math.max( rowCount - 1, 0 ) * gap + pad
+    local x = scrW - panelW - screenPadding
+    local y = math.Clamp( scrH * .38 - panelH * .5, screenPadding, scrH - screenPadding - panelH )
+
+    draw.RoundedBox( vox.hud.ScaleTall( 6 ), x, y, panelW, panelH, ColorAlpha( colorPrimary, 232 ) )
+    vox.DrawMatGradient( x, y, panelW, panelH, RIGHT, ColorAlpha( colorSecondary, 46 ) )
     surface.SetDrawColor( ColorAlpha( colorAccent, 95 ) )
     surface.DrawOutlinedRect( x, y, panelW, panelH, 1 )
     surface.SetDrawColor( ColorAlpha( colorAccent, 210 ) )
-    surface.DrawRect( x + pad, y, vox.hud.ScaleWide( 72 ), 2 )
+    surface.DrawRect( x, y + headerH, 2, panelH - headerH - pad )
 
-    draw.SimpleText( 'WEAPON', vox.hud.fonts.SmallBold, x + pad, y + headerH * .5, colorPrimaryText, 0, 1 )
+    draw.SimpleText( 'SELECTOR', vox.hud.fonts.ExtraTinyBold, x + pad, y + headerH * .5, colorSecondaryText, 0, 1 )
     draw.SimpleText( #weapons > 0 and ( selectedIndex .. ' / ' .. #weapons ) or '', vox.hud.fonts.ExtraTinyBold, x + panelW - pad, y + headerH * .5, colorSecondaryText, 2, 1 )
 
     if ( #weapons <= 0 or not IsValid( selectedWeapon ) ) then
-        local emptyY = y + headerH + gap
-        draw.RoundedBox( vox.hud.ScaleTall( 4 ), x + pad, emptyY, panelW - pad * 2, panelH - headerH - gap - pad, ColorAlpha( colorSecondary, 130 ) )
-        draw.SimpleText( 'NO WEAPONS', vox.hud.fonts.SmallBold, x + panelW * .5, emptyY + ( panelH - headerH - gap - pad ) * .5, colorSecondaryText, 1, 1 )
+        local emptyY = y + headerH + pad
+        draw.RoundedBox( vox.hud.ScaleTall( 4 ), x + pad, emptyY, panelW - pad * 2, rowH, ColorAlpha( colorSecondary, 130 ) )
+        draw.SimpleText( 'NO WEAPONS', vox.hud.fonts.SmallBold, x + panelW * .5, emptyY + rowH * .5, colorSecondaryText, 1, 1 )
         surface.SetAlphaMultiplier( prevAlpha )
         return
     end
 
-    local selectedX = x + pad
-    local selectedY = y + headerH + gap
-    local selectedW = panelW - pad * 2
-    local selectedActive = selectedWeapon == selectorData.activeWeapon
-    local selectedData = getWrappedWeaponData( weapons, selectedIndex )
+    local rowX = x + pad
+    local rowW = panelW - pad * 2
+    local rowY = y + headerH + pad
+    local labelW = vox.hud.ScaleWide( 50 )
+    local rightW = vox.hud.ScaleWide( 72 )
 
-    draw.RoundedBox( vox.hud.ScaleTall( 4 ), selectedX, selectedY, selectedW, currentH, ColorAlpha( colorSecondary, 152 ) )
-    vox.DrawMatGradient( selectedX, selectedY, selectedW, currentH, RIGHT, ColorAlpha( colorAccent, 24 ) )
-    surface.SetDrawColor( ColorAlpha( colorAccent, selectedActive and 165 or 82 ) )
-    surface.DrawOutlinedRect( selectedX, selectedY, selectedW, currentH, 1 )
-    draw.RoundedBox( 2, selectedX, selectedY, vox.hud.ScaleWide( 4 ), currentH, selectedActive and colorAccent or ColorAlpha( colorAccent, 145 ) )
+    local function drawSelectorRow( rowData, index )
+        local weaponData = rowData.data
+        if ( not weaponData or not IsValid( weaponData.weapon ) ) then return end
 
-    local slotW = vox.hud.ScaleWide( 44 )
-    local slotX = selectedX + vox.hud.ScaleWide( 10 )
-    local slotY = selectedY + vox.hud.ScaleTall( 9 )
-    draw.RoundedBox( vox.hud.ScaleTall( 3 ), slotX, slotY, slotW, currentH - vox.hud.ScaleTall( 18 ), ColorAlpha( colorPrimary, 168 ) )
-    draw.SimpleText( selectedData and ( 'S' .. selectedData.slot ) or 'S?', vox.hud.fonts.TinyBold, slotX + slotW * .5, selectedY + currentH * .5, colorPrimaryText, 1, 1 )
+        local rowCurrent = rowData.current
+        local weapon = weaponData.weapon
+        local rowColor = rowCurrent and ColorAlpha( colorAccent, 54 ) or ColorAlpha( colorSecondary, 118 )
+        local rowBorder = rowCurrent and ColorAlpha( colorAccent, 205 ) or ColorAlpha( colorSecondaryText, 35 )
+        local currentY = rowY + ( index - 1 ) * ( rowH + gap )
 
-    local statusLabel = selectedActive and 'EQUIPPED' or ( quickSwitchEnabled and 'AUTO' or 'SELECT' )
-    local statusW = vox.hud.ScaleWide( 78 )
-    local ammoW = vox.hud.ScaleWide( 78 )
-    local nameX = slotX + slotW + vox.hud.ScaleWide( 12 )
-    local nameW = math.max( selectedW - ( nameX - selectedX ) - statusW - ammoW - vox.hud.ScaleWide( 30 ), 0 )
-    drawClippedText( getWeaponName( selectedWeapon ), vox.hud.fonts.SmallBold, nameX, selectedY + currentH * .5 - vox.hud.ScaleTall( 5 ), colorPrimaryText, 0, 1, nameX, selectedY + vox.hud.ScaleTall( 6 ), nameW, currentH - vox.hud.ScaleTall( 12 ) )
-    draw.SimpleText( selectedData and ( 'POS ' .. selectedData.pos ) or '', vox.hud.fonts.ExtraTinyBold, nameX, selectedY + currentH - vox.hud.ScaleTall( 9 ), colorSecondaryText, 0, 1 )
-    draw.SimpleText( getWeaponAmmoText( client, selectedWeapon ), vox.hud.fonts.TinyBold, selectedX + selectedW - statusW - vox.hud.ScaleWide( 18 ), selectedY + currentH * .5, colorPrimaryText, 2, 1 )
-    draw.RoundedBox( vox.hud.ScaleTall( 3 ), selectedX + selectedW - statusW - vox.hud.ScaleWide( 10 ), selectedY + vox.hud.ScaleTall( 10 ), statusW, currentH - vox.hud.ScaleTall( 20 ), ColorAlpha( selectedActive and colorAccent or colorPrimary, selectedActive and 52 or 170 ) )
-    draw.SimpleText( statusLabel, vox.hud.fonts.ExtraTinyBold, selectedX + selectedW - statusW * .5 - vox.hud.ScaleWide( 10 ), selectedY + currentH * .5, selectedActive and colorAccent or colorSecondaryText, 1, 1 )
+        draw.RoundedBox( vox.hud.ScaleTall( 4 ), rowX, currentY, rowW, rowH, rowColor )
+        surface.SetDrawColor( rowBorder )
+        surface.DrawOutlinedRect( rowX, currentY, rowW, rowH, 1 )
 
-    local navY = selectedY + currentH + gap
-    local navGap = vox.hud.ScaleWide( 6 )
-    local navW = math.max( ( selectedW - navGap ) * .5, 0 )
-    local prevData = #weapons > 1 and getWrappedWeaponData( weapons, selectedIndex - 1 ) or nil
-    local nextData = #weapons > 1 and getWrappedWeaponData( weapons, selectedIndex + 1 ) or nil
-
-    local function drawNavChip( navX, label, weaponData )
-        draw.RoundedBox( vox.hud.ScaleTall( 3 ), navX, navY, navW, navH, ColorAlpha( colorSecondary, 118 ) )
-        surface.SetDrawColor( ColorAlpha( colorSecondaryText, 32 ) )
-        surface.DrawOutlinedRect( navX, navY, navW, navH, 1 )
-
-        if ( not weaponData ) then
-            draw.SimpleText( 'ONLY WEAPON', vox.hud.fonts.ExtraTinyBold, navX + navW * .5, navY + navH * .5, colorTertiaryText, 1, 1 )
-            return
+        if ( rowCurrent ) then
+            draw.RoundedBox( 2, rowX, currentY, vox.hud.ScaleWide( 4 ), rowH, colorAccent )
         end
 
-        local labelW = vox.hud.ScaleWide( 36 )
-        draw.RoundedBox( vox.hud.ScaleTall( 3 ), navX + vox.hud.ScaleWide( 5 ), navY + vox.hud.ScaleTall( 4 ), labelW, navH - vox.hud.ScaleTall( 8 ), ColorAlpha( colorPrimary, 150 ) )
-        draw.SimpleText( label, vox.hud.fonts.ExtraTinyBold, navX + vox.hud.ScaleWide( 5 ) + labelW * .5, navY + navH * .5, colorSecondaryText, 1, 1 )
+        local labelX = rowX + vox.hud.ScaleWide( 8 )
+        draw.RoundedBox( vox.hud.ScaleTall( 3 ), labelX, currentY + vox.hud.ScaleTall( 7 ), labelW, rowH - vox.hud.ScaleTall( 14 ), ColorAlpha( colorPrimary, rowCurrent and 190 or 150 ) )
+        draw.SimpleText( rowCurrent and ( 'S' .. weaponData.slot ) or rowData.label, vox.hud.fonts.ExtraTinyBold, labelX + labelW * .5, currentY + rowH * .5, rowCurrent and colorPrimaryText or colorSecondaryText, 1, 1 )
 
-        local textX = navX + vox.hud.ScaleWide( 5 ) + labelW + vox.hud.ScaleWide( 8 )
-        drawClippedText( getWeaponName( weaponData.weapon ), vox.hud.fonts.ExtraTinyBold, textX, navY + navH * .5, colorSecondaryText, 0, 1, textX, navY, navW - ( textX - navX ) - vox.hud.ScaleWide( 8 ), navH )
+        local nameX = labelX + labelW + vox.hud.ScaleWide( 10 )
+        local nameW = rowW - ( nameX - rowX ) - rightW - vox.hud.ScaleWide( 10 )
+        drawClippedText( getWeaponName( weapon ), rowCurrent and vox.hud.fonts.TinyBold or vox.hud.fonts.ExtraTinyBold, nameX, currentY + rowH * .5 - vox.hud.ScaleTall( rowCurrent and 5 or 0 ), rowCurrent and colorPrimaryText or colorSecondaryText, 0, 1, nameX, currentY, nameW, rowH )
+
+        if ( rowCurrent ) then
+            local statusText = selectorData.activeWeapon == weapon and getWeaponAmmoText( client, weapon ) or ( quickSwitchEnabled and 'AUTO' or 'READY' )
+            draw.SimpleText( selectedData and ( 'POS ' .. selectedData.pos ) or getWeaponMetaText( weapon ), vox.hud.fonts.ExtraTinyBold, nameX, currentY + rowH - vox.hud.ScaleTall( 8 ), colorSecondaryText, 0, 1 )
+            draw.SimpleText( statusText, vox.hud.fonts.ExtraTinyBold, rowX + rowW - vox.hud.ScaleWide( 10 ), currentY + rowH * .5, colorAccent, 2, 1 )
+        else
+            draw.SimpleText( 'S' .. weaponData.slot, vox.hud.fonts.ExtraTinyBold, rowX + rowW - vox.hud.ScaleWide( 10 ), currentY + rowH * .5, colorTertiaryText, 2, 1 )
+        end
     end
 
-    drawNavChip( selectedX, 'PREV', prevData )
-    drawNavChip( selectedX + navW + navGap, 'NEXT', nextData )
+    for index, rowData in ipairs( rows ) do
+        drawSelectorRow( rowData, index )
+    end
 
     surface.SetAlphaMultiplier( prevAlpha )
 end
@@ -327,14 +337,10 @@ do
 
     local function cycleWeapons( slot )
         local data = selectorData
-        local wasActive = toggleState
 
         rebuildSlotsCache( LocalPlayer() )
-        toggleWeaponSelector( true )
 
         local prevSlot = data.selectedSlot
-        if ( not wasActive and prevSlot == slot and not quickSwitchEnabled ) then return end
-
         local slotData = slotsCache[ slot ] or {}
         local pos = data.selectedPos or 0
         local weaponsAmount = #slotData
@@ -352,6 +358,7 @@ do
         end
 
         setSelectedWeaponPosition( slot, nextPos )
+        toggleWeaponSelector( true )
 
         if ( quickSwitchEnabled ) then
             selectWeapon()
@@ -360,7 +367,6 @@ do
 
     local function scrollWeapons( delta )
         rebuildSlotsCache( LocalPlayer() )
-        toggleWeaponSelector( true, true )
 
         local data = selectorData
         local slot = data.selectedSlot or 1
@@ -390,6 +396,8 @@ do
         else
             setSelectedWeaponPosition( slot, nextPos )
         end
+
+        toggleWeaponSelector( true )
 
         if ( quickSwitchEnabled ) then
             selectWeapon()
@@ -441,5 +449,15 @@ hook.Add( 'HUDShouldDraw', 'vox.hud.HideWeaponSelector', function( name )
 end )
 
 hook.Add( 'Think', 'vox.hud.UpdateWeaponSelector', function()
-    rebuildSlotsCache( LocalPlayer() )
+    local client = LocalPlayer()
+
+    if ( toggleState ) then
+        if ( IsValid( client ) ) then
+            selectorData.activeWeapon = client:GetActiveWeapon()
+        end
+
+        return
+    end
+
+    rebuildSlotsCache( client )
 end )
