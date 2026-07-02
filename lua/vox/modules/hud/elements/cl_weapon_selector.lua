@@ -11,13 +11,6 @@ local selectorData = {
     selectedWeapon = NULL,
     activeWeapon = NULL
 }
-local selectorAnim = {
-    initialized = false,
-    x = 0,
-    y = 0,
-    w = 0,
-    h = 0
-}
 
 local quickSwitchEnabled = GetConVar( 'hud_fastswitch' ):GetBool()
 
@@ -114,7 +107,6 @@ local function toggleWeaponSelector( state )
 
     if ( not state ) then
         toggleFraction = 0
-        selectorAnim.initialized = false
         timer.Remove( 'vox.hud.HideWeaponSelector' )
     else
         timer.Create( 'vox.hud.HideWeaponSelector', SHOW_DURATION, 1, function()
@@ -218,13 +210,10 @@ local function drawWeaponSelector( client, scrW, scrH )
             if ( IsValid( weapon ) ) then
                 local rowY = y + headerH + gapY + ( weaponIndex - 1 ) * ( rowH + gapY )
                 local selected = selectorData.selectedSlot == slotIndex and selectorData.selectedPos == weaponIndex
-                local active = selectorData.activeWeapon == weapon
-                local rowColor = ColorAlpha( colorPrimary, active and 178 or 155 )
-                local borderColor = ColorAlpha( active and colorAccent or colorSecondaryText, active and 110 or 24 )
 
-                draw.RoundedBox( vox.hud.ScaleTall( 4 ), slotX, rowY, slotW, rowH, rowColor )
+                draw.RoundedBox( vox.hud.ScaleTall( 4 ), slotX, rowY, slotW, rowH, ColorAlpha( colorPrimary, 155 ) )
                 vox.DrawMatGradient( slotX, rowY, slotW, rowH, RIGHT, ColorAlpha( colorSecondary, 18 ) )
-                surface.SetDrawColor( borderColor )
+                surface.SetDrawColor( ColorAlpha( colorSecondaryText, 24 ) )
                 surface.DrawOutlinedRect( slotX, rowY, slotW, rowH, 1 )
 
                 if ( selected ) then
@@ -242,8 +231,7 @@ local function drawWeaponSelector( client, scrW, scrH )
                     w = slotW,
                     h = rowH,
                     weapon = weapon,
-                    selected = selected,
-                    active = active
+                    selected = selected
                 }
             end
         end
@@ -252,39 +240,18 @@ local function drawWeaponSelector( client, scrW, scrH )
     end
 
     if ( selectionTarget ) then
-        local speed = math.Clamp( FrameTime() * 18, 0, 1 )
-
-        if ( not selectorAnim.initialized ) then
-            selectorAnim.x = selectionTarget.x
-            selectorAnim.y = selectionTarget.y
-            selectorAnim.w = selectionTarget.w
-            selectorAnim.h = selectionTarget.h
-            selectorAnim.initialized = true
-        else
-            selectorAnim.x = Lerp( speed, selectorAnim.x, selectionTarget.x )
-            selectorAnim.y = Lerp( speed, selectorAnim.y, selectionTarget.y )
-            selectorAnim.w = Lerp( speed, selectorAnim.w, selectionTarget.w )
-            selectorAnim.h = Lerp( speed, selectorAnim.h, selectionTarget.h )
-        end
-
-        draw.RoundedBox( vox.hud.ScaleTall( 4 ), selectorAnim.x, selectorAnim.y, selectorAnim.w, selectorAnim.h, ColorAlpha( colorAccent, 48 ) )
-        vox.DrawMatGradient( selectorAnim.x, selectorAnim.y, selectorAnim.w, selectorAnim.h, RIGHT, ColorAlpha( colorSecondary, 40 ) )
+        draw.RoundedBox( vox.hud.ScaleTall( 4 ), selectionTarget.x, selectionTarget.y, selectionTarget.w, selectionTarget.h, ColorAlpha( colorAccent, 48 ) )
+        vox.DrawMatGradient( selectionTarget.x, selectionTarget.y, selectionTarget.w, selectionTarget.h, RIGHT, ColorAlpha( colorSecondary, 40 ) )
         surface.SetDrawColor( ColorAlpha( colorAccent, 230 ) )
-        surface.DrawOutlinedRect( selectorAnim.x, selectorAnim.y, selectorAnim.w, selectorAnim.h, 1 )
-        surface.DrawRect( selectorAnim.x, selectorAnim.y, selectorAnim.w, 2 )
-    else
-        selectorAnim.initialized = false
+        surface.DrawOutlinedRect( selectionTarget.x, selectionTarget.y, selectionTarget.w, selectionTarget.h, 1 )
+        surface.DrawRect( selectionTarget.x, selectionTarget.y, selectionTarget.w, 2 )
     end
 
     for _, rowData in ipairs( rowLabels ) do
         local textInset = vox.hud.ScaleWide( 7 )
-        local rightPad = rowData.active and vox.hud.ScaleWide( 14 ) or vox.hud.ScaleWide( 7 )
+        local rightPad = vox.hud.ScaleWide( 7 )
 
         drawClippedText( getWeaponName( rowData.weapon ), vox.hud.fonts.ExtraTinyBold, rowData.x + rowData.w * .5, rowData.y + rowData.h * .5, rowData.selected and colorPrimaryText or colorSecondaryText, 1, 1, rowData.x + textInset, rowData.y, rowData.w - textInset - rightPad, rowData.h )
-
-        if ( rowData.active ) then
-            draw.RoundedBox( 2, rowData.x + rowData.w - vox.hud.ScaleWide( 10 ), rowData.y + rowData.h * .5 - vox.hud.ScaleTall( 2 ), vox.hud.ScaleWide( 4 ), vox.hud.ScaleTall( 4 ), colorAccent )
-        end
     end
 
     surface.SetAlphaMultiplier( prevAlpha )
@@ -297,8 +264,6 @@ do
     end
 
     local lastWeapon = NULL
-    local lastSlotBind = nil
-    local lastSlotBindTime = 0
 
     local function selectWeapon()
         local data = selectorData
@@ -317,25 +282,21 @@ do
 
     local function cycleWeapons( slot )
         local data = selectorData
-        local wasActive = toggleState
+        local wasOpen = toggleState
 
         rebuildSlotsCache( LocalPlayer() )
 
-        local prevSlot = data.selectedSlot
         local slotData = slotsCache[ slot ] or {}
-        local pos = data.selectedPos or 0
         local weaponsAmount = #slotData
 
         if ( weaponsAmount == 0 ) then return end
 
-        if ( not wasActive or prevSlot ~= slot ) then
-            pos = 0
-        end
-
-        local nextPos = pos + 1
-
-        if ( nextPos > weaponsAmount ) then
-            nextPos = 1
+        local nextPos = 1
+        if ( wasOpen and data.selectedSlot == slot ) then
+            nextPos = ( data.selectedPos or 0 ) + 1
+            if ( nextPos > weaponsAmount ) then
+                nextPos = 1
+            end
         end
 
         setSelectedWeaponPosition( slot, nextPos )
@@ -392,12 +353,6 @@ do
         if ( not pressed ) then return end
 
         if ( slot ) then
-            local now = RealTime()
-            if ( bind == lastSlotBind and now - lastSlotBindTime < .08 ) then return true end
-
-            lastSlotBind = bind
-            lastSlotBindTime = now
-
             cycleWeapons( slot )
             return true
         elseif ( bind == '+attack' and not quickSwitchEnabled ) then
